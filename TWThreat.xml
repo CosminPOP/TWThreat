@@ -1,0 +1,328 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
+    <Script file="TWThreat.lua"/>
+
+    <Frame name="TWTThreat" virtual="true">
+        <Size>
+            <AbsDimension x="298" y="20"/>
+        </Size>
+<!--        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background"-->
+<!--                  tile="false">-->
+<!--        </Backdrop>-->
+        <Anchors>
+            <Anchor point="TOPLEFT">
+                <Offset>
+                    <AbsDimension x="1" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Layers>
+            <Layer level="BACKGROUND">
+<!--                <Texture name="$parentBG" file="Interface\Tooltips\UI-Tooltip-Background">-->
+                <Texture name="$parentBG" file="Interface\TargetingFrame\UI-StatusBar">
+                    <Size>
+                        <AbsDimension x="298" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString name="$parentName" inherits="GameFontHighlight" text="Smultron"
+                            justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="100" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="5" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
+                        justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="60" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="threat"
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="60" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentPerc" inherits="GameFontHighlightSmall" text="perc" justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="60" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+    </Frame>
+
+    <Frame name="TWTMain" hidden="false" toplevel="true"
+           parent="UIParent" movable="true" enableMouse="true" resizable="true">
+        <Size>
+            <AbsDimension x="300" y="200"/>
+        </Size>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                  tile="false">
+        </Backdrop>
+        <ResizeBounds>
+            <minResize x="300" y="160"/>
+            <maxResize x="300" y="400"/>
+        </ResizeBounds>
+        <Anchors>
+            <Anchor point="CENTER">
+                <Offset>
+                    <AbsDimension x="0" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Layers>
+            <Layer level="OVERLAY">
+                <FontString name="$parentTitle" inherits="GameFontHighlight" text="Name">
+                    <Size>
+                        <AbsDimension x="300" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentName" inherits="GameFontHighlightSmall" text="Name"
+                            justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="100" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="5" y="-20"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="60" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="Threat"
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="60" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentPerc" inherits="GameFontHighlightSmall" text="%" justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="60" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentThreatTarget" inherits="GameFontHighlight" text="Threat: no target">
+                    <Size>
+                        <AbsDimension x="300" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="BOTTOM">
+                            <Offset>
+                                <AbsDimension x="0" y="1"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Scripts>
+            <OnLoad>
+                this:RegisterForDrag("LeftButton");
+                this:SetMovable(1);
+                this:SetUserPlaced(true);
+            </OnLoad>
+            <OnDragStart>
+                this:StartMoving();
+                this.isMoving = true;
+            </OnDragStart>
+            <OnDragStop>
+                this:StopMovingOrSizing();
+                this.isMoving = false;
+            </OnDragStop>
+        </Scripts>
+        <Frames>
+
+            <Button name="TWTResizeButton">
+                <NormalTexture file="Interface\AddOns\TWThreat\images\ResizeGrip"/>
+                <HighlightTexture file="Interface\AddOns\TWThreat\images\ResizeGrip" alphaMode="ADD"/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOMRIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnMouseDown>
+                        TWTMain:StartSizing("BOTTOMRIGHT")
+                        TWTMain:SetUserPlaced(true)
+                        TWTMainWindow_Resizing()
+                    </OnMouseDown>
+                    <OnMouseUp>
+                        TWTMain:StopMovingOrSizing()
+                        TWTMainMainWindow_Resized()
+                    </OnMouseUp>
+                    <OnClick>
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <ScrollFrame name="TWTThreatListScrollFrame" hidden="false" inherits="UIPanelScrollFrameTemplate">
+                <Size>
+                    <AbsDimension x="298" y="200"/>
+                </Size>
+                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                          tile="false">
+                </Backdrop>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="1" y="-40"/>
+                        </Offset>
+                    </Anchor>
+                    <Anchor point="BOTTOMRIGHT">
+                        <Offset>
+                            <AbsDimension x="-1" y="20"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                </Scripts>
+                <ScrollChild>
+                    <Frame name="TWTThreatListScrollFrameChildren">
+                        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background2"
+                                  tile="false">
+                        </Backdrop>
+                        <Size>
+                            <AbsDimension x="298" y="200"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="1" y="0"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Frames>
+                        </Frames>
+                    </Frame>
+
+                </ScrollChild>
+            </ScrollFrame>
+
+
+        </Frames>
+    </Frame>
+
+    <Frame name="TWTThreatDisplayTarget" parent="TargetFrame">
+        <Size>
+            <AbsDimension x="40" y="20"/>
+        </Size>
+        <!--        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background"-->
+        <!--                  tile="false">-->
+        <!--        </Backdrop>-->
+        <Anchors>
+            <Anchor point="TOPLEFT">
+                <Offset>
+                    <AbsDimension x="1" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentBG"
+                         file="Interface\TargetingFrame\UI-StatusBar">
+                    <Size>
+                        <AbsDimension x="40" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="-5" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <FontString name="$parentPerc" inherits="GameFontHighlight" text="Name">
+                    <Size>
+                        <AbsDimension x="40" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+    </Frame>
+
+</Ui>
