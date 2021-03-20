@@ -4,7 +4,7 @@
 
     <Frame name="TWTThreat" virtual="true">
         <Size>
-            <AbsDimension x="298" y="20"/>
+            <AbsDimension x="298" y="19"/>
         </Size>
 <!--        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background"-->
 <!--                  tile="false">-->
@@ -19,10 +19,13 @@
         <Layers>
             <Layer level="BACKGROUND">
 <!--                <Texture name="$parentBG" file="Interface\Tooltips\UI-Tooltip-Background">-->
-                <Texture name="$parentBG" file="Interface\TargetingFrame\UI-StatusBar">
+<!--                <Texture name="$parentBG" file="Interface\TargetingFrame\UI-StatusBar">-->
+<!--                <Texture name="$parentBG" file="Interface\addons\TWThreat\images\textures\BantoBar">-->
+                <Texture name="$parentBG" file="Interface\addons\TWThreat\images\textures\Smooth">
                     <Size>
-                        <AbsDimension x="298" y="20"/>
+                        <AbsDimension x="298" y="18"/>
                     </Size>
+                    <TexCoords left="1" right="0" top="0.1" bottom="1"/>
                     <Anchors>
                         <Anchor point="LEFT">
                             <Offset>
@@ -41,7 +44,7 @@
                     <Anchors>
                         <Anchor point="LEFT">
                             <Offset>
-                                <AbsDimension x="5" y="0"/>
+                                <AbsDimension x="5" y="-1"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -54,7 +57,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="0" y="-1"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -67,7 +70,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="0" y="-1"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -79,7 +82,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="0" y="-1"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -108,6 +111,20 @@
             </Anchor>
         </Anchors>
         <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
+                    <Size>
+                        <AbsDimension x="298" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
             <Layer level="OVERLAY">
                 <FontString name="$parentTitle" inherits="GameFontHighlight" text="Name">
                     <Size>
@@ -282,9 +299,6 @@
         <Size>
             <AbsDimension x="40" y="20"/>
         </Size>
-        <!--        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background"-->
-        <!--                  tile="false">-->
-        <!--        </Backdrop>-->
         <Anchors>
             <Anchor point="TOPLEFT">
                 <Offset>
@@ -294,29 +308,58 @@
         </Anchors>
         <Layers>
             <Layer level="BACKGROUND">
-                <Texture name="$parentBG"
-                         file="Interface\TargetingFrame\UI-StatusBar">
+                <Texture name="$parentGlow" hidden="true"
+                         file="Interface\addons\TWThreat\images\elite-red">
                     <Size>
-                        <AbsDimension x="40" y="20"/>
+                        <AbsDimension x="256" y="128"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="TOP">
+                        <Anchor point="TOPLEFT">
                             <Offset>
-                                <AbsDimension x="-5" y="0"/>
+                                <AbsDimension x="-11" y="13"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="BORDER">
+                <Texture name="$parentNumericBG" hidden="true"
+                         file="Interface\TargetingFrame\UI-StatusBar">
+                    <Size>
+                        <AbsDimension x="36" y="13"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="44" y="-7"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </Texture>
             </Layer>
             <Layer level="ARTWORK">
-                <FontString name="$parentPerc" inherits="GameFontHighlight" text="Name">
+                <Texture name="$parentNumericBorder" hidden="true"
+                         file="Interface\addons\TWThreat\images\numericthreatborder">
                     <Size>
-                        <AbsDimension x="40" y="20"/>
+                        <AbsDimension x="64" y="32"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="TOP">
+                        <Anchor point="TOPLEFT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="38" y="-3"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+                <FontString name="$parentPerc"  hidden="true"
+                            inherits="GameFontHighlightSmall" text="87%">
+                    <Size>
+                        <AbsDimension x="64" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="31" y="3"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
