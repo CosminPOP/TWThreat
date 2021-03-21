@@ -5,7 +5,6 @@ TWT.addonVer = '0.0.0.2'
 TWT.addonName = '|cff69ccf0Momo|cffffffffmeter'
 TWT.dev = false
 
-
 TWT.channel = 'TWT'
 TWT.name = UnitName('player')
 local _, cl = UnitClass('player')
@@ -44,13 +43,11 @@ function twtdebug(a)
     twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[' .. a .. ']')
 end
 
-
 TWT:RegisterEvent("CHAT_MSG_ADDON")
 TWT:RegisterEvent("ADDON_LOADED")
 TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
 TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
-TWT:RegisterEvent("UNIT_HEALTH")
 
 TWT.threats = {};
 TWT.target = '';
@@ -67,11 +64,6 @@ TWT.guids = {}
 
 TWT:SetScript("OnEvent", function()
     if event then
-        if event == 'UNIT_HEALTH' then
-            if arg1 == 'target' then
-                --twtdebug(UnitHealth('target'))
-            end
-        end
         if event == 'ADDON_LOADED' and arg1 == 'TWThreat' then
             TWT.init()
         end
@@ -82,98 +74,13 @@ TWT:SetScript("OnEvent", function()
             TWT.handleClientMSG(arg2, arg4)
         end
         if event == "PLAYER_REGEN_DISABLED" then
-            --entered combat
-            TWT.inCombat = true
-            TWT.updateTargetGlow(0)
-            timeStart = GetTime()
-            totalPackets = 0
-            TWT.updateUI()
+            TWT.combatStart()
         end
         if event == "PLAYER_REGEN_ENABLED" then
-            --left combat
-            TWT.inCombat = false
-            TWT.updateTargetGlow(0)
-            TWT.threats = nil
-            TWT.threats = {}
-            --_G['TWThreatDisplayTargetGlow']:Hide()
-
-            twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
-                    totalPackets / (GetTime() - timeStart) .. ' packets/s')
-
-            timeStart = GetTime()
-            totalPackets = 0
-            TWT.updateUI()
+            TWT.combatEnd()
         end
         if event == "PLAYER_TARGET_CHANGED" then
-
-            if TargetFrame:IsVisible() ~= nil then
-                TWT.targetVisible = true
-                _G['TWThreatDisplayTarget']:Show()
-            else
-                TWT.targetVisible = false
-                _G['TWThreatDisplayTarget']:Hide()
-            end
-
-            if UIParent:GetScale() ~= _G['TWThreatDisplayTarget']:GetScale() then
-                _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
-            end
-
-            TWT.updateTargetGlow(0)
-
-            if not UnitName('target') then
-                _G['TWTMainThreatTarget']:SetText('Threat: <no target>');
-                return false
-            end
-
-            if not UnitIsPlayer('target') then
-
-                if TWT.target == '' then
-                    _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
-                    return true
-                end
-
-                --TWT.target = UnitName('target')
-
-                --for guid, data in next, TWT.threats do
-                --    if UnitName('target') == TWT.guids[guid] then
-                --        twtprint('found guid ' .. guid .. ' of ' .. TWT.guids[guid])
-                --        TWT.target = guid
-                --    end
-                --end
-
-                TWT.target = ''
-
-                for guid, data in next, TWT.threats do
-                    if TWT.codes[guid] == UnitName('target') .. UnitHealth('target') then
-                        TWT.target = guid
-                    end
-                end
-
-                --for guid, name in TWT.guids do
-                --    if name == UnitName('target') then
-                --        TWT.target = guid
-                --    end
-                --end
-
-                if TWT.target == '' then
-                    _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
-                    return true
-                end
-
-                twtdebug('found target=' .. TWT.target)
-
-                local targetText = TWT.guids[TWT.target]
-
-                _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
-                if TWT.threats[TWT.target] then
-                    if TWT.threats[TWT.target][TWT.name] then
-                        TWT.updateTargetGlow(TWT.threats[TWT.target][TWT.name].perc)
-                        _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)');
-                    end
-                end
-
-            end
-            TWT.updateUI()
+            TWT.targetChanged()
         end
 
     end
@@ -186,20 +93,22 @@ function TWT.init()
         TWT_CONFIG.glow = false
         TWT_CONFIG.perc = false
         TWT_CONFIG.showInCombat = false
+        TWT_CONFIG.hideOOC = false
     end
 
     _G['TWTMainSettingsTargetFrameGlow']:SetChecked(TWT_CONFIG.glow)
     _G['TWTMainSettingsPercNumbers']:SetChecked(TWT_CONFIG.perc)
     _G['TWTMainSettingsShowInCombat']:SetChecked(TWT_CONFIG.showInCombat)
+    _G['TWTMainSettingsHideOOC']:SetChecked(TWT_CONFIG.hideOOC)
 
     local color = TWT.classColors[TWT.class]
     _G['TWTMainSettingsButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5);
     _G['TWTMainCloseButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5);
 
-    _G['TWTMainTitle']:SetText(TWT.addonName ..' |cffabd473v' .. TWT.addonVer)
+    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
     _G['TWTMainThreatTarget']:SetText('Threat: <no target>');
 
-    twtprint(TWT.addonName ..' |cffabd473v' .. TWT.addonVer ..'|cffffffff loaded.')
+    twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
     _G['TWThreatListScrollFrameScrollBar']:Hide()
     _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
     TWTMainMainWindow_Resized()
@@ -297,6 +206,89 @@ function TWT.handleClientMSG(msg, sender)
                     [math.floor(GetTime())] = threat
                 }
             }
+        end
+
+    end
+    TWT.updateUI()
+end
+
+function TWT.combatStart()
+    TWT.inCombat = true
+    TWT.updateTargetFrameThreatIndicators(0)
+    timeStart = GetTime()
+    totalPackets = 0
+    TWT.updateUI()
+
+    if TWT_CONFIG.showInCombat then
+        _G['TWTMain']:Show()
+    end
+end
+
+function TWT.combatEnd()
+    --left combat
+    TWT.inCombat = false
+    TWT.updateTargetFrameThreatIndicators(0)
+    TWT.wipe(TWT.threats)
+
+    twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
+            totalPackets / (GetTime() - timeStart) .. ' packets/s')
+
+    timeStart = GetTime()
+    totalPackets = 0
+    TWT.updateUI()
+
+    if TWT_CONFIG.hideOOC then
+        _G['TWTMain']:Hide()
+    end
+
+end
+
+function TWT.targetChanged()
+
+    if TargetFrame:IsVisible() ~= nil then
+        TWT.targetVisible = true
+    else
+        TWT.targetVisible = false
+    end
+
+    if UIParent:GetScale() ~= _G['TWThreatDisplayTarget']:GetScale() then
+        _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
+    end
+
+    -- no target
+    if not UnitName('target') then
+        _G['TWTMainThreatTarget']:SetText('Threat: <no target>');
+        return false
+    end
+
+    if not UnitIsPlayer('target') then
+
+        --if TWT.target == '' then
+        --    _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
+        --    return true
+        --end
+
+        TWT.target = ''
+
+        for guid, data in next, TWT.threats do
+            if TWT.codes[guid] == UnitName('target') .. UnitHealth('target') then
+                TWT.target = guid
+            end
+        end
+
+        if TWT.target == '' then
+            _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
+            TWT.updateTargetFrameThreatIndicators(0)
+            return true
+        end
+
+        local targetText = TWT.guids[TWT.target]
+
+        _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
+        if TWT.threats[TWT.target] then
+            if TWT.threats[TWT.target][TWT.name] then
+                _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)');
+            end
         end
 
     end
@@ -410,24 +402,11 @@ function TWT.updateUI()
     --twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
     --totalPackets / (GetTime() - timeStart) .. ' packets/s')
 
-    --for guid, name in TWT.guids do
-    --    if name == UnitName('target') then
-    --        TWT.target = guid
-    --    end
-    --end
-
     for guid, data in next, TWT.threats do
         if TWT.codes[guid] == UnitName('target') .. UnitHealth('target') then
             TWT.target = guid
         end
     end
-
-    --for guid, data in next, TWT.threats do
-    --    if UnitName('target') == TWT.guids[guid] then
-    --        twtprint('found guid ' .. guid .. ' of ' .. TWT.guids[guid])
-    --        TWT.target = guid
-    --    end
-    --end
 
     _G['TWThreatListScrollFrameScrollBar']:Hide()
 
@@ -437,7 +416,6 @@ function TWT.updateUI()
 
     local index = 0
 
-    --temp probably
     for boss, data in next, TWT.threats do
         for player, threatData in next, data do
 
@@ -511,16 +489,13 @@ function TWT.updateUI()
 
             if data.perc >= 0 and data.perc <= 50 then
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(0, 1, 0, 1);
-                _G['TWThreatDisplayTargetNumericBG']:SetTexture(0, 1, 0, 0.5);
             elseif data.perc > 50 and data.perc <= 80 then
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.5, 0.1, 1);
-                _G['TWThreatDisplayTargetNumericBG']:SetTexture(1, 0.5, 0, 0.5);
             else
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.1, 0.1, 1);
-                _G['TWThreatDisplayTargetNumericBG']:SetTexture(1, 0.1, 0.1, 0.5);
             end
 
-            TWT.updateTargetGlow(data.perc)
+            TWT.updateTargetFrameThreatIndicators(data.perc)
 
             _G['TWTMainThreatTarget']:SetText('Threat: ' .. TWT.guids[TWT.target] .. ' (' .. data.perc .. '%)');
 
@@ -664,15 +639,66 @@ end
 
 TWT.targetVisible = false
 
-function TWT.updateTargetGlow(perc)
+function st(t)
+    TWT.updateTargetFrameThreatIndicators(t)
+end
 
-    if true then
+function start_test()
+    TWT.test:Show()
+end
+
+TWT.test = CreateFrame('Frame')
+TWT.test:Hide()
+
+TWT.test:SetScript("OnShow", function()
+    this.startTime = GetTime()
+    this.threat = 1
+    this.f = 1
+end)
+TWT.test:SetScript("OnUpdate", function()
+    local plus = 0.03 --seconds
+    local gt = GetTime() * 1000
+    local st = (this.startTime + plus) * 1000
+    if gt >= st then
+        this.startTime = GetTime()
+        this.threat = this.threat + this.f * 1
+        if this.threat >= 130 then
+            this.f = -1
+        end
+        if this.threat <= 0 then
+            this.f = 1
+        end
+        TWT.updateTargetFrameThreatIndicators(this.threat)
+    end
+end)
+
+
+function TWT.updateTargetFrameThreatIndicators(perc)
+
+    if not TWT_CONFIG.glow and not TWT_CONFIG.perc then
+        _G['TWThreatDisplayTarget']:Hide()
         return true
     end
 
-    local glow = ''
+    _G['TWThreatDisplayTarget']:Show()
 
-    _G['TWThreatDisplayTargetPerc']:SetText(perc .. '%')
+    if TWT_CONFIG.perc then
+        _G['TWThreatDisplayTargetNumericPerc']:SetText(perc .. '%')
+        _G['TWThreatDisplayTargetNumericPerc']:Show()
+        _G['TWThreatDisplayTargetNumericBG']:Show()
+        _G['TWThreatDisplayTargetNumericBorder']:Show()
+    else
+        _G['TWThreatDisplayTargetNumericPerc']:Hide()
+        _G['TWThreatDisplayTargetNumericBG']:Hide()
+        _G['TWThreatDisplayTargetNumericBorder']:Hide()
+    end
+
+    if TWT_CONFIG.glow then
+        _G['TWThreatDisplayTargetGlow']:Show()
+    else
+        _G['TWThreatDisplayTargetGlow']:Hide()
+        return true
+    end
 
     local unitClassification = UnitClassification('target')
     if unitClassification == 'worldboss' then
@@ -680,16 +706,17 @@ function TWT.updateTargetGlow(perc)
     end
 
     if perc >= 0 and perc < 50 then
-        _G['TWThreatDisplayTargetGlow']:Hide()
-    elseif perc >= 50 and perc <= 80 then
-        glow = unitClassification .. '-yellow'
-        _G['TWThreatDisplayTargetGlow']:Show()
-    else
-        glow = unitClassification .. '-red'
-        _G['TWThreatDisplayTargetGlow']:Show()
+        _G['TWThreatDisplayTargetGlow']:SetVertexColor(perc / 50, 1, 0, perc / 50)
+        _G['TWThreatDisplayTargetNumericBG']:SetVertexColor(perc / 50, 1, 0, 1)
+    elseif perc >= 50 then
+        _G['TWThreatDisplayTargetGlow']:SetVertexColor(1, 1 - (perc - 50) / 50, 0, 1)
+        _G['TWThreatDisplayTargetNumericBG']:SetVertexColor(1, 1 - (perc - 50) / 50, 0)
     end
 
-    _G['TWThreatDisplayTargetGlow']:SetTexture('Interface\\addons\\TWThreat\\images\\' .. glow)
+    _G['TWThreatDisplayTargetGlow']:SetTexture('Interface\\addons\\TWThreat\\images\\' .. unitClassification)
+
+    --dev
+    --_G['TWThreatDisplayTarget']:Show()
 
     if TWT.inCombat and TWT.targetVisible then
         _G['TWThreatDisplayTarget']:Show()
@@ -772,4 +799,22 @@ function TWT.tableSize(t)
         size = size + 1
     end
     return size
+end
+
+-- https://github.com/shagu/pfUI/blob/master/api/api.lua#L596
+function TWT.wipe(src)
+    -- notes: table.insert, table.remove will have undefined behavior
+    -- when used on tables emptied this way because Lua removes nil
+    -- entries from tables after an indeterminate time.
+    -- Instead of table.insert(t,v) use t[table.getn(t)+1]=v as table.getn collapses nil entries.
+    -- There are no issues with hash tables, t[k]=v where k is not a number behaves as expected.
+    local mt = getmetatable(src) or {}
+    if mt.__mode == nil or mt.__mode ~= "kv" then
+        mt.__mode = "kv"
+        src = setmetatable(src, mt)
+    end
+    for k in pairs(src) do
+        src[k] = nil
+    end
+    return src
 end
