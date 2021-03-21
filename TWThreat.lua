@@ -50,6 +50,7 @@ TWT:RegisterEvent("ADDON_LOADED")
 TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
 TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
+TWT:RegisterEvent("UNIT_HEALTH")
 
 TWT.threats = {};
 TWT.target = '';
@@ -66,15 +67,18 @@ TWT.guids = {}
 
 TWT:SetScript("OnEvent", function()
     if event then
+        if event == 'UNIT_HEALTH' then
+            if arg1 == 'target' then
+                --twtdebug(UnitHealth('target'))
+            end
+        end
         if event == 'ADDON_LOADED' and arg1 == 'TWThreat' then
             TWT.init()
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWT:', 1, true) then
-            --twtprint(arg1)
             TWT.handleServerMSG(arg1)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.channel then
-            --twtprint(arg2)
             TWT.handleClientMSG(arg2, arg4)
         end
         if event == "PLAYER_REGEN_DISABLED" then
@@ -139,16 +143,24 @@ TWT:SetScript("OnEvent", function()
 
                 TWT.target = ''
 
-                for guid, name in TWT.guids do
-                    if name == UnitName('target') then
+                for guid, data in next, TWT.threats do
+                    if TWT.codes[guid] == UnitName('target') .. UnitHealth('target') then
                         TWT.target = guid
                     end
                 end
+
+                --for guid, name in TWT.guids do
+                --    if name == UnitName('target') then
+                --        TWT.target = guid
+                --    end
+                --end
 
                 if TWT.target == '' then
                     _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
                     return true
                 end
+
+                twtdebug('found target=' .. TWT.target)
 
                 local targetText = TWT.guids[TWT.target]
 
@@ -199,40 +211,46 @@ function TWT.init()
 
 end
 
+TWT.codes = {}
+
 function TWT.handleServerMSG(msg)
-    -- "TWT=target=guid=threat=lastthreat"
+    --twtdebug(msg)
+    -- "TWT:target:guid:threat:lastthreat:"
 
     totalPackets = totalPackets + 1
 
     local msgEx = string.split(msg, ':')
 
-    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] then
+    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] then
 
         local creature = ''
         local guid = 0
         local threat = 0
         local lastThreat = 0
+        local hp = math.floor(msgEx[6])
 
         creature = msgEx[2]
         guid = msgEx[3]
         threat = tonumber(msgEx[4])
         lastThreat = tonumber(msgEx[5])
 
-        TWT.send(TWT.class .. ':' .. creature .. ':' .. guid .. ':' .. threat .. ':' .. lastThreat)
+        TWT.send(TWT.class .. ':' .. creature .. ':' .. guid .. ':' .. threat .. ':' .. lastThreat .. ':' .. hp)
 
         if TWT.target == '' then
             TWT.target = guid
         end
 
         TWT.guids[guid] = creature
+        TWT.codes[guid] = creature .. hp
 
     end
 end
 
 function TWT.handleClientMSG(msg, sender)
-    --"priest:target:guid:threat:lastthreat"
+    --twtprint(msg)
+    --"priest:target:guid:threat:lastthreat:hp"
     local ex = string.split(msg, ':')
-    if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
+    if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] and ex[6] then
 
         local creature = ex[2]
         local guid = ex[3]
@@ -241,6 +259,7 @@ function TWT.handleClientMSG(msg, sender)
         local lastThreat = tonumber(ex[5])
         local target = guid
         local class = ex[1]
+        local hp = ex[6]
 
         if not TWT.threats[target] then
             TWT.threats[target] = {}
@@ -391,8 +410,14 @@ function TWT.updateUI()
     --twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
     --totalPackets / (GetTime() - timeStart) .. ' packets/s')
 
-    for guid, name in TWT.guids do
-        if name == UnitName('target') then
+    --for guid, name in TWT.guids do
+    --    if name == UnitName('target') then
+    --        TWT.target = guid
+    --    end
+    --end
+
+    for guid, data in next, TWT.threats do
+        if TWT.codes[guid] == UnitName('target') .. UnitHealth('target') then
             TWT.target = guid
         end
     end
@@ -627,7 +652,7 @@ function TWT.calcTPS(name, data)
         end
 
         if tps_real >= 0 then
-            return tps_real / math.floor(TWT.tableSize(data.history))
+            return math.floor(tps_real / TWT.tableSize(data.history))
         else
             return 0
         end
