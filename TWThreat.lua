@@ -1,17 +1,10 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.0.0.1'
-
+TWT.addonVer = '0.0.0.2'
+TWT.addonName = '|cff69ccf0Momo|cffffffffmeter'
 TWT.dev = false
 
-function twprint(a)
-    if a == nil then
-        DEFAULT_CHAT_FRAME:AddMessage('[TWT]|cff0070de:' .. math.floor(GetTime()) .. '|cffffffff attempt to print a nil value.')
-        return false
-    end
-    DEFAULT_CHAT_FRAME:AddMessage("[TWT:" .. math.floor(GetTime()) .. "] |cffffffff" .. a)
-end
 
 TWT.channel = 'TWT'
 TWT.name = UnitName('player')
@@ -30,6 +23,27 @@ TWT.classColors = {
     ["paladin"] = { r = 0.96, g = 0.55, b = 0.73, c = "|cfff58cba" },
     ["agro"] = { r = 0.96, g = 0.1, b = 0.1, c = "|cffff1111" }
 }
+
+function twtprint(a)
+    if a == nil then
+        DEFAULT_CHAT_FRAME:AddMessage('[TWT]|cff0070de:' .. math.floor(GetTime()) .. '|cffffffff attempt to print a nil value.')
+        return false
+    end
+    DEFAULT_CHAT_FRAME:AddMessage(TWT.classColors[TWT.class].c .. "[TWT] |cffffffff" .. a)
+end
+
+function twtdebug(a)
+    if type(a) == 'boolean' then
+        if a then
+            twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[true]')
+        else
+            twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[false]')
+        end
+        return true
+    end
+    twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[' .. a .. ']')
+end
+
 
 TWT:RegisterEvent("CHAT_MSG_ADDON")
 TWT:RegisterEvent("ADDON_LOADED")
@@ -56,112 +70,12 @@ TWT:SetScript("OnEvent", function()
             TWT.init()
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWT:', 1, true) then
-            -- todo in raid check
-            twprint(arg1)
-            totalPackets = totalPackets + 1
-            -- server case
-            --arg1: msg  "TWT=target=guid=threat=lastthreat"
-            --arg3: channel RAID
-
-            local msgEx = string.split(arg1, ':')
-
-            if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] then
-
-                local creature = ''
-                local guid = 0
-                local threat = 0
-                local lastThreat = 0
-
-                creature = msgEx[2]
-                guid = msgEx[3]
-                threat = tonumber(msgEx[4])
-                lastThreat = tonumber(msgEx[5])
-
-                TWT.send(TWT.class .. ':' .. creature .. ':' .. guid .. ':' .. threat .. ':' .. lastThreat)
-
-                if TWT.target == '' then
-                    TWT.target = guid
-                end
-
-                TWT.guids[guid] = creature
-
-                --[[
-                guid [ 4 ] name = moltengiant  threat = 100
-                guid [ 5 ] name = moltengiant  threat = 500
-                ]]--
-                --twprint('saved guid ' .. guid .. ' to ' .. creature .. ' lt = ' .. lastThreat)
-                --TWT.updateUI()
-            end
+            --twtprint(arg1)
+            TWT.handleServerMSG(arg1)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.channel then
-            -- todo in raid check
-            --twprint(arg2)
-            -- normal case, from friends
-            -- arg2 text   "priest:target:guid:threat:lastthreat"
-            local ex = string.split(arg2, ':')
-            if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
-
-                local creature = ex[2]
-                local guid = ex[3]
-                local player = arg4
-                local threat = tonumber(ex[4])
-                local lastThreat = tonumber(ex[5])
-                local target = guid
-                local class = ex[1]
-
-                if not TWT.threats[target] then
-                    TWT.threats[target] = {}
-                end
-                if not TWT.threats[target][player] then
-                    TWT.threats[target][player] = {}
-                end
-                local tps = 0
-
-                if not TWT.threats[target][TWT.AGRO] then
-                    TWT.threats[target][TWT.AGRO] = {
-                        class = 'agro',
-                        threat = 0,
-                        perc = 100,
-                        tps = 0,
-                        history = {},
-                        lastThreat = 0
-                    }
-                end
-
-                if TWT.threats[target][player]['threat'] then
-
-                    if threat < TWT.threats[target][player].threat then
-                        TWT.threats[target][player].dir = 'down'
-                    elseif threat > TWT.threats[target][player].threat then
-                        TWT.threats[target][player].dir = 'up'
-                    else
-                        TWT.threats[target][player].dir = '-'
-                    end
-
-                    twprint('-  -------- dir = ' .. TWT.threats[target][player].dir)
-
-                    TWT.threats[target][player].threat = threat
-                    TWT.threats[target][player].lastThreat = lastThreat
-
-                    TWT.threats[target][player].history[math.floor(GetTime())] = threat
-
-                else
-                    TWT.threats[target][player] = {
-                        class = class,
-                        threat = threat,
-                        dir = '-',
-                        perc = 0,
-                        tps = tps,
-                        lastThreat = lastThreat,
-                        history = {
-                            [math.floor(GetTime())] = threat
-                        }
-                    }
-                end
-
-            end
-            TWT.updateUI()
-
+            --twtprint(arg2)
+            TWT.handleClientMSG(arg2, arg4)
         end
         if event == "PLAYER_REGEN_DISABLED" then
             --entered combat
@@ -179,7 +93,7 @@ TWT:SetScript("OnEvent", function()
             TWT.threats = {}
             --_G['TWThreatDisplayTargetGlow']:Hide()
 
-            twprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
+            twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
                     totalPackets / (GetTime() - timeStart) .. ' packets/s')
 
             timeStart = GetTime()
@@ -218,7 +132,7 @@ TWT:SetScript("OnEvent", function()
 
                 --for guid, data in next, TWT.threats do
                 --    if UnitName('target') == TWT.guids[guid] then
-                --        twprint('found guid ' .. guid .. ' of ' .. TWT.guids[guid])
+                --        twtprint('found guid ' .. guid .. ' of ' .. TWT.guids[guid])
                 --        TWT.target = guid
                 --    end
                 --end
@@ -256,24 +170,118 @@ end)
 function TWT.init()
 
     if not TWT_CONFIG then
+        TWT_CONFIG = {}
         TWT_CONFIG.glow = false
         TWT_CONFIG.perc = false
+        TWT_CONFIG.showInCombat = false
     end
 
-    _G['TWTMainTitle']:SetText('Momometer v' .. TWT.addonVer)
+    _G['TWTMainSettingsTargetFrameGlow']:SetChecked(TWT_CONFIG.glow)
+    _G['TWTMainSettingsPercNumbers']:SetChecked(TWT_CONFIG.perc)
+    _G['TWTMainSettingsShowInCombat']:SetChecked(TWT_CONFIG.showInCombat)
+
+    local color = TWT.classColors[TWT.class]
+    _G['TWTMainSettingsButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5);
+    _G['TWTMainCloseButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5);
+
+    _G['TWTMainTitle']:SetText(TWT.addonName ..' |cffabd473v' .. TWT.addonVer)
     _G['TWTMainThreatTarget']:SetText('Threat: <no target>');
 
-    twprint('addonloaded')
+    twtprint(TWT.addonName ..' |cffabd473v' .. TWT.addonVer ..'|cffffffff loaded.')
     _G['TWThreatListScrollFrameScrollBar']:Hide()
     _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
     TWTMainMainWindow_Resized()
     TWT.ui:Show()
 
-    local color = TWT.classColors[TWT.class]
     _G['TWTMainTitleBG']:SetVertexColor(color.r, color.g, color.b);
 
     _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
 
+end
+
+function TWT.handleServerMSG(msg)
+    -- "TWT=target=guid=threat=lastthreat"
+
+    totalPackets = totalPackets + 1
+
+    local msgEx = string.split(msg, ':')
+
+    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] then
+
+        local creature = ''
+        local guid = 0
+        local threat = 0
+        local lastThreat = 0
+
+        creature = msgEx[2]
+        guid = msgEx[3]
+        threat = tonumber(msgEx[4])
+        lastThreat = tonumber(msgEx[5])
+
+        TWT.send(TWT.class .. ':' .. creature .. ':' .. guid .. ':' .. threat .. ':' .. lastThreat)
+
+        if TWT.target == '' then
+            TWT.target = guid
+        end
+
+        TWT.guids[guid] = creature
+
+    end
+end
+
+function TWT.handleClientMSG(msg, sender)
+    --"priest:target:guid:threat:lastthreat"
+    local ex = string.split(msg, ':')
+    if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
+
+        local creature = ex[2]
+        local guid = ex[3]
+        local player = sender
+        local threat = tonumber(ex[4])
+        local lastThreat = tonumber(ex[5])
+        local target = guid
+        local class = ex[1]
+
+        if not TWT.threats[target] then
+            TWT.threats[target] = {}
+        end
+        if not TWT.threats[target][player] then
+            TWT.threats[target][player] = {}
+        end
+        local tps = 0
+
+        if not TWT.threats[target][TWT.AGRO] then
+            TWT.threats[target][TWT.AGRO] = {
+                class = 'agro',
+                threat = 0,
+                perc = 100,
+                tps = 0,
+                history = {},
+                lastThreat = 0
+            }
+        end
+
+        if TWT.threats[target][player]['threat'] then
+
+            TWT.threats[target][player].threat = threat
+            TWT.threats[target][player].lastThreat = lastThreat
+            TWT.threats[target][player].history[math.floor(GetTime())] = threat
+
+        else
+            TWT.threats[target][player] = {
+                class = class,
+                threat = threat,
+                perc = 0,
+                tps = tps,
+                lastThreat = lastThreat,
+                history = {
+                    [math.floor(GetTime())] = threat
+                }
+            }
+        end
+
+    end
+    TWT.updateUI()
 end
 
 function TWT.send(msg)
@@ -380,7 +388,7 @@ TWT.threatsFrames = {}
 
 function TWT.updateUI()
 
-    --twprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
+    --twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
     --totalPackets / (GetTime() - timeStart) .. ' packets/s')
 
     for guid, name in TWT.guids do
@@ -391,7 +399,7 @@ function TWT.updateUI()
 
     --for guid, data in next, TWT.threats do
     --    if UnitName('target') == TWT.guids[guid] then
-    --        twprint('found guid ' .. guid .. ' of ' .. TWT.guids[guid])
+    --        twtprint('found guid ' .. guid .. ' of ' .. TWT.guids[guid])
     --        TWT.target = guid
     --    end
     --end
@@ -549,19 +557,16 @@ function TWT.updateUI()
         else
             _G['TWThreat' .. name .. 'Threat']:SetText(threatText)
 
-            if data.dir == 'down' then
-                --_G['TWThreat' .. name .. 'Arrow']:SetVertexColor(1, 0, 0, 1);
+            if data.threat < data.lastThreat then
                 _G['TWThreat' .. name .. 'ArrowUp']:Hide()
                 _G['TWThreat' .. name .. 'ArrowDown']:Show()
-            elseif data.dir == 'up' then
-                --_G['TWThreat' .. name .. 'Arrow']:SetVertexColor(0, 1, 0, 1);
+            elseif data.threat > data.lastThreat then
                 _G['TWThreat' .. name .. 'ArrowDown']:Hide()
                 _G['TWThreat' .. name .. 'ArrowUp']:Show()
             else
                 _G['TWThreat' .. name .. 'ArrowDown']:Hide()
                 _G['TWThreat' .. name .. 'ArrowUp']:Hide()
             end
-
         end
 
         _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
@@ -629,7 +634,7 @@ function TWT.calcTPS(name, data)
 
     end
 
-    return 0
+    return ''
 end
 
 TWT.targetVisible = false
@@ -648,8 +653,6 @@ function TWT.updateTargetGlow(perc)
     if unitClassification == 'worldboss' then
         unitClassification = 'elite'
     end
-
-    twprint(' update call ' .. perc)
 
     if perc >= 0 and perc < 50 then
         _G['TWThreatDisplayTargetGlow']:Hide()
@@ -685,6 +688,15 @@ function TWTMainMainWindow_Resized()
     _G['TWThreatListScrollFrameScrollBar']:Hide()
     _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
     _G['TWTMain']:SetAlpha(1)
+end
+
+function TWTChangeSetting_OnClick(name, checked, code)
+    TWT_CONFIG[code] = checked
+end
+
+function TWTCloseButton_OnClick()
+    _G['TWTMain']:Hide()
+    twtprint('Window closed. Type |cff69ccf0/twt show|cffffffff to restore it.')
 end
 
 function string:split(delimiter)
