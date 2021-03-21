@@ -2,7 +2,7 @@
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
     <Script file="TWThreat.lua"/>
 
-    <Frame name="TWTThreat" virtual="true">
+    <Frame name="TWThreat" virtual="true">
         <Size>
             <AbsDimension x="298" y="19"/>
         </Size>
@@ -57,7 +57,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="-1"/>
+                                <AbsDimension x="0" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -70,7 +70,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="-1"/>
+                                <AbsDimension x="0" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -82,11 +82,40 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="-1"/>
+                                <AbsDimension x="0" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
+
+                <Texture name="$parentArrowUp" file="interface\buttons\ui-sortarrow" hidden="true">
+                    <Size>
+                        <AbsDimension x="16" y="8"/>
+                    </Size>
+                    <TexCoords left="1" right="0" top="1" bottom="0"/>
+                    <Anchors>
+                        <Anchor point="RIGHT" relativeTo="$parentThreat">
+                            <Offset>
+                                <AbsDimension x="11" y="2"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
+                <Texture name="$parentArrowDown" file="interface\buttons\ui-sortarrow" hidden="true">
+                    <Size>
+                        <AbsDimension x="16" y="8"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="RIGHT" relativeTo="$parentThreat">
+                            <Offset>
+                                <AbsDimension x="18" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
+
             </Layer>
         </Layers>
     </Frame>
@@ -189,7 +218,7 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentThreatTarget" inherits="GameFontHighlight" text="Threat: no target">
+                <FontString name="$parentThreatTarget" inherits="GameFontHighlight" text="Threat:">
                     <Size>
                         <AbsDimension x="300" y="20"/>
                     </Size>
@@ -248,7 +277,7 @@
                 </Scripts>
             </Button>
 
-            <ScrollFrame name="TWTThreatListScrollFrame" hidden="false" inherits="UIPanelScrollFrameTemplate">
+            <ScrollFrame name="TWThreatListScrollFrame" hidden="false" inherits="UIPanelScrollFrameTemplate">
                 <Size>
                     <AbsDimension x="298" y="200"/>
                 </Size>
@@ -270,7 +299,7 @@
                 <Scripts>
                 </Scripts>
                 <ScrollChild>
-                    <Frame name="TWTThreatListScrollFrameChildren">
+                    <Frame name="TWThreatListScrollFrameChildren">
                         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background2"
                                   tile="false">
                         </Backdrop>
@@ -295,12 +324,12 @@
         </Frames>
     </Frame>
 
-    <Frame name="TWTThreatDisplayTarget" parent="TargetFrame">
+    <Frame name="TWThreatDisplayTarget" hidden="true">
         <Size>
-            <AbsDimension x="40" y="20"/>
+            <AbsDimension x="232" y="100"/>
         </Size>
         <Anchors>
-            <Anchor point="TOPLEFT">
+            <Anchor point="TOPLEFT" relativeTo="TargetFrame">
                 <Offset>
                     <AbsDimension x="1" y="0"/>
                 </Offset>
@@ -308,8 +337,7 @@
         </Anchors>
         <Layers>
             <Layer level="BACKGROUND">
-                <Texture name="$parentGlow" hidden="true"
-                         file="Interface\addons\TWThreat\images\elite-red">
+                <Texture name="$parentGlow">
                     <Size>
                         <AbsDimension x="256" y="128"/>
                     </Size>
@@ -323,7 +351,7 @@
                 </Texture>
             </Layer>
             <Layer level="BORDER">
-                <Texture name="$parentNumericBG" hidden="true"
+                <Texture name="$parentNumericBG"
                          file="Interface\TargetingFrame\UI-StatusBar">
                     <Size>
                         <AbsDimension x="36" y="13"/>
@@ -338,7 +366,7 @@
                 </Texture>
             </Layer>
             <Layer level="ARTWORK">
-                <Texture name="$parentNumericBorder" hidden="true"
+                <Texture name="$parentNumericBorder"
                          file="Interface\addons\TWThreat\images\numericthreatborder">
                     <Size>
                         <AbsDimension x="64" y="32"/>
@@ -351,7 +379,7 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
-                <FontString name="$parentPerc"  hidden="true"
+                <FontString name="$parentPerc"
                             inherits="GameFontHighlightSmall" text="87%">
                     <Size>
                         <AbsDimension x="64" y="32"/>
