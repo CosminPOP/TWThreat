@@ -2,4 +2,5 @@
 ## Title: TWThreat
 ## Author: Xerron/Er
 ## Notes: TWThreat
+## SavedVariablesPerCharacter: TWT_CONFIG
 TWThreat.xml
