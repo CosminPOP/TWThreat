@@ -6,9 +6,6 @@
         <Size>
             <AbsDimension x="298" y="19"/>
         </Size>
-<!--        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background"-->
-<!--                  tile="false">-->
-<!--        </Backdrop>-->
         <Anchors>
             <Anchor point="TOPLEFT">
                 <Offset>
@@ -18,9 +15,6 @@
         </Anchors>
         <Layers>
             <Layer level="BACKGROUND">
-<!--                <Texture name="$parentBG" file="Interface\Tooltips\UI-Tooltip-Background">-->
-<!--                <Texture name="$parentBG" file="Interface\TargetingFrame\UI-StatusBar">-->
-<!--                <Texture name="$parentBG" file="Interface\addons\TWThreat\images\textures\BantoBar">-->
                 <Texture name="$parentBG" file="Interface\addons\TWThreat\images\textures\Smooth">
                     <Size>
                         <AbsDimension x="298" y="18"/>
@@ -50,7 +44,7 @@
                     </Anchors>
                 </FontString>
                 <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
-                        justifyH="RIGHT">
+                            justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="60" y="20"/>
                     </Size>
@@ -249,6 +243,50 @@
         </Scripts>
         <Frames>
 
+            <Button name="$parentSettingsButton" inherits="UIPanelButtonTemplate" text="S">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="3" y="-2"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        getglobal('TWTMainSettings'):Show()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="$parentCloseButton" inherits="UIPanelButtonTemplate" text="X">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPRIGHT">
+                        <Offset>
+                            <AbsDimension x="-3" y="-2"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        TWTCloseButton_OnClick()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
             <Button name="TWTResizeButton">
                 <NormalTexture file="Interface\AddOns\TWThreat\images\ResizeGrip"/>
                 <HighlightTexture file="Interface\AddOns\TWThreat\images\ResizeGrip" alphaMode="ADD"/>
@@ -320,6 +358,197 @@
                 </ScrollChild>
             </ScrollFrame>
 
+            <Frame name="$parentSettings" hidden="true" toplevel="true"
+                   movable="true" enableMouse="true">
+                <Size>
+                    <AbsDimension x="300" y="200"/>
+                </Size>
+                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                          tile="false">
+                </Backdrop>
+                <Anchors>
+                    <Anchor point="CENTER" relativeTo="UIParent">
+                        <Offset>
+                            <AbsDimension x="0" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="ARTWORK">
+                        <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
+                            <Size>
+                                <AbsDimension x="298" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT">
+                                    <Offset>
+                                        <AbsDimension x="1" y="0"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                    <Layer level="OVERLAY">
+                        <FontString name="$parentTitle" inherits="GameFontHighlight" text="Settings">
+                            <Size>
+                                <AbsDimension x="300" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOP">
+                                    <Offset>
+                                        <AbsDimension x="0" y="0"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+
+                    <Button name="$parentCloseButton" inherits="UIPanelCloseButton">
+                        <Anchors>
+                            <Anchor point="TOPRIGHT">
+                                <Offset>
+                                    <AbsDimension x="0" y="0"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                    </Button>
+
+                    <CheckButton name="$parentTargetFrameGlow" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-30"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Target Frame Glow (default UI)">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'glow')
+                            </OnClick>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentPercNumbers" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-50"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Target Frame Threat Percentage (default UI)">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'perc')
+                            </OnClick>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentShowInCombat" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-70"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Always Show in Combat">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'showInCombat')
+                            </OnClick>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                </Frames>
+                <Scripts>
+                    <OnLoad>
+                        this:RegisterForDrag("LeftButton");
+                        this:SetMovable(1);
+                        this:SetUserPlaced(true);
+                    </OnLoad>
+                    <OnDragStart>
+                        this:StartMoving();
+                        this.isMoving = true;
+                    </OnDragStart>
+                    <OnDragStop>
+                        this:StopMovingOrSizing();
+                        this.isMoving = false;
+                    </OnDragStop>
+                </Scripts>
+            </Frame>
 
         </Frames>
     </Frame>
