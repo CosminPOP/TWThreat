@@ -532,6 +532,45 @@
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
 
+                    <CheckButton name="$parentHideOOC" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-90"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Hide Out Of Combat">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'hideOOC')
+                            </OnClick>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
                 </Frames>
                 <Scripts>
                     <OnLoad>
@@ -553,7 +592,7 @@
         </Frames>
     </Frame>
 
-    <Frame name="TWThreatDisplayTarget" hidden="true">
+    <Frame name="TWThreatDisplayTarget" frameStrata="LOW">
         <Size>
             <AbsDimension x="232" y="100"/>
         </Size>
@@ -566,7 +605,7 @@
         </Anchors>
         <Layers>
             <Layer level="BACKGROUND">
-                <Texture name="$parentGlow">
+                <Texture name="$parentGlow" hidden="true">
                     <Size>
                         <AbsDimension x="256" y="128"/>
                     </Size>
@@ -580,7 +619,7 @@
                 </Texture>
             </Layer>
             <Layer level="BORDER">
-                <Texture name="$parentNumericBG"
+                <Texture name="$parentNumericBG" hidden="true"
                          file="Interface\TargetingFrame\UI-StatusBar">
                     <Size>
                         <AbsDimension x="36" y="13"/>
@@ -595,7 +634,7 @@
                 </Texture>
             </Layer>
             <Layer level="ARTWORK">
-                <Texture name="$parentNumericBorder"
+                <Texture name="$parentNumericBorder" hidden="true"
                          file="Interface\addons\TWThreat\images\numericthreatborder">
                     <Size>
                         <AbsDimension x="64" y="32"/>
@@ -608,7 +647,7 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
-                <FontString name="$parentPerc"
+                <FontString name="$parentNumericPerc" hidden="true"
                             inherits="GameFontHighlightSmall" text="87%">
                     <Size>
                         <AbsDimension x="64" y="32"/>
