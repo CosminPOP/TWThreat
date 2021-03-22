@@ -33,12 +33,12 @@
                 <FontString name="$parentName" inherits="GameFontHighlight" text="Smultron"
                             justifyH="LEFT">
                     <Size>
-                        <AbsDimension x="100" y="20"/>
+                        <AbsDimension x="111" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="LEFT">
                             <Offset>
-                                <AbsDimension x="5" y="-1"/>
+                                <AbsDimension x="20" y="-1"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -46,12 +46,12 @@
                 <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
                             justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="60" y="20"/>
+                        <AbsDimension x="40" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="-8" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -74,9 +74,9 @@
                         <AbsDimension x="60" y="20"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
+                        <Anchor point="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="-7" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -109,6 +109,32 @@
                     </Anchors>
                 </Texture>
 
+                <Texture name="$parentTank" file="Interface\addons\TWThreat\images\tank" hidden="true">
+                    <Size>
+                        <AbsDimension x="24" y="24"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="3" y="-3"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
+                <Texture name="$parentAGRO" file="Interface\CharacterFrame\UI-StateIcon" hidden="true">
+                    <Size>
+                        <AbsDimension x="24" y="24"/>
+                    </Size>
+                    <TexCoords left="0.5" right="1.0" top="0" bottom="0.5"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
 
             </Layer>
         </Layers>
@@ -405,14 +431,26 @@
                 </Layers>
                 <Frames>
 
-                    <Button name="$parentCloseButton" inherits="UIPanelCloseButton">
+                    <Button name="$parentCloseButton" inherits="UIPanelButtonTemplate" text="X">
+                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                        </NormalTexture>
+                        <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                        <HighlightTexture/>
+                        <Size>
+                            <AbsDimension x="16" y="16"/>
+                        </Size>
                         <Anchors>
                             <Anchor point="TOPRIGHT">
                                 <Offset>
-                                    <AbsDimension x="0" y="0"/>
+                                    <AbsDimension x="-3" y="-2"/>
                                 </Offset>
                             </Anchor>
                         </Anchors>
+                        <Scripts>
+                            <OnClick>
+                                TWTSettingsCloseButton_OnClick()
+                            </OnClick>
+                        </Scripts>
                     </Button>
 
                     <CheckButton name="$parentTargetFrameGlow" hidden="false">
