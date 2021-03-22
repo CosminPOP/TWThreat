@@ -43,6 +43,17 @@ function twtdebug(a)
     twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[' .. a .. ']')
 end
 
+SLASH_TWT1 = "/twt"
+SlashCmdList["TWT"] = function(cmd)
+    if cmd then
+        if string.sub(cmd, 1, 4) == 'show' then
+            _G['TWTMain']:Show()
+        end
+
+    end
+
+end
+
 TWT:RegisterEvent("CHAT_MSG_ADDON")
 TWT:RegisterEvent("ADDON_LOADED")
 TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -51,6 +62,7 @@ TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
 
 TWT.threats = {}
 TWT.target = ''
+TWT.lastTarget = ''
 
 TWT.ui = CreateFrame("Frame")
 TWT.ui:Hide()
@@ -124,26 +136,23 @@ TWT.codes = {}
 
 function TWT.handleServerMSG(msg)
     --twtdebug(msg)
-    -- "TWT:target:guid:threat:lastthreat:"
 
     totalPackets = totalPackets + 1
 
     local msgEx = string.split(msg, ':')
 
-    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] then
+    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] then
 
         local creature = ''
         local guid = 0
         local threat = 0
-        local lastThreat = 0
-        local hp = math.floor(msgEx[6])
+        local hp = math.floor(msgEx[5])
 
         creature = msgEx[2]
         guid = msgEx[3]
         threat = tonumber(msgEx[4])
-        lastThreat = tonumber(msgEx[5])
 
-        TWT.send(TWT.class .. ':' .. creature .. ':' .. guid .. ':' .. threat .. ':' .. lastThreat .. ':' .. hp)
+        TWT.send(TWT.class .. ':' .. creature .. ':' .. guid .. ':' .. threat .. ':' .. hp)
 
         if TWT.target == '' then
             TWT.target = guid
@@ -156,19 +165,18 @@ function TWT.handleServerMSG(msg)
 end
 
 function TWT.handleClientMSG(msg, sender)
-    --twtprint(msg)
+    --twtprint(sender .. ': ' .. msg)
     --"priest:target:guid:threat:lastthreat:hp"
     local ex = string.split(msg, ':')
-    if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] and ex[6] then
+    if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
 
         local creature = ex[2]
         local guid = ex[3]
         local player = sender
         local threat = tonumber(ex[4])
-        local lastThreat = tonumber(ex[5])
         local target = guid
         local class = ex[1]
-        local hp = ex[6]
+        local hp = ex[5]
 
         if not TWT.threats[target] then
             TWT.threats[target] = {}
@@ -192,7 +200,7 @@ function TWT.handleClientMSG(msg, sender)
         if TWT.threats[target][player]['threat'] then
 
             TWT.threats[target][player].threat = threat
-            TWT.threats[target][player].lastThreat = lastThreat
+            TWT.threats[target][player].lastThreat = threat
             TWT.threats[target][player].history[math.floor(GetTime())] = threat
 
         else
@@ -201,7 +209,7 @@ function TWT.handleClientMSG(msg, sender)
                 threat = threat,
                 perc = 0,
                 tps = tps,
-                lastThreat = lastThreat,
+                lastThreat = threat,
                 history = {
                     [math.floor(GetTime())] = threat
                 }
@@ -264,6 +272,7 @@ function TWT.targetChanged()
 
     if UnitIsPlayer('target') then
         TWT.updateTargetFrameThreatIndicators(-1, UnitName('target'))
+        --TWT.lastTarget = UnitName('target')
     else
 
         --if TWT.target == '' then
@@ -286,6 +295,7 @@ function TWT.targetChanged()
         end
 
         local targetText = TWT.guids[TWT.target]
+        TWT.lastTarget = UnitName('targettarget')
 
         _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
         if TWT.threats[TWT.target] then
@@ -441,127 +451,118 @@ function TWT.updateUI()
         return false
     end
 
-    local maxThreat = 0
-    local minThreat = 10000000
+    local tankThreat = 0
     local myThreat = 0
-    for name, data in next, TWT.threats[TWT.target] do
-        if data.threat > maxThreat and name ~= TWT.AGRO then
-            maxThreat = data.threat
+
+    local tankName = ''
+
+    if UnitIsPlayer('target') or not UnitName('target') then
+        tankName = TWT.lastTarget
+    else
+        tankName = UnitName('targettarget')
+        TWT.lastTarget = tankName
+    end
+
+    if TWT.threats[TWT.target] then
+        if TWT.threats[TWT.target][tankName] then
+            if TWT.threats[TWT.target][tankName].threat then
+                tankThreat = TWT.threats[TWT.target][tankName].threat
+            end
         end
-        if data.threat < minThreat and data.threat ~= 0 and name ~= TWT.AGRO then
-            minThreat = data.threat
-        end
-        if name == TWT.name then
-            myThreat = data.threat
+    end
+
+    if TWT.threats[TWT.target] then
+        if TWT.threats[TWT.target][TWT.name] then
+            if TWT.threats[TWT.target][TWT.name].threat then
+                myThreat = TWT.threats[TWT.target][TWT.name].threat
+            end
         end
     end
 
     if CheckInteractDistance('target', 1) then
         -- melee
-        for name, data in next, TWT.threats[TWT.target] do
-            if name == TWT.AGRO then
-                data.threat = maxThreat * 1.1 -- - maxThreat
-            end
-        end
+        TWT.threats[TWT.target][TWT.AGRO].threat = tankThreat * 1.1
+        TWT.threats[TWT.target][TWT.AGRO].perc = 110
     else
         -- ranged
-        for name, data in next, TWT.threats[TWT.target] do
-            if name == TWT.AGRO then
-                data.threat = maxThreat * 1.3 -- - maxThreat
-            end
-        end
+        TWT.threats[TWT.target][TWT.AGRO].threat = tankThreat * 1.3
+        TWT.threats[TWT.target][TWT.AGRO].perc = 130
     end
+
+    local maxThreat = TWT.threats[TWT.target][TWT.AGRO].threat
 
     for name, data in TWT.ohShitHereWeSortAgain(TWT.threats[TWT.target], true) do
 
         index = index + 1
-
         if not TWT.threatsFrames[name] then
             TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWThreatListScrollFrameChildren"], 'TWThreat')
         end
-
         TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWThreatListScrollFrameChildren"], "TOPLEFT", 0, 19 - index * 20)
 
+        if name == tankName then
+            _G['TWThreat' .. name .. 'Tank']:Show()
+            _G['TWThreat' .. name .. 'AGRO']:Hide()
+        elseif name == TWT.AGRO then
+            _G['TWThreat' .. name .. 'AGRO']:Show()
+            _G['TWThreat' .. name .. 'Tank']:Hide()
+        end
+
+        -- tps
         data.tps = TWT.calcTPS(name, data)
-        data.perc = math.floor((data.threat * 100) / maxThreat)
+        _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
+
+
+        -- perc
+        if CheckInteractDistance('target', 1) then
+            data.perc = math.floor(data.threat * 110 / maxThreat)
+        else
+            data.perc = math.floor(data.threat * 130 / maxThreat)
+        end
+
+        if name == tankName then
+            data.perc = 100
+        end
+
+        _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
+
+
+        -- name
+        if name == TWT.name then
+            _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
+        else
+            _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
+        end
+
+
+        -- bar
 
         local color = TWT.classColors[data.class]
+
         if name == TWT.name then
-            --_G['TWThreat' .. name .. 'BG']:SetTexture(color.r, color.g, color.b, 0.7)
-            --_G['TWThreat' .. name .. 'BG']:SetTexture(TWT.classColors['agro'].r, TWT.classColors['agro'].g, TWT.classColors['agro'].b,
-            --        data.threat / maxThreat - 0.2)
 
+            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
 
-            if data.perc >= 0 and data.perc <= 50 then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(0, 1, 0, 1)
-            elseif data.perc > 50 and data.perc <= 80 then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.5, 0.1, 1)
-            else
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.1, 0.1, 1)
+            if data.perc >= 0 and data.perc < 50 then
+                --_G['TWThreat' .. name .. 'BG']:SetVertexColor(data.perc / 50, 1, 0, 1)
+            elseif data.perc >= 50 then
+                --_G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (data.perc - 50) / 50, 0, 1)
             end
 
             TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
 
             _G['TWTMainThreatTarget']:SetText('Threat: ' .. TWT.guids[TWT.target] .. ' (' .. data.perc .. '%)')
 
+        elseif name == TWT.AGRO then
+            _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(maxThreat - myThreat))
+            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
+
         else
             _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
         end
 
-        if name == TWT.name then
-            _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
-        else
-            _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
-        end
+        _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
-        --data.tps = TWT.calcTPS(name, data)
-
-        _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
-
-        local threatText = data.threat
-        if data.threat > 1000 then
-            threatText = math.floor((data.threat / 1000) * 100) / 100 .. 'K'
-        end
-        if data.threat > 1000000 then
-            threatText = math.floor((data.threat / 1000000) * 100) / 100 .. 'M'
-        end
-
-        if name == TWT.AGRO then
-
-            local agroInText = ''
-            if CheckInteractDistance('target', 1) then
-                -- melee
-                local meleeThreat = maxThreat * 1.1 - myThreat
-                local meleeThreatText = meleeThreat
-                if meleeThreat > 1000 then
-                    meleeThreatText = math.floor((meleeThreat / 1000) * 100) / 100 .. 'K'
-                end
-                if meleeThreat > 1000000 then
-                    meleeThreatText = math.floor((meleeThreat / 1000000) * 100) / 100 .. 'M'
-                end
-                agroInText = '+' .. meleeThreatText
-
-                --_G['TWThreat' .. name .. 'Name']:SetText("-Pull Aggro in "..math.floor(meleeThreat / TWT.threats[TWT.target][TWT.name].tps).."s -")
-
-            else
-                -- ranged
-                local rangedThreat = maxThreat * 1.3 - myThreat
-                local rangedThreatText = rangedThreat
-                if rangedThreat > 1000 then
-                    rangedThreatText = math.floor((rangedThreat / 1000) * 100) / 100 .. 'K'
-                end
-                if rangedThreat > 1000000 then
-                    rangedThreatText = math.floor((rangedThreat / 1000000) * 100) / 100 .. 'M'
-                end
-                agroInText = '+' .. rangedThreatText
-            end
-
-            _G['TWThreat' .. name .. 'Threat']:SetText(agroInText)
-
-
-        else
-            _G['TWThreat' .. name .. 'Threat']:SetText(threatText)
-
+        if name ~= TWT.AGRo then
             if data.threat < data.lastThreat then
                 _G['TWThreat' .. name .. 'ArrowUp']:Hide()
                 _G['TWThreat' .. name .. 'ArrowDown']:Show()
@@ -574,10 +575,7 @@ function TWT.updateUI()
             end
         end
 
-        _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
-
         if CheckInteractDistance('target', 1) then
-
             _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 110)
         else
             _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 130)
@@ -679,7 +677,7 @@ end)
 
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
-    if not creature or creature ~= UnitName('target') then
+    if not creature or creature ~= UnitName('target') or perc == -1 then
         _G['TWThreatDisplayTarget']:Hide()
         return false
     end
@@ -706,6 +704,14 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
         _G['TWThreatDisplayTargetGlow']:Show()
     else
         _G['TWThreatDisplayTargetGlow']:Hide()
+
+        if perc < 0 then
+            return false
+        elseif perc >= 0 and perc < 50 then
+            _G['TWThreatDisplayTargetNumericBG']:SetVertexColor(perc / 50, 1, 0, 1)
+        elseif perc >= 50 then
+            _G['TWThreatDisplayTargetNumericBG']:SetVertexColor(1, 1 - (perc - 50) / 50, 0)
+        end
         return true
     end
 
@@ -763,6 +769,10 @@ function TWTCloseButton_OnClick()
     twtprint('Window closed. Type |cff69ccf0/twt show|cffffffff to restore it.')
 end
 
+function TWTSettingsCloseButton_OnClick()
+    _G['TWTMainSettings']:Hide()
+end
+
 function string:split(delimiter)
     local result = {}
     local from = 1
@@ -803,6 +813,16 @@ function TWT.ohShitHereWeSortAgain(t, reverse)
         end
     end
     return iter
+end
+
+function TWT.formatNumber(n)
+    if n < 1000 then
+        return n
+    end
+    if n < 999999 then
+        return math.floor(n / 1000) .. 'K'
+    end
+    return math.floor(n / 1000000) .. 'M'
 end
 
 function TWT.tableSize(t)
