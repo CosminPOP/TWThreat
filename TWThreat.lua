@@ -193,15 +193,18 @@ function TWT.handleClientMSG(msg, sender)
                 perc = 100,
                 tps = 0,
                 history = {},
-                lastThreat = 0
+                lastThreat = 0,
+                dir = '-'
             }
         end
 
-        if TWT.threats[target][player]['threat'] then
+        if TWT.threats[target][player].threat then
+
+            TWT.threats[target][player].lastThreat = TWT.threats[target][player].threat
 
             TWT.threats[target][player].threat = threat
-            TWT.threats[target][player].lastThreat = threat
             TWT.threats[target][player].history[math.floor(GetTime())] = threat
+            TWT.threats[target][player].dir = '-'
 
         else
             TWT.threats[target][player] = {
@@ -209,10 +212,11 @@ function TWT.handleClientMSG(msg, sender)
                 threat = threat,
                 perc = 0,
                 tps = tps,
-                lastThreat = threat,
+                lastThreat = 0,
                 history = {
                     [math.floor(GetTime())] = threat
-                }
+                },
+                dir = '-'
             }
         end
 
@@ -505,6 +509,9 @@ function TWT.updateUI()
         elseif name == TWT.AGRO then
             _G['TWThreat' .. name .. 'AGRO']:Show()
             _G['TWThreat' .. name .. 'Tank']:Hide()
+        else
+            _G['TWThreat' .. name .. 'AGRO']:Hide()
+            _G['TWThreat' .. name .. 'Tank']:Hide()
         end
 
         -- tps
@@ -562,16 +569,20 @@ function TWT.updateUI()
 
         _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
-        if name ~= TWT.AGRo then
-            if data.threat < data.lastThreat then
-                _G['TWThreat' .. name .. 'ArrowUp']:Hide()
-                _G['TWThreat' .. name .. 'ArrowDown']:Show()
-            elseif data.threat > data.lastThreat then
-                _G['TWThreat' .. name .. 'ArrowDown']:Hide()
-                _G['TWThreat' .. name .. 'ArrowUp']:Show()
-            else
-                _G['TWThreat' .. name .. 'ArrowDown']:Hide()
-                _G['TWThreat' .. name .. 'ArrowUp']:Hide()
+        if name ~= TWT.AGRO then
+            if data.dir then
+
+                if data.dir == 'down' then
+                    _G['TWThreat' .. name .. 'ArrowUp']:Hide()
+                    _G['TWThreat' .. name .. 'ArrowDown']:Show()
+                elseif data.dir == 'up' then
+                    _G['TWThreat' .. name .. 'ArrowDown']:Hide()
+                    _G['TWThreat' .. name .. 'ArrowUp']:Show()
+                else
+                    _G['TWThreat' .. name .. 'ArrowDown']:Hide()
+                    _G['TWThreat' .. name .. 'ArrowUp']:Hide()
+                end
+
             end
         end
 
@@ -626,6 +637,16 @@ function TWT.calcTPS(name, data)
         for i = 0, TWT.tableSize(data.history) - 1 do
             if data.history[math.floor(GetTime()) - i] and data.history[math.floor(GetTime()) - i - 1] then
                 tps_real = tps_real + data.history[math.floor(GetTime()) - i] - data.history[math.floor(GetTime()) - i - 1]
+            end
+        end
+
+        if data.history[math.floor(GetTime())] and data.history[math.floor(GetTime()) - 1] then
+            if data.history[math.floor(GetTime())] > data.history[math.floor(GetTime()) - 1] then
+                data.dir = 'up'
+            elseif data.history[math.floor(GetTime())] < data.history[math.floor(GetTime()) - 1] then
+                data.dir = 'down'
+            else
+                data.dir = '-'
             end
         end
 
