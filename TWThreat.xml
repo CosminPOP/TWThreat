@@ -162,7 +162,7 @@
                     <Size>
                         <AbsDimension x="24" y="24"/>
                     </Size>
-                    <TexCoords left="0.5" right="1.0" top="0" bottom="0.5"/>
+                    <TexCoords left="0.5" right="1.0" top="0" bottom="0.49"/>
                     <Anchors>
                         <Anchor point="LEFT">
                             <Offset>
