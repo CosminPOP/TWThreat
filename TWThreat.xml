@@ -3,7 +3,7 @@
     <Script file="TWThreat.lua"/>
 
     <Button name="TWTFontFrameTemplate" inherits="UIPanelButtonTemplate" virtual="true">
-        <NormalTexture />
+        <NormalTexture/>
         <PushedTexture/>
         <HighlightTexture name="$parentHT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD"/>
         <Size>
@@ -189,6 +189,18 @@
             <Size x="32" y="32"/>
         </ThumbTexture>
     </Slider>
+
+    <Frame name="TWTFullScreenGlow" hidden="true" toplevel="false" frameStrata="LOW" >
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentTexture" file="Interface\addons\TWThreat\images\fs_glow" alphaMode="ADD">
+                    <Anchors>
+                        <Anchor point="CENTER" relativeTo="UIParent" relativePoint="CENTER"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Frame>
 
     <Frame name="TWTMain" hidden="false" toplevel="true"
            parent="UIParent" movable="true" enableMouse="true" resizable="true">
@@ -499,20 +511,21 @@
                             <Anchors>
                                 <Anchor point="TOPLEFT">
                                     <Offset>
-                                        <AbsDimension x="15" y="-120"/>
+                                        <AbsDimension x="15" y="-140"/>
                                     </Offset>
                                 </Anchor>
                             </Anchors>
                         </FontString>
 
-                        <FontString name="$parentSBarHeight" inherits="GameFontNormal" text="Bar Height" justifyH="LEFT">
+                        <FontString name="$parentSBarHeight" inherits="GameFontNormal" text="Bar Height"
+                                    justifyH="LEFT">
                             <Size>
                                 <AbsDimension x="100" y="20"/>
                             </Size>
                             <Anchors>
                                 <Anchor point="TOPLEFT">
                                     <Offset>
-                                        <AbsDimension x="15" y="-145"/>
+                                        <AbsDimension x="15" y="-165"/>
                                     </Offset>
                                 </Anchor>
                             </Anchors>
@@ -522,7 +535,8 @@
                 <Frames>
 
                     <Button name="$parentCloseButton" inherits="UIPanelButtonTemplate" text="X">
-                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth"
+                                       alphaMode="ADD">
                         </NormalTexture>
                         <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
                         <HighlightTexture/>
@@ -582,7 +596,7 @@
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
 
-                    <CheckButton name="$parentPercNumbers" hidden="false">
+                    <CheckButton name="$parentFullScreenGlow" hidden="false">
                         <Size>
                             <AbsDimension x="20" y="20"/>
                         </Size>
@@ -590,6 +604,45 @@
                             <Anchor point="TOPLEFT">
                                 <Offset>
                                     <AbsDimension x="10" y="-50"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Full Screen Glow">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'fullScreenGlow')
+                            </OnClick>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentPercNumbers" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-70"/>
                                 </Offset>
                             </Anchor>
                         </Anchors>
@@ -628,7 +681,7 @@
                         <Anchors>
                             <Anchor point="TOPLEFT">
                                 <Offset>
-                                    <AbsDimension x="10" y="-70"/>
+                                    <AbsDimension x="10" y="-90"/>
                                 </Offset>
                             </Anchor>
                         </Anchors>
@@ -667,7 +720,7 @@
                         <Anchors>
                             <Anchor point="TOPLEFT">
                                 <Offset>
-                                    <AbsDimension x="10" y="-90"/>
+                                    <AbsDimension x="10" y="-110"/>
                                 </Offset>
                             </Anchor>
                         </Anchors>
@@ -700,7 +753,8 @@
                     </CheckButton>
 
                     <Button name="$parentFontButton" inherits="UIPanelButtonTemplate" text="Font">
-                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth"
+                                       alphaMode="ADD">
                         </NormalTexture>
                         <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
                         <HighlightTexture/>
