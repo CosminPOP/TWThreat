@@ -2,6 +2,43 @@
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
     <Script file="TWThreat.lua"/>
 
+    <Button name="TWTFontFrameTemplate" inherits="UIPanelButtonTemplate" virtual="true">
+        <NormalTexture />
+        <PushedTexture/>
+        <HighlightTexture name="$parentHT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD"/>
+        <Size>
+            <AbsDimension x="140" y="16"/>
+        </Size>
+        <Layers>
+            <Layer level="OVERLAY">
+                <FontString name="$parentName" justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="140" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="2" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Anchors>
+            <Anchor point="TOPLEFT">
+                <Offset>
+                    <AbsDimension x="0" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Scripts>
+            <OnClick>
+                TWTFontSelect(this:GetID())
+            </OnClick>
+        </Scripts>
+    </Button>
+
     <Frame name="TWThreat" virtual="true">
         <Size>
             <AbsDimension x="298" y="19"/>
@@ -30,10 +67,9 @@
                 </Texture>
             </Layer>
             <Layer level="OVERLAY">
-                <FontString name="$parentName" inherits="GameFontHighlight" text="Smultron"
-                            justifyH="LEFT">
+                <FontString name="$parentName" justifyH="LEFT">
                     <Size>
-                        <AbsDimension x="111" y="20"/>
+                        <AbsDimension x="130" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="LEFT">
@@ -51,7 +87,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="-8" y="0"/>
+                                <AbsDimension x="-18" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -59,12 +95,12 @@
                 <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="threat"
                             justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="60" y="20"/>
+                        <AbsDimension x="70" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="5" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -76,7 +112,7 @@
                     <Anchors>
                         <Anchor point="RIGHT">
                             <Offset>
-                                <AbsDimension x="-7" y="0"/>
+                                <AbsDimension x="-2" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -90,7 +126,7 @@
                     <Anchors>
                         <Anchor point="RIGHT" relativeTo="$parentThreat">
                             <Offset>
-                                <AbsDimension x="11" y="2"/>
+                                <AbsDimension x="9" y="2"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -103,7 +139,7 @@
                     <Anchors>
                         <Anchor point="RIGHT" relativeTo="$parentThreat">
                             <Offset>
-                                <AbsDimension x="18" y="0"/>
+                                <AbsDimension x="16" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -140,6 +176,20 @@
         </Layers>
     </Frame>
 
+    <Slider name="TWTSliderTemplate" orientation="HORIZONTAL" enableMouse="true" virtual="true">
+        <Size x="144" y="17"/>
+        <HitRectInsets left="0" right="0" top="-10" bottom="-10"/>
+        <Backdrop bgFile="Interface\Buttons\UI-SliderBar-Background"
+                  edgeFile="Interface\Buttons\UI-SliderBar-Border" tile="true">
+            <EdgeSize val="8"/>
+            <TileSize val="8"/>
+            <BackgroundInsets left="3" right="3" top="6" bottom="6"/>
+        </Backdrop>
+        <ThumbTexture name="$parentThumb" file="Interface\Buttons\UI-SliderBar-Button-Horizontal">
+            <Size x="32" y="32"/>
+        </ThumbTexture>
+    </Slider>
+
     <Frame name="TWTMain" hidden="false" toplevel="true"
            parent="UIParent" movable="true" enableMouse="true" resizable="true">
         <Size>
@@ -175,6 +225,20 @@
                 </Texture>
             </Layer>
             <Layer level="OVERLAY">
+
+                <FontString name="CombatHeal" font="Fonts\FRIZQT__.TTF" text="+1242" hidden="true">
+                    <FontHeight val="40"/>
+                    <Color r="0.1" g="1" b="0.1" a="1"/>
+                    <Shadow>
+                        <Offset x="1" y="-1"/>
+                        <Color r="0" g="0" b="0"/>
+                    </Shadow>
+                    <Size>
+                        <AbsDimension x="300" y="40"/>
+                    </Size>
+                </FontString>
+
+
                 <FontString name="$parentTitle" inherits="GameFontHighlight" text="Name">
                     <Size>
                         <AbsDimension x="300" y="20"/>
@@ -190,7 +254,7 @@
                 <FontString name="$parentName" inherits="GameFontHighlightSmall" text="Name"
                             justifyH="LEFT">
                     <Size>
-                        <AbsDimension x="100" y="20"/>
+                        <AbsDimension x="115" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="TOPLEFT">
@@ -208,7 +272,7 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="-10" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -221,14 +285,14 @@
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="5" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
                 <FontString name="$parentPerc" inherits="GameFontHighlightSmall" text="%" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="60" y="20"/>
+                        <AbsDimension x="50" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
@@ -427,6 +491,32 @@
                                 </Anchor>
                             </Anchors>
                         </FontString>
+
+                        <FontString name="$parentSBarFont" inherits="GameFontNormal" text="Bar Font" justifyH="LEFT">
+                            <Size>
+                                <AbsDimension x="100" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT">
+                                    <Offset>
+                                        <AbsDimension x="15" y="-120"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+
+                        <FontString name="$parentSBarHeight" inherits="GameFontNormal" text="Bar Height" justifyH="LEFT">
+                            <Size>
+                                <AbsDimension x="100" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT">
+                                    <Offset>
+                                        <AbsDimension x="15" y="-145"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
                     </Layer>
                 </Layers>
                 <Frames>
@@ -608,6 +698,63 @@
                         <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
+
+                    <Button name="$parentFontButton" inherits="UIPanelButtonTemplate" text="Font">
+                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                        </NormalTexture>
+                        <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                        <HighlightTexture/>
+                        <Size>
+                            <AbsDimension x="140" y="16"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="LEFT" relativeTo="$parentSBarFont" relativePoint="RIGHT">
+                                <Offset>
+                                    <AbsDimension x="0" y="0"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Scripts>
+                            <OnClick>
+                                TWTFontButton_OnClick()
+                            </OnClick>
+                        </Scripts>
+                    </Button>
+
+                    <Frame name="$parentFontList" hidden="true">
+                        <Size>
+                            <AbsDimension x="140" y="310"/>
+                        </Size>
+                        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                                  tile="false">
+                        </Backdrop>
+                        <Anchors>
+                            <Anchor point="TOP" relativeTo="$parentFontButton">
+                                <Offset>
+                                    <AbsDimension x="0" y="-16"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Frames>
+
+                        </Frames>
+                    </Frame>
+
+                    <Slider name="$parentFrameHeightSlider" inherits="TWTSliderTemplate"
+                            minValue="20" maxValue="30" valueStep="2">
+                        <Anchors>
+                            <Anchor point="LEFT" relativeTo="$parentSBarHeight" relativePoint="RIGHT">
+                                <Offset>
+                                    <AbsDimension x="-2" y="0"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Scripts>
+                            <OnValueChanged>
+                                FrameHeightSlider_OnValueChanged()
+                            </OnValueChanged>
+                        </Scripts>
+                    </Slider>
 
                 </Frames>
                 <Scripts>
