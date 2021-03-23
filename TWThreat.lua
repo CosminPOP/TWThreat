@@ -76,7 +76,6 @@ TWT.lastTarget = ''
 TWT.ui = CreateFrame("Frame")
 TWT.ui:Hide()
 TWT.targetType = 'normal'
-TWT.inCombat = false
 
 local timeStart = GetTime()
 local totalPackets = 0
@@ -92,12 +91,13 @@ TWT:SetScript("OnEvent", function()
             local guidEx = string.split(arg1, ':')
             if guidEx[2] then
                 TWT.targetChanged(guidEx[2])
-                TWT.targetChangedHelper:Hide();
-                twtdebug('helper stopped - have guid');
+                TWT.targetChangedHelper:Hide()
+                TWT.guids[guidEx[2]] = UnitName('target')
+                twtdebug('helper stopped - have guid')
                 return true
             end
-            TWT.targetChangedHelper:Hide();
-            twtdebug('helper stopped - not have guid');
+            TWT.targetChangedHelper:Hide()
+            twtdebug('helper stopped - not have guid')
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWT:', 1, true) then
             TWT.handleServerMSG(arg1)
@@ -113,10 +113,12 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_TARGET_CHANGED" then
             if not UnitName('target') then
+                TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
             if UnitIsPlayer('target') then
+                TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
@@ -131,7 +133,25 @@ TWT:SetScript("OnEvent", function()
                 TWT.channel = 'PARTY'
             end
 
-            TWT.targetChangedHelper:Show();
+            -- load from guids cache first
+            -- even if its the wrong guid, it will update ui fast, not wait for server guid
+            local cacheGUID = 0
+            for guid, creature in TWT.guids do
+                if creature == UnitName('target') then
+                    cacheGUID = guid
+                end
+            end
+
+            if cacheGUID ~= 0 then
+                twtdebug('cached guid found')
+                TWT.targetChanged(cacheGUID)
+            end
+
+            if not TWT.threats[cacheGUID] then
+                TWT.updateTargetFrameThreatIndicators(-1)
+            end
+
+            TWT.targetChangedHelper:Show()
         end
 
     end
@@ -147,7 +167,16 @@ function TWT.init()
         TWT_CONFIG.hideOOC = false
         TWT_CONFIG.font = 'Roboto'
         TWT_CONFIG.barHeight = 20
+        TWT_CONFIG.fullScreenGlow = false
     end
+
+    --TWT_CONFIG.font = 'Roboto'
+    --TWT_CONFIG.barHeight = 20
+    --TWT_CONFIG.fullScreenGlow = false
+
+
+    _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth())
+    _G['TWTFullScreenGlowTexture']:SetHeight(GetScreenHeight())
 
     _G['TWTMainSettingsFrameHeightSlider']:SetValue(TWT_CONFIG.barHeight)
 
@@ -157,6 +186,7 @@ function TWT.init()
     _G['TWTMainSettingsPercNumbers']:SetChecked(TWT_CONFIG.perc)
     _G['TWTMainSettingsShowInCombat']:SetChecked(TWT_CONFIG.showInCombat)
     _G['TWTMainSettingsHideOOC']:SetChecked(TWT_CONFIG.hideOOC)
+    _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
 
     _G['TWTMainSettingsFontButtonNT']:SetVertexColor(0.4, 0.4, 0.4)
 
@@ -197,7 +227,6 @@ function TWT.init()
 end
 
 function TWT.handleServerMSG(msg)
-    twtdebug(msg)
 
     totalPackets = totalPackets + 1
 
@@ -278,7 +307,7 @@ function TWT.handleClientMSG(msg, sender)
 end
 
 function TWT.combatStart()
-    TWT.inCombat = true
+
     TWT.updateTargetFrameThreatIndicators(-1, '')
     timeStart = GetTime()
     totalPackets = 0
@@ -299,7 +328,7 @@ end
 
 function TWT.combatEnd()
     --left combat
-    TWT.inCombat = false
+
     TWT.updateTargetFrameThreatIndicators(-1, '')
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.guids = TWT.wipe(TWT.guids)
@@ -318,20 +347,29 @@ function TWT.combatEnd()
 end
 
 TWT.targetChangedHelper = CreateFrame('Frame')
-TWT.targetChangedHelper:Hide();
+TWT.targetChangedHelper:Hide()
 
 TWT.targetChangedHelper:SetScript("OnShow", function()
     this.startTime = GetTime()
+    this.canSend = true
+end)
+TWT.targetChangedHelper:SetScript("OnHide", function()
+    this.startTime = GetTime()
+    this.canSend = true
 end)
 TWT.targetChangedHelper:SetScript("OnUpdate", function()
     local plus = 0.2 --seconds
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
-        this.startTime = GetTime();
-        --TWT.targetChangedHelper:Hide();
-        twtdebug('helper sent');
-        SendAddonMessage("TWTGUID", "GETGUID", TWT.channel)
+        this.startTime = GetTime()
+        if this.canSend then
+            twtdebug('helper sent')
+            SendAddonMessage("TWTGUID", "GETGUID", TWT.channel)
+            this.canSend = false
+        else
+            twtdebug(' waiting for cansend ')
+        end
     end
 end)
 
@@ -354,8 +392,9 @@ function TWT.targetChanged(guid)
         return false
     end
 
+    -- player check
     if UnitIsPlayer('target') then
-        TWT.updateTargetFrameThreatIndicators(-1, UnitName('target'))
+        TWT.updateTargetFrameThreatIndicators(-1)
         --TWT.lastTarget = UnitName('target')
     else
 
@@ -478,7 +517,7 @@ end
 TWT.threatsFrames = {}
 
 local nf = CreateFrame('Frame')
-nf:Hide();
+nf:Hide()
 
 local framePoint = ''
 
@@ -540,6 +579,7 @@ function TWT.updateUI()
 
     --twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
     --totalPackets / (GetTime() - timeStart) .. ' packets/s')
+    --twtdebug('update ui call target = ' .. TWT.target)
 
     if TWT.target == '' then
         twtdebug('uiupdate returned, target = blank')
@@ -668,7 +708,12 @@ function TWT.updateUI()
             data.perc = 100
         end
 
+        if string.find(data.perc, '#INF', 1, true) then
+            data.perc = 0
+        end
+
         _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
+
 
 
         -- name
@@ -720,9 +765,9 @@ function TWT.updateUI()
 
         -- bar width
         if CheckInteractDistance(TWT.targetFromName(name), 1) then
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 110)
+            _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 110 + 1)
         else
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 130)
+            _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 130 + 1)
         end
 
         if name == TWT.AGRO then
@@ -769,7 +814,7 @@ TWT.ui:SetScript("OnUpdate", function()
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
-        if TWT.inCombat then
+        if UnitAffectingCombat('player') then
             TWT.updateUI()
         end
     end
@@ -837,23 +882,39 @@ TWT.test:SetScript("OnShow", function()
     this.f = 1
 end)
 TWT.test:SetScript("OnUpdate", function()
-    local plus = 0.03 --seconds
+    local plus = 0.02 --seconds
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
         this.threat = this.threat + this.f * 1
-        if this.threat >= 130 then
+        if this.threat >= 50 then
             this.f = -1
         end
         if this.threat <= 0 then
             this.f = 1
         end
-        TWT.updateTargetFrameThreatIndicators(this.threat)
+        --TWT.updateTargetFrameThreatIndicators(this.threat)
+
+        --/run start_test()
+
+
     end
 end)
 
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
+
+    if TWT_CONFIG.fullScreenGlow then
+
+        _G['TWTFullScreenGlow']:SetAlpha((perc - 50) / 50 + math.random() / 10)
+
+        _G['TWTFullScreenGlow']:SetWidth(GetScreenWidth() + 100 - perc)
+        _G['TWTFullScreenGlow']:SetHeight(GetScreenHeight() + 100 - perc)
+
+        _G['TWTFullScreenGlow']:Show()
+    else
+        _G['TWTFullScreenGlow']:Hide()
+    end
 
     if not creature or creature ~= UnitName('target') or perc == -1 then
         _G['TWThreatDisplayTarget']:Hide()
@@ -862,7 +923,7 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if not TWT_CONFIG.glow and not TWT_CONFIG.perc then
         _G['TWThreatDisplayTarget']:Hide()
-        return true
+        return false
     end
 
     _G['TWThreatDisplayTarget']:Show()
@@ -914,7 +975,7 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
     --dev
     --_G['TWThreatDisplayTarget']:Show()
 
-    if TWT.inCombat and TWT.targetFrameVisible then
+    if UnitAffectingCombat('player') and TWT.targetFrameVisible then
         _G['TWThreatDisplayTarget']:Show()
     else
         _G['TWThreatDisplayTarget']:Hide()
@@ -1017,12 +1078,12 @@ function TWT.formatNumber(n)
         return math.floor(n)
     end
     if n < 99999 then
-        return math.floor(n / 10) / 100 .. 'K' --562
+        return math.floor(n / 10) / 100 .. 'K' or 0 --562
     end
     if n < 999999 then
-        return math.floor(n / 10) / 100 .. 'K' --562
+        return math.floor(n / 10) / 100 .. 'K' or 0 --562
     end
-    --return math.floor(n / 1000000) .. 'M'
+    return math.floor(n / 1000) / 1000 .. 'M' or 0 --562
 end
 
 function TWT.tableSize(t)
@@ -1040,7 +1101,7 @@ function TWT.targetFromName(name)
     if TWT.channel == 'RAID' then
         for i = 0, GetNumRaidMembers() do
             if GetRaidRosterInfo(i) then
-                local n = GetRaidRosterInfo(i);
+                local n = GetRaidRosterInfo(i)
                 if n == name then
                     return 'raid' .. i
                 end
