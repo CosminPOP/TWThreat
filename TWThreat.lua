@@ -24,6 +24,14 @@ TWT.classColors = {
     ["agro"] = { r = 0.96, g = 0.1, b = 0.1, c = "|cffff1111" }
 }
 
+TWT.fonts = {
+    'BalooBhaina', 'BigNoodleTitling',
+    'Expressway', 'Homespun', 'Hooge', 'LondrinaSolid',
+    'Myriad-Pro', 'PT-Sans-Narrow-Bold', 'PT-Sans-Narrow-Regular',
+    'Roboto', 'Share', 'ShareBold',
+    'Sniglet', 'SquadaOne',
+}
+
 function twtprint(a)
     if a == nil then
         DEFAULT_CHAT_FRAME:AddMessage('[TWT]|cff0070de:' .. math.floor(GetTime()) .. '|cffffffff attempt to print a nil value.')
@@ -113,6 +121,7 @@ TWT:SetScript("OnEvent", function()
             end
 
             if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
+                _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
                 return false
             end
 
@@ -136,12 +145,20 @@ function TWT.init()
         TWT_CONFIG.perc = false
         TWT_CONFIG.showInCombat = false
         TWT_CONFIG.hideOOC = false
+        TWT_CONFIG.font = 'Roboto'
+        TWT_CONFIG.barHeight = 20
     end
+
+    _G['TWTMainSettingsFrameHeightSlider']:SetValue(TWT_CONFIG.barHeight)
+
+    _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
 
     _G['TWTMainSettingsTargetFrameGlow']:SetChecked(TWT_CONFIG.glow)
     _G['TWTMainSettingsPercNumbers']:SetChecked(TWT_CONFIG.perc)
     _G['TWTMainSettingsShowInCombat']:SetChecked(TWT_CONFIG.showInCombat)
     _G['TWTMainSettingsHideOOC']:SetChecked(TWT_CONFIG.hideOOC)
+
+    _G['TWTMainSettingsFontButtonNT']:SetVertexColor(0.4, 0.4, 0.4)
 
     local color = TWT.classColors[TWT.class]
     _G['TWTMainSettingsButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
@@ -159,6 +176,23 @@ function TWT.init()
     _G['TWTMainTitleBG']:SetVertexColor(color.r, color.g, color.b)
 
     _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
+
+
+    -- fonts
+    local fontFrames = {}
+
+    for i, font in TWT.fonts do
+        fontFrames[i] = CreateFrame('Button', 'Font_' .. font, _G['TWTMainSettingsFontList'], 'TWTFontFrameTemplate')
+
+        fontFrames[i]:SetPoint("TOPLEFT", _G["TWTMainSettingsFontList"], "TOPLEFT", 0, 17 - i * 17)
+
+        _G['Font_' .. font]:SetID(i)
+        _G['Font_' .. font .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. font .. ".ttf", 15)
+        _G['Font_' .. font .. 'Name']:SetText(font)
+        _G['Font_' .. font .. 'HT']:SetVertexColor(1, 1, 1, 0.5)
+
+        fontFrames[i]:Show()
+    end
 
 end
 
@@ -253,6 +287,10 @@ function TWT.combatStart()
     TWT.guids = TWT.wipe(TWT.guids)
 
     TWT.updateUI()
+
+    if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
+        return false
+    end
 
     if TWT_CONFIG.showInCombat then
         _G['TWTMain']:Show()
@@ -439,6 +477,65 @@ end
 
 TWT.threatsFrames = {}
 
+local nf = CreateFrame('Frame')
+nf:Hide();
+
+local framePoint = ''
+
+nf:SetScript("OnShow", function()
+    this.startTime = GetTime()
+    this.mh = 70
+    this.ch = 0
+    _G['CombatHeal']:SetPoint("TOPLEFT", framePoint, "TOPLEFT", 0, 30)
+    _G['CombatHeal']:SetAlpha(1)
+    _G['CombatHeal']:Show()
+end)
+nf:SetScript("OnUpdate", function()
+    local plus = 0.01 --seconds
+    local gt = GetTime() * 1000
+    local st = (this.startTime + plus) * 1000
+    if gt >= st then
+        this.startTime = GetTime()
+        if this.ch < this.mh then
+            this.ch = this.ch + 1
+            _G['CombatHeal']:SetPoint("TOPLEFT", framePoint, "TOPLEFT", 0, 30 + this.ch)
+            _G['CombatHeal']:SetAlpha(1 - this.ch / this.mh)
+            return true
+        end
+        _G['CombatHeal']:SetAlpha(0)
+        nf:Hide()
+        _G['CombatHeal']:Hide()
+    end
+end)
+
+function np_test()
+
+    local Nameplates = {}
+
+    for _, plate in pairs({ WorldFrame:GetChildren() }) do
+        local name = plate:GetName()
+        if plate then
+
+            if plate:GetObjectType() == 'Button' then
+
+                twtdebug(plate:GetObjectType())
+
+                framePoint = plate
+
+                _G['CombatHeal']:SetWidth(plate:GetWidth())
+                _G['CombatHeal']:SetPoint("TOPLEFT", plate, "TOPLEFT", 0, 30)
+
+                nf:Show()
+
+            end
+        end
+        if name then
+            twtdebug(name)
+        end
+    end
+
+end
+
 function TWT.updateUI()
 
     --twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
@@ -523,7 +620,16 @@ function TWT.updateUI()
         if not TWT.threatsFrames[name] then
             TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWThreatListScrollFrameChildren"], 'TWThreat')
         end
-        TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWThreatListScrollFrameChildren"], "TOPLEFT", 0, 19 - index * 20)
+
+        _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+        _G['TWThreat' .. name .. 'TPS']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+        _G['TWThreat' .. name .. 'Threat']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+        _G['TWThreat' .. name .. 'Perc']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+
+        _G['TWThreat' .. name]:SetHeight(TWT_CONFIG.barHeight - 1)
+        _G['TWThreat' .. name .. 'BG']:SetHeight(TWT_CONFIG.barHeight - 2)
+
+        TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWThreatListScrollFrameChildren"], "TOPLEFT", 0, TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
 
 
         -- icons
@@ -845,6 +951,25 @@ function TWTSettingsCloseButton_OnClick()
     _G['TWTMainSettings']:Hide()
 end
 
+function TWTFontButton_OnClick()
+    if _G['TWTMainSettingsFontList']:IsVisible() then
+        _G['TWTMainSettingsFontList']:Hide()
+    else
+        _G['TWTMainSettingsFontList']:Show()
+    end
+end
+
+function TWTFontSelect(id)
+    TWT_CONFIG.font = TWT.fonts[id]
+    _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
+    TWT.updateUI()
+end
+
+function FrameHeightSlider_OnValueChanged(self, value, userInput)
+    TWT_CONFIG.barHeight = _G['TWTMainSettingsFrameHeightSlider']:GetValue()
+    TWT.updateUI()
+end
+
 function string:split(delimiter)
     local result = {}
     local from = 1
@@ -888,13 +1013,16 @@ function TWT.ohShitHereWeSortAgain(t, reverse)
 end
 
 function TWT.formatNumber(n)
-    if n < 1000 then
-        return n
+    if n < 999 then
+        return math.floor(n)
+    end
+    if n < 99999 then
+        return math.floor(n / 10) / 100 .. 'K' --562
     end
     if n < 999999 then
-        return math.floor(n / 1000) .. 'K'
+        return math.floor(n / 10) / 100 .. 'K' --562
     end
-    return math.floor(n / 1000000) .. 'M'
+    --return math.floor(n / 1000000) .. 'M'
 end
 
 function TWT.tableSize(t)
