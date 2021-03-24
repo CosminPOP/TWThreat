@@ -2,6 +2,136 @@
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
     <Script file="TWThreat.lua"/>
 
+    <Frame name="TankModeExtraFrameTemplate" virtual="true">
+        <Size>
+            <AbsDimension x="300" y="24"/>
+        </Size>
+        <Anchors>
+            <Anchor point="TOPLEFT">
+                <Offset>
+                    <AbsDimension x="0" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentBG" file="Interface\addons\TWThreat\images\textures\Smooth">
+                    <Size>
+                        <AbsDimension x="298" y="24"/>
+                    </Size>
+                    <TexCoords left="1" right="0" top="0.1" bottom="1"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+
+                <Texture name="$parentRaidTargetIcon" file="Interface\TargetingFrame\UI-RaidTargetingIcons">
+                    <Size>
+                        <AbsDimension x="18" y="18"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
+                <FontString name="$parentTarget" inherits="GameFontNormalLarge" text="Princess Huhuran nnnnnn"
+                            justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="140" y="30"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="20" y="-1"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentPlayer" inherits="GameFontNormalLarge" text="Tonysoprano"
+                            justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="100" y="30"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentTarget" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentPerc" inherits="GameFontNormalLarge" text="99%"
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="70" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="RIGHT">
+                            <Offset>
+                                <AbsDimension x="-5" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button name="$parentTargetButton" inherits="UIPanelButtonTemplate">
+                <NormalTexture/>
+                <PushedTexture/>
+<!--                <HighlightTexture/>-->
+                <Size>
+                    <AbsDimension x="300" y="24"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="0" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        TWTTargetButton_OnClick(this:GetID())
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+    </Frame>
+
+    <Frame name="TWTGraphLineTemplate" virtual="true">
+        <Size>
+            <AbsDimension x="1" y="100"/>
+        </Size>
+        <Layers>
+            <Layer level="OVERLAY">
+                <Texture name="$parentLine" file="Interface\addons\TWThreat\images\textures\Smooth">
+                    <Size>
+                        <AbsDimension x="1" y="100"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="BOTTOM">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Frame>
+
     <Button name="TWTFontFrameTemplate" inherits="UIPanelButtonTemplate" virtual="true">
         <NormalTexture/>
         <PushedTexture/>
@@ -463,7 +593,7 @@
             <Frame name="$parentSettings" hidden="true" toplevel="true"
                    movable="true" enableMouse="true">
                 <Size>
-                    <AbsDimension x="300" y="200"/>
+                    <AbsDimension x="300" y="240"/>
                 </Size>
                 <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                           tile="false">
@@ -511,7 +641,7 @@
                             <Anchors>
                                 <Anchor point="TOPLEFT">
                                     <Offset>
-                                        <AbsDimension x="15" y="-140"/>
+                                        <AbsDimension x="15" y="-170"/>
                                     </Offset>
                                 </Anchor>
                             </Anchors>
@@ -525,7 +655,7 @@
                             <Anchors>
                                 <Anchor point="TOPLEFT">
                                     <Offset>
-                                        <AbsDimension x="15" y="-165"/>
+                                        <AbsDimension x="15" y="-195"/>
                                     </Offset>
                                 </Anchor>
                             </Anchors>
@@ -588,6 +718,19 @@
                             <OnClick>
                                 TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'glow')
                             </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Glow');
+                                GameTooltip:AddLine('Shows green/yellow/red glow on default game target frame.', 1, 1, 1);
+                                GameTooltip:AddLine('Color is based on your current threat:', 1, 1, 1);
+                                GameTooltip:AddLine(' green - yellow for 0% - 49%', 1, 1, 1);
+                                GameTooltip:AddLine(' yellow - red for 50% - 100%', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
                         </Scripts>
                         <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
                         <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
@@ -627,6 +770,16 @@
                             <OnClick>
                                 TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'fullScreenGlow')
                             </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Full Screen Glow');
+                                GameTooltip:AddLine('Red glowing screen edges when your threat above 80%', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
                         </Scripts>
                         <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
                         <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
@@ -666,6 +819,16 @@
                             <OnClick>
                                 TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'perc')
                             </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Percentages');
+                                GameTooltip:AddLine('Shows threat percent on default target frame', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
                         </Scripts>
                         <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
                         <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
@@ -705,6 +868,16 @@
                             <OnClick>
                                 TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'showInCombat')
                             </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Combat');
+                                GameTooltip:AddLine('Auto show the window when combat starts', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
                         </Scripts>
                         <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
                         <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
@@ -744,6 +917,65 @@
                             <OnClick>
                                 TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'hideOOC')
                             </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Combat');
+                                GameTooltip:AddLine('Auto hide the window when combat starts', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentTankMode" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-140"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Tank Mode">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'tankMode')
+                            </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Tank Mode');
+                                GameTooltip:AddLine('Click me!', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
                         </Scripts>
                         <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
                         <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
@@ -825,6 +1057,99 @@
                         this:StopMovingOrSizing();
                         this.isMoving = false;
                     </OnDragStop>
+                </Scripts>
+            </Frame>
+
+            <Frame name="$parentRTTPS" hidden="true" toplevel="true" movable="true" enableMouse="true">
+                <Size>
+                    <AbsDimension x="300" y="200"/>
+                </Size>
+                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                          tile="false">
+                </Backdrop>
+                <Anchors>
+                    <Anchor point="CENTER" relativeTo="UIParent">
+                        <Offset>
+                            <AbsDimension x="0" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="ARTWORK">
+                        <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
+                            <Size>
+                                <AbsDimension x="298" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT">
+                                    <Offset>
+                                        <AbsDimension x="1" y="0"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                    <Layer level="OVERLAY">
+                        <FontString name="$parentTitle" inherits="GameFontHighlight" text="Threat">
+                            <Size>
+                                <AbsDimension x="300" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOP">
+                                    <Offset>
+                                        <AbsDimension x="0" y="0"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+
+                    </Layer>
+                </Layers>
+                <Frames>
+
+                </Frames>
+                <Scripts>
+                    <OnLoad>
+                        this:RegisterForDrag("LeftButton");
+                        this:SetMovable(1);
+                        this:SetUserPlaced(true);
+                    </OnLoad>
+                    <OnDragStart>
+                        this:StartMoving();
+                        this.isMoving = true;
+                    </OnDragStart>
+                    <OnDragStop>
+                        this:StopMovingOrSizing();
+                        this.isMoving = false;
+                    </OnDragStop>
+                </Scripts>
+            </Frame>
+
+            <Frame name="$parentTankModeWindow" hidden="true">
+                <Size>
+                    <AbsDimension x="300" y="30"/>
+                </Size>
+                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                          tile="false">
+                </Backdrop>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT">
+                        <Offset>
+                            <AbsDimension x="0" y="-1"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Frames>
+
+                    <Frame name="TMEF1" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+                    <Frame name="TMEF2" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+                    <Frame name="TMEF3" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+                    <Frame name="TMEF4" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+                    <Frame name="TMEF5" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+
+                </Frames>
+                <Scripts>
+
                 </Scripts>
             </Frame>
 
