@@ -1,7 +1,7 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.0.0.2'
+TWT.addonVer = '0.0.0.3'
 TWT.addonName = '|cff69ccf0Momo|cffffffffmeter'
 TWT.dev = false
 
@@ -10,6 +10,9 @@ TWT.channel = 'RAID'
 TWT.name = UnitName('player')
 local _, cl = UnitClass('player')
 TWT.class = string.lower(cl)
+TWT.tpss = {}
+TWT.raidTargetIconIndex = {}
+TWT.secondOnThreat = {}
 
 TWT.classColors = {
     ["warrior"] = { r = 0.78, g = 0.61, b = 0.43, c = "|cffc79c6e" },
@@ -68,6 +71,8 @@ TWT:RegisterEvent("ADDON_LOADED")
 TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
 TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
+TWT:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF")
+TWT:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
 
 TWT.threats = {}
 TWT.target = ''
@@ -84,15 +89,22 @@ TWT.guids = {}
 
 TWT:SetScript("OnEvent", function()
     if event then
+        if event == 'CHAT_MSG_SPELL_SELF_BUFF' or event == 'CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS' then
+            local _, _, heal = string.find(arg1, "for (%d+)");
+            local _, _, target = string.find(arg1, "heals (%a+) for");
+            if target and heal then
+                --np_test(heal, target)
+            end
+        end
         if event == 'ADDON_LOADED' and arg1 == 'TWThreat' then
             TWT.init()
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWTGUID:', 1, true) then
             local guidEx = string.split(arg1, ':')
             if guidEx[2] then
-                TWT.targetChanged(guidEx[2])
+                TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.targetChangedHelper:Hide()
-                TWT.guids[guidEx[2]] = UnitName('target')
+                TWT.guids[tonumber(guidEx[2])] = UnitName('target')
                 twtdebug('helper stopped - have guid')
                 return true
             end
@@ -144,7 +156,7 @@ TWT:SetScript("OnEvent", function()
 
             if cacheGUID ~= 0 then
                 twtdebug('cached guid found')
-                TWT.targetChanged(cacheGUID)
+                TWT.targetChanged(cacheGUID, true)
             end
 
             if not TWT.threats[cacheGUID] then
@@ -170,6 +182,7 @@ function TWT.init()
     TWT_CONFIG.font = TWT_CONFIG.font or 'Roboto'
     TWT_CONFIG.barHeight = TWT_CONFIG.barHeight or 20
     TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
+    TWT_CONFIG.tankMode = TWT_CONFIG.tankMode or false
 
     --TWT_CONFIG.font = 'Roboto'
     --TWT_CONFIG.barHeight = 20
@@ -188,6 +201,7 @@ function TWT.init()
     _G['TWTMainSettingsShowInCombat']:SetChecked(TWT_CONFIG.showInCombat)
     _G['TWTMainSettingsHideOOC']:SetChecked(TWT_CONFIG.hideOOC)
     _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
+    _G['TWTMainSettingsTankMode']:SetChecked(TWT_CONFIG.tankMode)
 
     _G['TWTMainSettingsFontButtonNT']:SetVertexColor(0.4, 0.4, 0.4)
 
@@ -236,7 +250,7 @@ function TWT.handleServerMSG(msg)
     if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] then
 
         local creature = msgEx[2]
-        local guid = msgEx[3]
+        local guid = tonumber(msgEx[3])
         local threat = tonumber(msgEx[4])
 
         TWT.send(TWT.class .. ':' .. guid .. ':' .. threat)
@@ -258,7 +272,7 @@ function TWT.handleClientMSG(msg, sender)
 
         local player = sender
         local class = ex[1]
-        local guid = ex[2]
+        local guid = tonumber(ex[2])
         local threat = tonumber(ex[3])
 
         if not TWT.threats[guid] then
@@ -311,6 +325,8 @@ function TWT.combatStart()
 
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.guids = TWT.wipe(TWT.guids)
+
+    TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
 
     TWT.updateUI()
 
@@ -378,7 +394,7 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
     end
 end)
 
-function TWT.targetChanged(guid)
+function TWT.targetChanged(guid, cached)
 
     if TargetFrame:IsVisible() ~= nil then
         TWT.targetFrameVisible = true
@@ -415,7 +431,13 @@ function TWT.targetChanged(guid)
             end
         end
 
+        if not cached then
+            TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
+            twtdebug('saved TWT.raidTargetIconIndex[' .. TWT.target .. '] ' .. TWT.raidTargetIconIndex[TWT.target])
+        end
+
     end
+
     TWT.updateUI()
 end
 
@@ -552,7 +574,7 @@ nf:SetScript("OnUpdate", function()
     end
 end)
 
-function np_test()
+function np_test(heal, target)
 
     local Nameplates = {}
 
@@ -561,24 +583,40 @@ function np_test()
         if plate then
 
             if plate:GetObjectType() == 'Button' then
+                --twtdebug(plate:GetObjectType())
+                for _, region in ipairs({ plate:GetRegions() }) do
+                    --twtdebug('found a region')
+                    --twtdebug(region:GetObjectType())
+                    if region:GetObjectType() == 'FontString' then
+                        --twtdebug(region:GetText())
+                        --twtdebug(target)
 
-                twtdebug(plate:GetObjectType())
+                        if region:GetText() == target then
 
-                framePoint = plate
+                            framePoint = plate
 
-                _G['CombatHeal']:SetWidth(plate:GetWidth())
-                _G['CombatHeal']:SetPoint("TOPLEFT", plate, "TOPLEFT", 0, 30)
+                            _G['CombatHeal']:SetText("+" .. heal)
 
-                nf:Show()
+                            _G['CombatHeal']:SetWidth(plate:GetWidth())
+                            _G['CombatHeal']:SetPoint("TOPLEFT", plate, "TOPLEFT", 0, 30)
 
+                            nf:Show()
+
+                        else
+                            region:SetAlpha(0)
+                        end
+                    else
+                        region:SetAlpha(0)
+                    end
+
+                end
             end
-        end
-        if name then
-            twtdebug(name)
         end
     end
 
 end
+
+TWT.graphFrames = {}
 
 function TWT.updateUI()
 
@@ -689,10 +727,36 @@ function TWT.updateUI()
             _G['TWThreat' .. name .. 'Tank']:Hide()
         end
 
-        -- tps
+        --graph
+        --if name == TWT.name then
+        --    local j = 0
+        --    for t, d in TWT.pairsByKeys(TWT.tpss) do
+        --        j = j + 1
+        --        if not TWT.graphFrames[j] then
+        --            TWT.graphFrames[j] = CreateFrame('Frame', 'TWTGF' .. j, _G["TWTMainRTTPS"], 'TWTGraphLineTemplate')
+        --        end
+        --        TWT.graphFrames[j]:SetPoint("BOTTOMLEFT", _G["TWTMainRTTPS"], "BOTTOMLEFT", j, 0) -- 6 - 6 - 1
+        --
+        --        _G['TWTGF' .. j .. 'Line']:SetHeight(d / 10)
+        --    end
+        --end
 
+
+        -- tps
         data.history[math.floor(GetTime())] = data.threat
         data.tps = TWT.calcTPS(name, data)
+        --if name == TWT.name then
+        --    TWT.tpss[math.floor(GetTime())] = data.tps
+        --
+        --    if TWT.tpss[math.floor(GetTime()) - 1] then
+        --
+        --        TWT.tpss[math.floor(GetTime()) - 0.5] = (TWT.tpss[math.floor(GetTime())] + TWT.tpss[math.floor(GetTime()) - 1]) / 2
+        --
+        --        TWT.tpss[math.floor(GetTime()) - 0.75] = (TWT.tpss[math.floor(GetTime()) - 0.5] + TWT.tpss[math.floor(GetTime()) - 1]) / 2
+        --
+        --        TWT.tpss[math.floor(GetTime()) - 0.25] = (TWT.tpss[math.floor(GetTime()) - 0.5] + TWT.tpss[math.floor(GetTime())]) / 2
+        --    end
+        --end
         _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
 
@@ -805,6 +869,86 @@ function TWT.updateUI()
 
     end
 
+    if TWT_CONFIG.tankMode then
+
+        for guid, target in next, TWT.threats do
+            if target[TWT.name] then
+                if target[TWT.name].perc == 100 then
+                    --twtdebug('added TWT.secondOnThreat = ' .. guid)
+                    TWT.secondOnThreat[guid] = {
+                        name = '',
+                        class = '',
+                        perc = 0
+                    }
+                end
+
+            end
+        end
+        -- find first player bellow me
+        for guid, player in next, TWT.secondOnThreat do
+            player.name = ''
+            player.class = 'priest'
+            player.perc = 0
+            for name, data in TWT.threats[guid] do
+                if name ~= TWT.name and name ~= TWT.AGRO then
+                    if data.perc > player.perc then
+                        player.name = name
+                        player.class = data.class
+                        player.perc = data.perc
+                    end
+                end
+            end
+            --twtdebug('next for ' .. TWT.guids[guid] .. ' is ' .. player.name .. ' at ' .. player.perc)
+        end
+        local nrTargets = TWT.tableSize(TWT.secondOnThreat)
+        _G['TMEF1']:Hide()
+        _G['TMEF2']:Hide()
+        _G['TMEF3']:Hide()
+        _G['TMEF4']:Hide()
+        _G['TMEF5']:Hide()
+        --twtdebug('nr tagets = ' .. nrTargets)
+        if nrTargets > 1 then
+            _G['TWTMainTankModeWindow']:Show()
+            _G['TWTMainTankModeWindow']:SetHeight(nrTargets * 25)
+
+            local i = 1
+            for guid, player in next, TWT.secondOnThreat do
+
+                if player.name ~= '' then
+
+                    _G['TMEF' .. i .. 'Target']:SetText(TWT.guids[guid])
+                    _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[player.class].c .. player.name)
+                    _G['TMEF' .. i .. 'Perc']:SetText(player.perc .. '%')
+                    _G['TMEF' .. i .. 'TargetButton']:SetID(guid)
+                    _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, 24 - i * 25)
+
+                    if TWT.raidTargetIconIndex[guid] then
+                        --twtdebug('              --- set icon ' .. TWT.raidTargetIconIndex[guid] ..' to ' .. guid)
+                        SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
+                        _G['TMEF' .. i .. 'RaidTargetIcon']:Show()
+                    else
+                        _G['TMEF' .. i .. 'RaidTargetIcon']:Hide()
+                    end
+
+                    if player.perc >= 0 and player.perc < 50 then
+                        _G['TMEF' .. i .. 'BG']:SetVertexColor(player.perc / 50, 1, 0, 0.3)
+                    else
+                        _G['TMEF' .. i .. 'BG']:SetVertexColor(1, 1 - (player.perc - 50) / 50, 0, 0.3)
+                    end
+
+                    _G['TMEF' .. i]:Show()
+
+                    i = i + 1
+
+                end
+            end
+        else
+            _G['TWTMainTankModeWindow']:Hide()
+        end
+    else
+        _G['TWTMainTankModeWindow']:Hide()
+    end
+
     _G['TWThreatListScrollFrameScrollBar']:Hide()
 
     _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
@@ -913,7 +1057,7 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if TWT_CONFIG.fullScreenGlow then
 
-        _G['TWTFullScreenGlow']:SetAlpha((perc - 50) / 50 + math.random() / 10)
+        _G['TWTFullScreenGlow']:SetAlpha((perc - 80) / 80 + math.random() / 10)
 
         _G['TWTFullScreenGlow']:SetWidth(GetScreenWidth() + 100 - perc)
         _G['TWTFullScreenGlow']:SetHeight(GetScreenHeight() + 100 - perc)
@@ -979,9 +1123,6 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     _G['TWThreatDisplayTargetGlow']:SetTexture('Interface\\addons\\TWThreat\\images\\' .. unitClassification)
 
-    --dev
-    --_G['TWThreatDisplayTarget']:Show()
-
     if UnitAffectingCombat('player') and TWT.targetFrameVisible then
         _G['TWThreatDisplayTarget']:Show()
     else
@@ -998,9 +1139,6 @@ function TWTMainWindow_Resizing()
 end
 
 function TWTMainMainWindow_Resized()
-    --_G['TWThreatListScrollFrame']:SetHeight(_G['TWTMain']:GetHeight() - 60)
-    --_G['TWThreatListScrollFrameChildren']:SetHeight(_G['TWThreatListScrollFrame']:GetHeight())
-    --_G['TWThreatListScrollFrame']:UpdateScrollChildRect()
     _G['TWThreatListScrollFrameScrollBar']:Hide()
     _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
     _G['TWTMain']:SetAlpha(1)
@@ -1029,6 +1167,17 @@ function TWTFontButton_OnClick()
     else
         _G['TWTMainSettingsFontList']:Show()
     end
+end
+
+function TWTTargetButton_OnClick(guid)
+    --twtdebug('target click call ' .. id)
+    if TWT.raidTargetIconIndex[guid] then
+        --twtdebug('should target icon: ' .. TWT.raidTargetIconIndex[id])
+        TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid)
+    else
+        twtdebug('TWT.raidTargetIconIndex[' .. guid .. '] is nil')
+    end
+    --
 end
 
 function TWTFontSelect(id)
@@ -1061,12 +1210,12 @@ function TWT.ohShitHereWeSortAgain(t, reverse)
         table.insert(a, { ['threat'] = l.threat, ['perc'] = l.perc, ['tps'] = l.tps, ['name'] = n })
     end
     if reverse then
-        table.sort(a, function(a, b)
-            return a['threat'] > b['threat']
+        table.sort(a, function(b, c)
+            return b['threat'] > c['threat']
         end)
     else
-        table.sort(a, function(a, b)
-            return a['threat'] < b['threat']
+        table.sort(a, function(b, c)
+            return b['threat'] < c['threat']
         end)
     end
 
@@ -1134,6 +1283,51 @@ function TWT.targetFromName(name)
     return 'target'
 end
 
+function TWT.targetRaidIcon(iconIndex, guid)
+
+    for i = 1, GetNumRaidMembers() do
+        if TWT.targetRaidSymbolFromUnit("raid" .. i, iconIndex) then
+            return
+        end
+    end
+    for i = 1, GetNumPartyMembers() do
+        if TWT.targetRaidSymbolFromUnit("party" .. i, iconIndex) then
+            return
+        end
+    end
+    if TWT.targetRaidSymbolFromUnit("player", iconIndex) then
+        return
+    end
+
+
+    -- try to target based on 2nd's target
+    if guid then
+        AssistByName(TWT.secondOnThreat[guid].name)
+        return
+    end
+
+    twtdebug('did not find index ' .. iconIndex)
+    return
+end
+
+function TWT.targetRaidSymbolFromUnit(unit, index)
+    if UnitExists(unit) then
+        if GetRaidTargetIndex(unit) == index then
+            twtdebug('found ! ' .. unit)
+            TargetUnit(unit);
+            return true
+        end
+        if UnitExists(unit .. "target") then
+            if GetRaidTargetIndex(unit .. "target") == index then
+                twtdebug('found ! ' .. unit .. 'target')
+                TargetUnit(unit .. "target");
+                return true;
+            end
+        end
+    end
+    return false
+end
+
 -- https://github.com/shagu/pfUI/blob/master/api/api.lua#L596
 function TWT.wipe(src)
     -- notes: table.insert, table.remove will have undefined behavior
@@ -1151,7 +1345,6 @@ function TWT.wipe(src)
     end
     return src
 end
-
 
 function TWT.pairsByKeys(t, f)
     local a = {}
