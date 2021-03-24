@@ -161,14 +161,15 @@ function TWT.init()
 
     if not TWT_CONFIG then
         TWT_CONFIG = {}
-        TWT_CONFIG.glow = false
-        TWT_CONFIG.perc = false
-        TWT_CONFIG.showInCombat = false
-        TWT_CONFIG.hideOOC = false
-        TWT_CONFIG.font = 'Roboto'
-        TWT_CONFIG.barHeight = 20
-        TWT_CONFIG.fullScreenGlow = false
     end
+
+    TWT_CONFIG.glow = TWT_CONFIG.glow or false
+    TWT_CONFIG.perc = TWT_CONFIG.perc or false
+    TWT_CONFIG.showInCombat = TWT_CONFIG.showInCombat or false
+    TWT_CONFIG.hideOOC = TWT_CONFIG.hideOOC or false
+    TWT_CONFIG.font = TWT_CONFIG.font or 'Roboto'
+    TWT_CONFIG.barHeight = TWT_CONFIG.barHeight or 20
+    TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
 
     --TWT_CONFIG.font = 'Roboto'
     --TWT_CONFIG.barHeight = 20
@@ -283,9 +284,7 @@ function TWT.handleClientMSG(msg, sender)
         if TWT.threats[guid][player].threat then
 
             TWT.threats[guid][player].lastThreat = TWT.threats[guid][player].threat
-
             TWT.threats[guid][player].threat = threat
-            TWT.threats[guid][player].history[math.floor(GetTime())] = threat
             TWT.threats[guid][player].dir = '-'
 
         else
@@ -295,9 +294,7 @@ function TWT.handleClientMSG(msg, sender)
                 perc = 0,
                 tps = tps,
                 lastThreat = 0,
-                history = {
-                    [math.floor(GetTime())] = threat
-                },
+                history = {},
                 dir = '-'
             }
         end
@@ -352,10 +349,13 @@ TWT.targetChangedHelper:Hide()
 TWT.targetChangedHelper:SetScript("OnShow", function()
     this.startTime = GetTime()
     this.canSend = true
+    this.maxWaits = 25
+    this.canSendWaitIndex = 0
 end)
 TWT.targetChangedHelper:SetScript("OnHide", function()
     this.startTime = GetTime()
     this.canSend = true
+    this.canSendWaitIndex = 0
 end)
 TWT.targetChangedHelper:SetScript("OnUpdate", function()
     local plus = 0.2 --seconds
@@ -368,7 +368,12 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
             SendAddonMessage("TWTGUID", "GETGUID", TWT.channel)
             this.canSend = false
         else
+            this.canSendWaitIndex = this.canSendWaitIndex + 1
             twtdebug(' waiting for cansend ')
+            if this.canSendWaitIndex >= this.maxWaits then
+                twtdebug(' max cansends reached, resetting ')
+                this:Hide()
+            end
         end
     end
 end)
@@ -685,6 +690,8 @@ function TWT.updateUI()
         end
 
         -- tps
+
+        data.history[math.floor(GetTime())] = data.threat
         data.tps = TWT.calcTPS(name, data)
         _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
@@ -824,7 +831,7 @@ function TWT.calcTPS(name, data)
     if name ~= TWT.AGRO then
 
         local older = math.floor(GetTime())
-        for i in data.history do
+        for i, j in TWT.pairsByKeys(data.history) do
             if i < older then
                 older = i
             end
@@ -1008,8 +1015,12 @@ function TWTCloseButton_OnClick()
     twtprint('Window closed. Type |cff69ccf0/twt show|cffffffff to restore it.')
 end
 
-function TWTSettingsCloseButton_OnClick()
-    _G['TWTMainSettings']:Hide()
+function TWTSettingsToggle_OnClick()
+    if _G['TWTMainSettings']:IsVisible() == 1 then
+        _G['TWTMainSettings']:Hide()
+    else
+        _G['TWTMainSettings']:Show()
+    end
 end
 
 function TWTFontButton_OnClick()
@@ -1139,4 +1150,26 @@ function TWT.wipe(src)
         src[k] = nil
     end
     return src
+end
+
+
+function TWT.pairsByKeys(t, f)
+    local a = {}
+    for n in pairs(t) do
+        table.insert(a, n)
+    end
+    table.sort(a, function(a, b)
+        return a < b
+    end)
+    local i = 0 -- iterator variable
+    local iter = function()
+        -- iterator function
+        i = i + 1
+        if a[i] == nil then
+            return nil
+        else
+            return a[i], t[a[i]]
+        end
+    end
+    return iter
 end
