@@ -184,11 +184,6 @@ function TWT.init()
     TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
     TWT_CONFIG.tankMode = TWT_CONFIG.tankMode or false
 
-    --TWT_CONFIG.font = 'Roboto'
-    --TWT_CONFIG.barHeight = 20
-    --TWT_CONFIG.fullScreenGlow = false
-
-
     _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth())
     _G['TWTFullScreenGlowTexture']:SetHeight(GetScreenHeight())
 
@@ -265,8 +260,8 @@ function TWT.handleServerMSG(msg)
 end
 
 function TWT.handleClientMSG(msg, sender)
-    --twtprint(sender .. ': ' .. msg)
-    --"priest:target:guid:threat:lastthreat:hp"
+    -- format "class:guid:threat"
+
     local ex = string.split(msg, ':')
     if ex[1] and ex[2] and ex[3] then
 
@@ -374,7 +369,7 @@ TWT.targetChangedHelper:SetScript("OnHide", function()
     this.canSendWaitIndex = 0
 end)
 TWT.targetChangedHelper:SetScript("OnUpdate", function()
-    local plus = 0.2 --seconds
+    local plus = 0.2
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
@@ -415,8 +410,9 @@ function TWT.targetChanged(guid, cached)
 
     -- player check
     if UnitIsPlayer('target') then
+
         TWT.updateTargetFrameThreatIndicators(-1)
-        --TWT.lastTarget = UnitName('target')
+
     else
 
         TWT.target = guid
@@ -449,7 +445,6 @@ TWT.AGRO = '-Pull Aggro at-'
 
 if TWT.dev then
     TWT.threats = {
-        --['Tham\'Grarr'] = {
         [123456] = {
             [TWT.AGRO] = {
                 class = 'agro',
@@ -463,82 +458,8 @@ if TWT.dev then
                 perc = 10,
                 tps = 10
             },
-            ['Momo'] = {
-                class = 'mage',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Carol'] = {
-                class = 'warrior',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Laugh'] = {
-                class = 'paladin',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Astrld'] = {
-                class = 'rogue',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['BoB'] = {
-                class = 'rogue',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Chlo'] = {
-                class = 'hunter',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Slowbro'] = {
-                class = 'rogue',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Ilmane'] = {
-                class = 'shaman',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Furryslayer'] = {
-                class = 'warlock',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Er'] = {
-                class = 'priest',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Dispatch'] = {
-                class = 'priest',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-            ['Cinnamom'] = {
-                class = 'priest',
-                threat = 5,
-                perc = 5,
-                tps = 5
-            },
-
         }
     }
-
 end
 
 TWT.threatsFrames = {}
@@ -557,7 +478,7 @@ nf:SetScript("OnShow", function()
     _G['CombatHeal']:Show()
 end)
 nf:SetScript("OnUpdate", function()
-    local plus = 0.01 --seconds
+    local plus = 0.01
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
@@ -583,7 +504,7 @@ function np_test(heal, target)
         if plate then
 
             if plate:GetObjectType() == 'Button' then
-                --twtdebug(plate:GetObjectType())
+
                 for _, region in ipairs({ plate:GetRegions() }) do
                     --twtdebug('found a region')
                     --twtdebug(region:GetObjectType())
@@ -619,10 +540,6 @@ end
 TWT.graphFrames = {}
 
 function TWT.updateUI()
-
-    --twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
-    --totalPackets / (GetTime() - timeStart) .. ' packets/s')
-    --twtdebug('update ui call target = ' .. TWT.target)
 
     if TWT.target == '' then
         twtdebug('uiupdate returned, target = blank')
@@ -786,7 +703,6 @@ function TWT.updateUI()
         _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
 
 
-
         -- name
         _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
 
@@ -874,14 +790,12 @@ function TWT.updateUI()
         for guid, target in next, TWT.threats do
             if target[TWT.name] then
                 if target[TWT.name].perc == 100 then
-                    --twtdebug('added TWT.secondOnThreat = ' .. guid)
                     TWT.secondOnThreat[guid] = {
                         name = '',
                         class = '',
                         perc = 0
                     }
                 end
-
             end
         end
         -- find first player bellow me
@@ -898,15 +812,14 @@ function TWT.updateUI()
                     end
                 end
             end
-            --twtdebug('next for ' .. TWT.guids[guid] .. ' is ' .. player.name .. ' at ' .. player.perc)
         end
+
         local nrTargets = TWT.tableSize(TWT.secondOnThreat)
         _G['TMEF1']:Hide()
         _G['TMEF2']:Hide()
         _G['TMEF3']:Hide()
         _G['TMEF4']:Hide()
         _G['TMEF5']:Hide()
-        --twtdebug('nr tagets = ' .. nrTargets)
         if nrTargets > 1 then
             _G['TWTMainTankModeWindow']:Show()
             _G['TWTMainTankModeWindow']:SetHeight(nrTargets * 25)
@@ -923,7 +836,6 @@ function TWT.updateUI()
                     _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, 24 - i * 25)
 
                     if TWT.raidTargetIconIndex[guid] then
-                        --twtdebug('              --- set icon ' .. TWT.raidTargetIconIndex[guid] ..' to ' .. guid)
                         SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
                         _G['TMEF' .. i .. 'RaidTargetIcon']:Show()
                     else
@@ -960,7 +872,7 @@ TWT.ui:SetScript("OnShow", function()
     this.startTime = GetTime()
 end)
 TWT.ui:SetScript("OnUpdate", function()
-    local plus = 1 --seconds
+    local plus = 1
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
@@ -1033,7 +945,7 @@ TWT.test:SetScript("OnShow", function()
     this.f = 1
 end)
 TWT.test:SetScript("OnUpdate", function()
-    local plus = 0.02 --seconds
+    local plus = 0.02
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
@@ -1045,11 +957,6 @@ TWT.test:SetScript("OnUpdate", function()
         if this.threat <= 0 then
             this.f = 1
         end
-        --TWT.updateTargetFrameThreatIndicators(this.threat)
-
-        --/run start_test()
-
-
     end
 end)
 
@@ -1170,14 +1077,14 @@ function TWTFontButton_OnClick()
 end
 
 function TWTTargetButton_OnClick(guid)
-    --twtdebug('target click call ' .. id)
+
     if TWT.raidTargetIconIndex[guid] then
-        --twtdebug('should target icon: ' .. TWT.raidTargetIconIndex[id])
+
         TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid)
     else
         twtdebug('TWT.raidTargetIconIndex[' .. guid .. '] is nil')
     end
-    --
+
 end
 
 function TWTFontSelect(id)
@@ -1225,7 +1132,6 @@ function TWT.ohShitHereWeSortAgain(t, reverse)
         i = i + 1
         if a[i] == nil then
             return nil
-            --        else return a[i]['code'], t[a[i]['name']]
         else
             return a[i]['name'], t[a[i]['name']]
         end
@@ -1238,12 +1144,12 @@ function TWT.formatNumber(n)
         return math.floor(n)
     end
     if n < 99999 then
-        return math.floor(n / 10) / 100 .. 'K' or 0 --562
+        return math.floor(n / 10) / 100 .. 'K' or 0
     end
     if n < 999999 then
-        return math.floor(n / 10) / 100 .. 'K' or 0 --562
+        return math.floor(n / 10) / 100 .. 'K' or 0
     end
-    return math.floor(n / 1000) / 1000 .. 'M' or 0 --562
+    return math.floor(n / 1000) / 1000 .. 'M' or 0
 end
 
 function TWT.tableSize(t)
