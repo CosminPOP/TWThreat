@@ -362,7 +362,7 @@
                 </Anchors>
                 <Scripts>
                     <OnClick>
-                        getglobal('TWTMainSettings'):Show()
+                        TWTSettingsToggle_OnClick()
                     </OnClick>
                 </Scripts>
             </Button>
@@ -552,7 +552,7 @@
                         </Anchors>
                         <Scripts>
                             <OnClick>
-                                TWTSettingsCloseButton_OnClick()
+                                TWTSettingsToggle_OnClick()
                             </OnClick>
                         </Scripts>
                     </Button>
@@ -775,9 +775,9 @@
                         </Scripts>
                     </Button>
 
-                    <Frame name="$parentFontList" hidden="true">
+                    <Frame name="$parentFontList" hidden="true" frameStrata="MEDIUM">
                         <Size>
-                            <AbsDimension x="140" y="310"/>
+                            <AbsDimension x="140" y="240"/>
                         </Size>
                         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                                   tile="false">
