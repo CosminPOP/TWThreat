@@ -1,7 +1,7 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.0.0.3'
+TWT.addonVer = '0.0.0.4'
 TWT.addonName = '|cff69ccf0Momo|cffffffffmeter'
 TWT.dev = false
 
@@ -47,6 +47,9 @@ function twtprint(a)
 end
 
 function twtdebug(a)
+    if not TWT_CONFIG.debug then
+        return false
+    end
     if type(a) == 'boolean' then
         if a then
             twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[true]')
@@ -63,10 +66,44 @@ SlashCmdList["TWT"] = function(cmd)
     if cmd then
         if string.sub(cmd, 1, 4) == 'show' then
             _G['TWTMain']:Show()
+            TWT_CONFIG.visible = true
+            return true
         end
-
+        if string.sub(cmd, 1, 5) == 'debug' then
+            if TWT_CONFIG.debug then
+                TWT_CONFIG.debug = false
+                twtprint('Debugging disabled')
+                return true
+            end
+            TWT_CONFIG.debug = true
+            twtdebug('Debugging enabled')
+            return true
+        end
+        twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff available commands:')
+        twtprint('/twt show - shows the main window (also /twtshow)')
     end
+end
 
+SLASH_TWTSHOW1 = "/twtshow"
+SlashCmdList["TWTSHOW"] = function(cmd)
+    if cmd then
+        _G['TWTMain']:Show()
+        TWT_CONFIG.visible = true
+    end
+end
+
+SLASH_TWTDEBUG1 = "/twtdebug"
+SlashCmdList["TWTDEBUG"] = function(cmd)
+    if cmd then
+        if TWT_CONFIG.debug then
+            TWT_CONFIG.debug = false
+            twtprint('Debugging disabled')
+            return true
+        end
+        TWT_CONFIG.debug = true
+        twtdebug('Debugging enabled')
+        return true
+    end
 end
 
 TWT:RegisterEvent("CHAT_MSG_ADDON")
@@ -186,6 +223,26 @@ function TWT.init()
     TWT_CONFIG.barHeight = TWT_CONFIG.barHeight or 20
     TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
     TWT_CONFIG.tankMode = TWT_CONFIG.tankMode or false
+    TWT_CONFIG.lock = TWT_CONFIG.lock or false
+    TWT_CONFIG.visible = TWT_CONFIG.visible or true
+
+    TWT_CONFIG.debug = TWT_CONFIG.debug or false
+
+    if TWT_CONFIG.visible then
+        _G['TWTMain']:Show()
+    else
+        _G['TWTMain']:Hide()
+    end
+
+    if TWT_CONFIG.tankMode then
+        _G['TWTMainSettingsFullScreenGlow']:Disable()
+    end
+
+    if TWT_CONFIG.lock then
+        _G['TWTMainLockButton']:SetText('u')
+    else
+        _G['TWTMainLockButton']:SetText('L')
+    end
 
     _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth())
     _G['TWTFullScreenGlowTexture']:SetHeight(GetScreenHeight())
@@ -206,6 +263,8 @@ function TWT.init()
     local color = TWT.classColors[TWT.class]
     _G['TWTMainSettingsButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
     _G['TWTMainCloseButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
+    _G['TWTMainSettingsCloseButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
+    _G['TWTMainLockButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
 
     _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
     _G['TWTMainThreatTarget']:SetText('Threat: <no target>')
@@ -217,6 +276,7 @@ function TWT.init()
     TWT.ui:Show()
 
     _G['TWTMainTitleBG']:SetVertexColor(color.r, color.g, color.b)
+    _G['TWTMainSettingsTitleBG']:SetVertexColor(color.r, color.g, color.b)
     _G['TWTMainTankModeWindowTitleBG']:SetVertexColor(color.r, color.g, color.b)
 
     _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
@@ -388,6 +448,10 @@ function TWT.combatStart()
     if TWT_CONFIG.showInCombat then
         _G['TWTMain']:Show()
     end
+
+    if TWT_CONFIG.fullScreenGlow then
+        TWT.fullScreenGlowAnimator:Show()
+    end
 end
 
 function TWT.combatEnd()
@@ -406,6 +470,10 @@ function TWT.combatEnd()
 
     if TWT_CONFIG.hideOOC then
         _G['TWTMain']:Hide()
+    end
+
+    if TWT_CONFIG.fullScreenGlow then
+        TWT.fullScreenGlowAnimator:Hide()
     end
 
     --if TWT_CONFIG.tankMode then
@@ -861,6 +929,8 @@ function TWT.updateUI()
             end
         end
 
+        --twtdebug('second on th = ' .. TWT.tableSize(TWT.secondOnThreat))
+
         if TWT.tableSize(TWT.secondOnThreat) > 1 then
 
             -- find first player bellow me
@@ -1036,15 +1106,43 @@ TWT.test:SetScript("OnUpdate", function()
     end
 end)
 
+TWT.fullScreenGlowAnimator = CreateFrame('Frame')
+TWT.fullScreenGlowAnimator:Hide()
+
+TWT.fullScreenGlowAnimator:SetScript("OnShow", function()
+    this.startTime = GetTime()
+    this.sizeDiff = 100
+    this.sizeNow = 0
+    this.factor = 1
+end)
+TWT.fullScreenGlowAnimator:SetScript("OnHide", function()
+end)
+TWT.fullScreenGlowAnimator:SetScript("OnUpdate", function()
+    local plus = 0.02
+    local gt = GetTime() * 1000
+    local st = (this.startTime + plus) * 1000
+    if gt >= st then
+        this.startTime = GetTime()
+        if this.sizeNow >= this.sizeDiff then
+            this.factor = -1
+        end
+        if this.sizeNow <= 0 then
+            this.factor = 1
+        end
+
+        this.sizeNow = this.sizeNow + this.factor * 4
+
+        if TWT_CONFIG.fullScreenGlow then
+            _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth() + this.sizeNow)
+            _G['TWTFullScreenGlowTexture']:SetHeight(GetScreenHeight() + this.sizeNow)
+        end
+    end
+end)
+
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if TWT_CONFIG.fullScreenGlow then
-
-        _G['TWTFullScreenGlow']:SetAlpha((perc - 80) / 80 + math.random() / 10)
-
-        _G['TWTFullScreenGlow']:SetWidth(GetScreenWidth() + 100 - perc)
-        _G['TWTFullScreenGlow']:SetHeight(GetScreenHeight() + 100 - perc)
-
+        _G['TWTFullScreenGlow']:SetAlpha((perc - 80) / 20)
         _G['TWTFullScreenGlow']:Show()
     else
         _G['TWTFullScreenGlow']:Hide()
@@ -1128,12 +1226,30 @@ function TWTMainMainWindow_Resized()
 end
 
 function TWTChangeSetting_OnClick(name, checked, code)
+    if code == 'lock' then
+        checked = not TWT_CONFIG[code]
+        if checked then
+            _G['TWTMainLockButton']:SetText('u')
+        else
+            _G['TWTMainLockButton']:SetText('L')
+        end
+    end
     TWT_CONFIG[code] = checked
+    if code == 'tankMode' then
+        if checked then
+            TWT_CONFIG.fullScreenGlow = false
+            _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
+            _G['TWTMainSettingsFullScreenGlow']:Disable()
+        else
+            _G['TWTMainSettingsFullScreenGlow']:Enable()
+        end
+    end
 end
 
 function TWTCloseButton_OnClick()
     _G['TWTMain']:Hide()
-    twtprint('Window closed. Type |cff69ccf0/twt show|cffffffff to restore it.')
+    twtprint('Window closed. Type |cff69ccf0/twt show|cffffffff or |cff69ccf0/twtshow|cffffffff to restore it.')
+    TWT_CONFIG.visible = false
 end
 
 function TWTSettingsToggle_OnClick()
