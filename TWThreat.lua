@@ -13,6 +13,9 @@ TWT.class = string.lower(cl)
 TWT.tpss = {}
 TWT.raidTargetIconIndex = {}
 TWT.secondOnThreat = {}
+TWT.lastMessageTime = {}
+
+--todo hide tank window on combat leave
 
 TWT.classColors = {
     ["warrior"] = { r = 0.78, g = 0.61, b = 0.43, c = "|cffc79c6e" },
@@ -105,11 +108,11 @@ TWT:SetScript("OnEvent", function()
                 TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.targetChangedHelper:Hide()
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
-                twtdebug('helper stopped - have guid')
+                --twtdebug('helper stopped - have guid')
                 return true
             end
             TWT.targetChangedHelper:Hide()
-            twtdebug('helper stopped - not have guid')
+            --twtdebug('helper stopped - not have guid')
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWT:', 1, true) then
             TWT.handleServerMSG(arg1)
@@ -155,7 +158,7 @@ TWT:SetScript("OnEvent", function()
             end
 
             if cacheGUID ~= 0 then
-                twtdebug('cached guid found')
+                --twtdebug('cached guid found')
                 TWT.targetChanged(cacheGUID, true)
             end
 
@@ -214,6 +217,7 @@ function TWT.init()
     TWT.ui:Show()
 
     _G['TWTMainTitleBG']:SetVertexColor(color.r, color.g, color.b)
+    _G['TWTMainTankModeWindowTitleBG']:SetVertexColor(color.r, color.g, color.b)
 
     _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
 
@@ -248,7 +252,7 @@ function TWT.handleServerMSG(msg)
         local guid = tonumber(msgEx[3])
         local threat = tonumber(msgEx[4])
 
-        TWT.send(TWT.class .. ':' .. guid .. ':' .. threat)
+        TWT.send(TWT.class .. ':' .. guid .. ':' .. threat, guid)
 
         if TWT.target == '' then
             TWT.target = guid
@@ -261,7 +265,7 @@ end
 
 function TWT.handleClientMSG(msg, sender)
     -- format "class:guid:threat"
-
+    --twtdebug(msg)
     local ex = string.split(msg, ':')
     if ex[1] and ex[2] and ex[3] then
 
@@ -273,39 +277,90 @@ function TWT.handleClientMSG(msg, sender)
         if not TWT.threats[guid] then
             TWT.threats[guid] = {}
         end
-        if not TWT.threats[guid][player] then
-            TWT.threats[guid][player] = {}
+
+        if not TWT.threats[guid][TWT.name] then
+            TWT.threats[guid][TWT.name] = {
+                class = 'agro',
+                threat = 0,
+                perc = 100,
+                tps = '',
+                history = {},
+                lastThreat = 0,
+                dir = '-'
+            }
         end
-        local tps = 0
 
         if not TWT.threats[guid][TWT.AGRO] then
             TWT.threats[guid][TWT.AGRO] = {
                 class = 'agro',
                 threat = 0,
                 perc = 100,
-                tps = 0,
+                tps = '',
                 history = {},
                 lastThreat = 0,
                 dir = '-'
             }
         end
 
-        if TWT.threats[guid][player].threat then
-
+        if TWT.threats[guid][player] then
             TWT.threats[guid][player].lastThreat = TWT.threats[guid][player].threat
             TWT.threats[guid][player].threat = threat
-            TWT.threats[guid][player].dir = '-'
-
         else
             TWT.threats[guid][player] = {
                 class = class,
                 threat = threat,
                 perc = 0,
-                tps = tps,
+                tps = 0,
                 lastThreat = 0,
                 history = {},
                 dir = '-'
             }
+        end
+
+        if TWT_CONFIG.tankMode then
+
+            for creature, pData in next, TWT.threats do
+
+                for victim, data in next, pData do
+
+                    if CheckInteractDistance(TWT.targetFromName(victim), 1) then
+                        -- melee
+                        pData[TWT.AGRO].threat = TWT.threats[creature][TWT.name].threat * 1.1
+                        pData[TWT.AGRO].perc = 110
+                    else
+                        -- ranged
+                        pData[TWT.AGRO].threat = TWT.threats[creature][TWT.name].threat * 1.3
+                        pData[TWT.AGRO].perc = 130
+                    end
+                end
+            end
+
+            for creature, pData in next, TWT.threats do
+
+                local maxThreat = pData[TWT.AGRO].threat
+
+                for victim, data in next, pData do
+
+                    if CheckInteractDistance(TWT.targetFromName(victim), 1) then
+                        if creature == TWT.AGRO then
+                            data.perc = TWT.round(110 - data.threat * 110 / maxThreat)
+                        else
+                            data.perc = TWT.round(data.threat * 110 / maxThreat)
+                        end
+                    else
+                        if creature == TWT.AGRO then
+                            data.perc = TWT.round(130 - data.threat * 130 / maxThreat)
+                        else
+                            data.perc = TWT.round(data.threat * 130 / maxThreat)
+                        end
+                    end
+
+                    --twtdebug('mt = ' .. maxThreat .. ' setting perc to ' .. data.perc .. ' for ' .. victim .. ' for ' .. creature)
+
+                end
+
+            end
+
         end
 
     end
@@ -322,6 +377,7 @@ function TWT.combatStart()
     TWT.guids = TWT.wipe(TWT.guids)
 
     TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
+    TWT.lastMessageTime = TWT.wipe(TWT.lastMessageTime)
 
     TWT.updateUI()
 
@@ -341,7 +397,7 @@ function TWT.combatEnd()
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.guids = TWT.wipe(TWT.guids)
 
-    twtprint('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
+    twtdebug('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
             totalPackets / (GetTime() - timeStart) .. ' packets/s')
 
     timeStart = GetTime()
@@ -351,6 +407,10 @@ function TWT.combatEnd()
     if TWT_CONFIG.hideOOC then
         _G['TWTMain']:Hide()
     end
+
+    --if TWT_CONFIG.tankMode then
+    --    _G['TWTMainTankModeWindow']:Hide()
+    --end
 
 end
 
@@ -429,7 +489,6 @@ function TWT.targetChanged(guid, cached)
 
         if not cached then
             TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
-            twtdebug('saved TWT.raidTargetIconIndex[' .. TWT.target .. '] ' .. TWT.raidTargetIconIndex[TWT.target])
         end
 
     end
@@ -437,8 +496,9 @@ function TWT.targetChanged(guid, cached)
     TWT.updateUI()
 end
 
-function TWT.send(msg)
+function TWT.send(msg, guid)
     SendAddonMessage(TWT.prefix, msg, TWT.channel)
+    TWT.lastMessageTime[guid] = GetTime()
 end
 
 TWT.AGRO = '-Pull Aggro at-'
@@ -554,7 +614,7 @@ function TWT.updateUI()
 
     local index = 0
 
-    for boss, data in next, TWT.threats do
+    for _, data in next, TWT.threats do
         for player, threatData in next, data do
 
             if player == TWT.AGRO then
@@ -680,15 +740,15 @@ function TWT.updateUI()
         -- perc
         if CheckInteractDistance('target', 1) then
             if name == TWT.AGRO then
-                data.perc = math.floor(110 - myThreat * 110 / maxThreat)
+                data.perc = TWT.round(110 - myThreat * 110 / maxThreat)
             else
-                data.perc = math.floor(data.threat * 110 / maxThreat)
+                data.perc = TWT.round(data.threat * 110 / maxThreat)
             end
         else
             if name == TWT.AGRO then
-                data.perc = math.floor(130 - myThreat * 130 / maxThreat)
+                data.perc = TWT.round(130 - myThreat * 130 / maxThreat)
             else
-                data.perc = math.floor(data.threat * 130 / maxThreat)
+                data.perc = TWT.round(data.threat * 130 / maxThreat)
             end
         end
 
@@ -787,6 +847,8 @@ function TWT.updateUI()
 
     if TWT_CONFIG.tankMode then
 
+        TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
+
         for guid, target in next, TWT.threats do
             if target[TWT.name] then
                 if target[TWT.name].perc == 100 then
@@ -798,31 +860,35 @@ function TWT.updateUI()
                 end
             end
         end
-        -- find first player bellow me
-        for guid, player in next, TWT.secondOnThreat do
-            player.name = ''
-            player.class = 'priest'
-            player.perc = 0
-            for name, data in TWT.threats[guid] do
-                if name ~= TWT.name and name ~= TWT.AGRO then
-                    if data.perc > player.perc then
-                        player.name = name
-                        player.class = data.class
-                        player.perc = data.perc
+
+        if TWT.tableSize(TWT.secondOnThreat) > 1 then
+
+            -- find first player bellow me
+            for guid, player in next, TWT.secondOnThreat do
+                player.name = ''
+                player.class = 'priest'
+                player.perc = 0
+                for name, data in TWT.threats[guid] do
+                    if name ~= TWT.name and name ~= TWT.AGRO then
+                        if data.perc > player.perc then
+                            player.name = name
+                            player.class = data.class
+                            player.perc = data.perc
+                        end
                     end
                 end
             end
-        end
 
-        local nrTargets = TWT.tableSize(TWT.secondOnThreat)
-        _G['TMEF1']:Hide()
-        _G['TMEF2']:Hide()
-        _G['TMEF3']:Hide()
-        _G['TMEF4']:Hide()
-        _G['TMEF5']:Hide()
-        if nrTargets > 1 then
+            _G['TMEF1']:Hide()
+            _G['TMEF2']:Hide()
+            _G['TMEF3']:Hide()
+            _G['TMEF4']:Hide()
+            _G['TMEF5']:Hide()
+
+            local nrTargets = TWT.tableSize(TWT.secondOnThreat)
+
             _G['TWTMainTankModeWindow']:Show()
-            _G['TWTMainTankModeWindow']:SetHeight(nrTargets * 25)
+            _G['TWTMainTankModeWindow']:SetHeight(nrTargets * 25 + 21)
 
             local i = 1
             for guid, player in next, TWT.secondOnThreat do
@@ -833,7 +899,7 @@ function TWT.updateUI()
                     _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[player.class].c .. player.name)
                     _G['TMEF' .. i .. 'Perc']:SetText(player.perc .. '%')
                     _G['TMEF' .. i .. 'TargetButton']:SetID(guid)
-                    _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, 24 - i * 25)
+                    _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, -21 + 24 - i * 25)
 
                     if TWT.raidTargetIconIndex[guid] then
                         SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
@@ -845,7 +911,7 @@ function TWT.updateUI()
                     if player.perc >= 0 and player.perc < 50 then
                         _G['TMEF' .. i .. 'BG']:SetVertexColor(player.perc / 50, 1, 0, 0.3)
                     else
-                        _G['TMEF' .. i .. 'BG']:SetVertexColor(1, 1 - (player.perc - 50) / 50, 0, 0.3)
+                        _G['TMEF' .. i .. 'BG']:SetVertexColor(1, 1 - (player.perc - 50) / 50, 0, 0.6)
                     end
 
                     _G['TMEF' .. i]:Show()
@@ -866,6 +932,16 @@ function TWT.updateUI()
     _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
     _G['TWThreatListScrollFrameScrollBar']:Hide()
 
+    for guid, data in next, TWT.threats do
+        if TWT.lastMessageTime[guid] then
+            if GetTime() - TWT.lastMessageTime[guid] > 2 then
+                --twtdebug('2secs passed, should send info about ' .. guid)
+                TWT.lastMessageTime[guid] = GetTime()
+                TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat, guid)
+                --twtdebug(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ' sent')
+            end
+        end
+    end
 end
 
 TWT.ui:SetScript("OnShow", function()
@@ -916,7 +992,7 @@ function TWT.calcTPS(name, data)
         end
 
         if tps_real >= 0 then
-            return math.floor(tps_real / TWT.tableSize(data.history))
+            return TWT.round(tps_real / TWT.tableSize(data.history))
         else
             return 0
         end
@@ -1141,15 +1217,15 @@ end
 
 function TWT.formatNumber(n)
     if n < 999 then
-        return math.floor(n)
+        return TWT.round(n)
     end
     if n < 99999 then
-        return math.floor(n / 10) / 100 .. 'K' or 0
+        return TWT.round(n / 10) / 100 .. 'K' or 0
     end
     if n < 999999 then
-        return math.floor(n / 10) / 100 .. 'K' or 0
+        return TWT.round(n / 10) / 100 .. 'K' or 0
     end
-    return math.floor(n / 1000) / 1000 .. 'M' or 0
+    return TWT.round(n / 1000) / 1000 .. 'M' or 0
 end
 
 function TWT.tableSize(t)
@@ -1271,4 +1347,9 @@ function TWT.pairsByKeys(t, f)
         end
     end
     return iter
+end
+
+function TWT.round(num, numDecimalPlaces)
+    local mult = 10 ^ (numDecimalPlaces or 0)
+    return math.floor(num * mult + 0.5) / mult
 end
