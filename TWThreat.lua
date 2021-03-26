@@ -1,8 +1,8 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.0.0.4'
-TWT.addonName = '|cff69ccf0Momo|cffffffffmeter'
+TWT.addonVer = '0.5'
+TWT.addonName = '|cffabd473TW|cff11cc11 Threatmeter'
 TWT.dev = false
 
 TWT.prefix = 'TWT'
@@ -14,6 +14,10 @@ TWT.tpss = {}
 TWT.raidTargetIconIndex = {}
 TWT.secondOnThreat = {}
 TWT.lastMessageTime = {}
+
+TWT.custom = {
+    ['The Prophet Skeram'] = 0
+}
 
 --todo hide tank window on combat leave
 
@@ -111,6 +115,8 @@ TWT:RegisterEvent("ADDON_LOADED")
 TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
 TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
+TWT:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
+
 TWT:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF")
 TWT:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
 
@@ -129,6 +135,7 @@ TWT.guids = {}
 
 TWT:SetScript("OnEvent", function()
     if event then
+        -- heal above name stuff
         if event == 'CHAT_MSG_SPELL_SELF_BUFF' or event == 'CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS' then
             local _, _, heal = string.find(arg1, "for (%d+)");
             local _, _, target = string.find(arg1, "heals (%a+) for");
@@ -145,7 +152,7 @@ TWT:SetScript("OnEvent", function()
                 TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.targetChangedHelper:Hide()
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
-                --twtdebug('helper stopped - have guid')
+                twtdebug('helper stopped - have guid' .. tonumber(guidEx[2]))
                 return true
             end
             TWT.targetChangedHelper:Hide()
@@ -164,18 +171,22 @@ TWT:SetScript("OnEvent", function()
             TWT.combatEnd()
         end
         if event == "PLAYER_TARGET_CHANGED" then
-            if not UnitName('target') then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
+
+            if not UnitAffectingCombat('player') then
+                _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
             end
 
-            if UnitIsPlayer('target') then
+            if not UnitName('target') or not UnitAffectingCombat('player') or
+                    UnitIsPlayer('target') or UnitIsDead('target') then
+                twtdebug('not target or not combat or not player or unit dead')
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
+
             end
 
             if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
-                _G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
+                --_G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
+                _G['TWTMainTitle']:SetText('Threat: ' .. UnitName('target'))
                 return false
             end
 
@@ -205,14 +216,34 @@ TWT:SetScript("OnEvent", function()
 
             TWT.targetChangedHelper:Show()
         end
-
+        if event == 'CHAT_MSG_COMBAT_HOSTILE_DEATH' then
+            for guid, gData in next, TWT.threats do
+                if TWT.guids[guid] then
+                    if arg1 == TWT.guids[guid] .. ' dies.' then
+                        twtdebug(guid .. ' died, perc = 0')
+                        TWT.targetChanged(0)
+                        --TWT.lastMessageTime[guid] = GetTime()
+                        --for player, data in next, gData do
+                        --    if player ~= TWT.AGRO then
+                        --        data.threat = 0
+                        --    end
+                        --end
+                    end
+                end
+            end
+        end
     end
 end)
 
 function TWT.init()
 
     if not TWT_CONFIG then
-        TWT_CONFIG = {}
+        TWT_CONFIG = {
+            colTPS = true,
+            colThreat = true,
+            colPerc = true,
+            labelRow = true,
+        }
     end
 
     TWT_CONFIG.glow = TWT_CONFIG.glow or false
@@ -224,7 +255,11 @@ function TWT.init()
     TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
     TWT_CONFIG.tankMode = TWT_CONFIG.tankMode or false
     TWT_CONFIG.lock = TWT_CONFIG.lock or false
-    TWT_CONFIG.visible = TWT_CONFIG.visible or true
+    TWT_CONFIG.visible = TWT_CONFIG.visible or false
+    TWT_CONFIG.colTPS = TWT_CONFIG.colTPS or false
+    TWT_CONFIG.colThreat = TWT_CONFIG.colThreat or false
+    TWT_CONFIG.colPerc = TWT_CONFIG.colPerc or false
+    TWT_CONFIG.labelRow = TWT_CONFIG.labelRow or false
 
     TWT_CONFIG.debug = TWT_CONFIG.debug or false
 
@@ -258,6 +293,44 @@ function TWT.init()
     _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
     _G['TWTMainSettingsTankMode']:SetChecked(TWT_CONFIG.tankMode)
 
+    _G['TWTMainSettingsColumnsTPS']:SetChecked(TWT_CONFIG.colTPS)
+    _G['TWTMainSettingsColumnsThreat']:SetChecked(TWT_CONFIG.colThreat)
+    _G['TWTMainSettingsColumnsPercent']:SetChecked(TWT_CONFIG.colPerc)
+
+    _G['TWTMainSettingsLabelRow']:SetChecked(TWT_CONFIG.labelRow)
+
+    if TWT_CONFIG.colTPS then
+        _G['TWTMainTPSLabel']:Show()
+    else
+        _G['TWTMainTPSLabel']:Hide()
+    end
+
+    if TWT_CONFIG.colThreat then
+        _G['TWTMainThreatLabel']:Show()
+    else
+        _G['TWTMainThreatLabel']:Hide()
+    end
+
+    if TWT_CONFIG.colPerc then
+        _G['TWTMainPercLabel']:Show()
+    else
+        _G['TWTMainPercLabel']:Hide()
+    end
+
+    if TWT_CONFIG.labelRow then
+        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
+        _G['TWTMainNameLabel']:Show()
+        _G['TWTMainTPSLabel']:Show()
+        _G['TWTMainThreatLabel']:Show()
+        _G['TWTMainPercLabel']:Show()
+    else
+        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -20)
+        _G['TWTMainNameLabel']:Hide()
+        _G['TWTMainTPSLabel']:Hide()
+        _G['TWTMainThreatLabel']:Hide()
+        _G['TWTMainPercLabel']:Hide()
+    end
+
     _G['TWTMainSettingsFontButtonNT']:SetVertexColor(0.4, 0.4, 0.4)
 
     local color = TWT.classColors[TWT.class]
@@ -267,7 +340,7 @@ function TWT.init()
     _G['TWTMainLockButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
 
     _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
-    _G['TWTMainThreatTarget']:SetText('Threat: <no target>')
+    --_G['TWTMainThreatTarget']:SetText('Threat: <no target>')
 
     twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
     _G['TWThreatListScrollFrameScrollBar']:Hide()
@@ -476,9 +549,11 @@ function TWT.combatEnd()
         TWT.fullScreenGlowAnimator:Hide()
     end
 
-    --if TWT_CONFIG.tankMode then
-    --    _G['TWTMainTankModeWindow']:Hide()
-    --end
+    if TWT_CONFIG.tankMode then
+        _G['TWTMainTankModeWindow']:Hide()
+    end
+
+    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
 
 end
 
@@ -503,7 +578,7 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
     if gt >= st then
         this.startTime = GetTime()
         if this.canSend then
-            twtdebug('helper sent')
+            --twtdebug('helper sent')
             SendAddonMessage("TWTGUID", "GETGUID", TWT.channel)
             this.canSend = false
         else
@@ -519,6 +594,10 @@ end)
 
 function TWT.targetChanged(guid, cached)
 
+    if guid == 0 then
+        return
+    end
+
     if TargetFrame:IsVisible() ~= nil then
         TWT.targetFrameVisible = true
     else
@@ -531,7 +610,9 @@ function TWT.targetChanged(guid, cached)
 
     -- no target
     if not UnitName('target') then
-        _G['TWTMainThreatTarget']:SetText('Threat: <no target>')
+        --_G['TWTMainThreatTarget']:SetText('Threat: <no target>')
+        _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+
         TWT.updateTargetFrameThreatIndicators(-1, 'notarget')
         return false
     end
@@ -543,15 +624,33 @@ function TWT.targetChanged(guid, cached)
 
     else
 
+        -- skeram hax
+        if not cached then
+            if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
+                TWT.custom[UnitName('target')] = guid
+                twtdebug('real skeram guid = ' .. guid)
+            end
+
+            if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
+                if guid == TWT.custom[UnitName('target')] then
+                    twtdebug('targetting real skeram')
+                else
+                    twtdebug('targetting a clone')
+                end
+            end
+        end
+
         TWT.target = guid
         TWT.lastTarget = UnitName('targettarget') --tank
 
         local targetText = UnitName('target')
 
-        _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
+        --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
+        _G['TWTMainTitle']:SetText('Threat: ' .. UnitName('target'))
         if TWT.threats[TWT.target] then
             if TWT.threats[TWT.target][TWT.name] then
-                _G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
+                --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
+                _G['TWTMainTitle']:SetText(targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
             end
         end
 
@@ -670,7 +769,6 @@ TWT.graphFrames = {}
 function TWT.updateUI()
 
     if TWT.target == '' then
-        twtdebug('uiupdate returned, target = blank')
         return false
     end
 
@@ -802,6 +900,11 @@ function TWT.updateUI()
         --        TWT.tpss[math.floor(GetTime()) - 0.25] = (TWT.tpss[math.floor(GetTime()) - 0.5] + TWT.tpss[math.floor(GetTime())]) / 2
         --    end
         --end
+        if TWT_CONFIG.colTPS then
+            _G['TWThreat' .. name .. 'TPS']:Show()
+        else
+            _G['TWThreat' .. name .. 'TPS']:Hide()
+        end
         _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
 
@@ -824,10 +927,11 @@ function TWT.updateUI()
             data.perc = 100
         end
 
-        if string.find(data.perc, '#INF', 1, true) then
-            data.perc = 0
+        if TWT_CONFIG.colPerc then
+            _G['TWThreat' .. name .. 'Perc']:Show()
+        else
+            _G['TWThreat' .. name .. 'Perc']:Hide()
         end
-
         _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
 
 
@@ -837,14 +941,19 @@ function TWT.updateUI()
 
         -- bar
         local color = TWT.classColors[data.class]
+        if TWT_CONFIG.colThreat then
+            _G['TWThreat' .. name .. 'Threat']:Show()
+        else
+            _G['TWThreat' .. name .. 'Threat']:Hide()
+        end
         if name == TWT.name then
 
             _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
 
             TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
 
-            _G['TWTMainThreatTarget']:SetText('Threat: ' .. (TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
-
+            --_G['TWTMainThreatTarget']:SetText('Threat: ' .. (TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
+            _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
             _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
         elseif name == TWT.AGRO then
@@ -861,7 +970,7 @@ function TWT.updateUI()
         end
 
         -- dir
-        if name ~= TWT.AGRO then
+        if name ~= TWT.AGRO and TWT_CONFIG.colThreat then
             if data.dir then
 
                 if data.dir == 'down' then
@@ -920,6 +1029,7 @@ function TWT.updateUI()
         for guid, target in next, TWT.threats do
             if target[TWT.name] then
                 if target[TWT.name].perc == 100 then
+                    twtdebug('target me perc = 100, added ' .. guid)
                     TWT.secondOnThreat[guid] = {
                         name = '',
                         class = '',
@@ -954,16 +1064,18 @@ function TWT.updateUI()
             _G['TMEF3']:Hide()
             _G['TMEF4']:Hide()
             _G['TMEF5']:Hide()
-
-            local nrTargets = TWT.tableSize(TWT.secondOnThreat)
-
-            _G['TWTMainTankModeWindow']:Show()
-            _G['TWTMainTankModeWindow']:SetHeight(nrTargets * 25 + 21)
+            _G['TWTMainTankModeWindow']:Hide()
+            _G['TWTMainTankModeWindow']:SetHeight(0)
 
             local i = 1
             for guid, player in next, TWT.secondOnThreat do
 
                 if player.name ~= '' then
+
+                    if player.perc ~= 0 then
+                        _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 21)
+                        _G['TWTMainTankModeWindow']:Show()
+                    end
 
                     _G['TMEF' .. i .. 'Target']:SetText(TWT.guids[guid])
                     _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[player.class].c .. player.name)
@@ -1007,7 +1119,9 @@ function TWT.updateUI()
             if GetTime() - TWT.lastMessageTime[guid] > 2 then
                 --twtdebug('2secs passed, should send info about ' .. guid)
                 TWT.lastMessageTime[guid] = GetTime()
-                TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat, guid)
+                if data[TWT.threat] ~= 0 then
+                    TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat, guid)
+                end
                 --twtdebug(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ' sent')
             end
         end
@@ -1244,6 +1358,38 @@ function TWTChangeSetting_OnClick(name, checked, code)
             _G['TWTMainSettingsFullScreenGlow']:Enable()
         end
     end
+
+    if TWT_CONFIG.colTPS then
+        _G['TWTMainTPSLabel']:Show()
+    else
+        _G['TWTMainTPSLabel']:Hide()
+    end
+
+    if TWT_CONFIG.colThreat then
+        _G['TWTMainThreatLabel']:Show()
+    else
+        _G['TWTMainThreatLabel']:Hide()
+    end
+
+    if TWT_CONFIG.colPerc then
+        _G['TWTMainPercLabel']:Show()
+    else
+        _G['TWTMainPercLabel']:Hide()
+    end
+
+    if TWT_CONFIG.labelRow then
+        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
+        _G['TWTMainNameLabel']:Show()
+        _G['TWTMainTPSLabel']:Show()
+        _G['TWTMainThreatLabel']:Show()
+        _G['TWTMainPercLabel']:Show()
+    else
+        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -20)
+        _G['TWTMainNameLabel']:Hide()
+        _G['TWTMainTPSLabel']:Hide()
+        _G['TWTMainThreatLabel']:Hide()
+        _G['TWTMainPercLabel']:Hide()
+    end
 end
 
 function TWTCloseButton_OnClick()
@@ -1332,6 +1478,11 @@ function TWT.ohShitHereWeSortAgain(t, reverse)
 end
 
 function TWT.formatNumber(n)
+
+    if n < 0 then
+        n = 0
+    end
+
     if n < 999 then
         return TWT.round(n)
     end
