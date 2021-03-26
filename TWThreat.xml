@@ -393,7 +393,7 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentName" inherits="GameFontHighlightSmall" text="Name"
+                <FontString name="$parentNameLabel" inherits="GameFontHighlightSmall" text="Name"
                             justifyH="LEFT">
                     <Size>
                         <AbsDimension x="115" y="20"/>
@@ -406,56 +406,56 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
+                <FontString name="$parentTPSLabel" inherits="GameFontHighlightSmall" text="TPS"
                             justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="60" y="20"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
+                        <Anchor point="LEFT" relativeTo="$parentNameLabel" relativePoint="RIGHT">
                             <Offset>
                                 <AbsDimension x="-10" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="Threat"
+                <FontString name="$parentThreatLabel" inherits="GameFontHighlightSmall" text="Threat"
                             justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="60" y="20"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
+                        <Anchor point="LEFT" relativeTo="$parentTPSLabel" relativePoint="RIGHT">
                             <Offset>
                                 <AbsDimension x="5" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentPerc" inherits="GameFontHighlightSmall" text="%" justifyH="RIGHT">
+                <FontString name="$parentPercLabel" inherits="GameFontHighlightSmall" text="%" justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="50" y="20"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentThreat" relativePoint="RIGHT">
+                        <Anchor point="LEFT" relativeTo="$parentThreatLabel" relativePoint="RIGHT">
                             <Offset>
                                 <AbsDimension x="0" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentThreatTarget" inherits="GameFontHighlight" text="Threat:">
-                    <Size>
-                        <AbsDimension x="300" y="20"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="BOTTOM">
-                            <Offset>
-                                <AbsDimension x="0" y="1"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
+<!--                <FontString name="$parentThreatTarget" inherits="GameFontHighlight" text="Threat:">-->
+<!--                    <Size>-->
+<!--                        <AbsDimension x="300" y="20"/>-->
+<!--                    </Size>-->
+<!--                    <Anchors>-->
+<!--                        <Anchor point="BOTTOM">-->
+<!--                            <Offset>-->
+<!--                                <AbsDimension x="0" y="1"/>-->
+<!--                            </Offset>-->
+<!--                        </Anchor>-->
+<!--                    </Anchors>-->
+<!--                </FontString>-->
             </Layer>
         </Layers>
         <Scripts>
@@ -618,7 +618,7 @@
                     </Anchor>
                     <Anchor point="BOTTOMRIGHT">
                         <Offset>
-                            <AbsDimension x="-1" y="20"/>
+                            <AbsDimension x="-1" y="0"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
@@ -646,10 +646,10 @@
                 </ScrollChild>
             </ScrollFrame>
 
-            <Frame name="$parentSettings" hidden="true" toplevel="true"
+            <Frame name="$parentSettings" hidden="false" toplevel="true"
                    movable="true" enableMouse="true">
                 <Size>
-                    <AbsDimension x="300" y="240"/>
+                    <AbsDimension x="300" y="280"/>
                 </Size>
                 <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                           tile="false">
@@ -716,6 +716,21 @@
                                 </Anchor>
                             </Anchors>
                         </FontString>
+
+                        <FontString name="$parentSColumns" inherits="GameFontNormal" text="Columns"
+                                    justifyH="LEFT">
+                            <Size>
+                                <AbsDimension x="100" y="20"/>
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT">
+                                    <Offset>
+                                        <AbsDimension x="15" y="-230"/>
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </FontString>
+
                     </Layer>
                 </Layers>
                 <Frames>
@@ -1109,6 +1124,201 @@
                             </OnValueChanged>
                         </Scripts>
                     </Slider>
+
+                    <CheckButton name="$parentLabelRow" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="80" y="-230"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Show Labels">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'labelRow')
+                            </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Show TPS Column');
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentColumnsTPS" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="10" y="-250"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="TPS">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'colTPS')
+                            </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Show TPS Column');
+<!--                                GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);-->
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentColumnsThreat" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="80" y="-250"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Threat">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'colThreat')
+                            </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Show Threat Column');
+<!--                                GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);-->
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
+                    <CheckButton name="$parentColumnsPercent" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="160" y="-250"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Percent">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'colPerc')
+                            </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Show Percent Column');
+<!--                                GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);-->
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
 
                 </Frames>
                 <Scripts>
