@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: TWThreat
 ## Author: Xerron/Er
-## Notes: TWThreat
+## Notes: Contributors: Henry, Laughadin, Faralynn
 ## SavedVariablesPerCharacter: TWT_CONFIG
 TWThreat.xml
