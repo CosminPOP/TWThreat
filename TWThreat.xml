@@ -870,6 +870,55 @@
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
 
+                    <CheckButton name="$parentAggroSound" hidden="false">
+                        <Size>
+                            <AbsDimension x="20" y="20"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="140" y="-50"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="ARTWORK">
+                                <FontString name="$parentLabel" inherits="GameFontNormal"
+                                            text="Play Warning at 99%">
+                                    <Anchors>
+                                        <Anchor point="LEFT" relativePoint="RIGHT">
+                                            <Offset>
+                                                <AbsDimension x="1" y="1"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Frames>
+                        </Frames>
+                        <Scripts>
+                            <OnClick>
+                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'aggroSound')
+                            </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Aggro Warning Sound');
+                                GameTooltip:AddLine('Plays a warning sound when you reach 99% threat.', 1, 1, 1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
+                        </Scripts>
+                        <NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+                        <PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+                        <HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+                        <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+                        <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
+                    </CheckButton>
+
                     <CheckButton name="$parentPercNumbers" hidden="false">
                         <Size>
                             <AbsDimension x="20" y="20"/>
@@ -1464,7 +1513,7 @@
         </Frames>
     </Frame>
 
-    <Frame name="TWThreatDisplayTarget" frameStrata="LOW">
+    <Frame name="TWThreatDisplayTarget" frameStrata="LOW" hidden="true">
         <Size>
             <AbsDimension x="232" y="100"/>
         </Size>
