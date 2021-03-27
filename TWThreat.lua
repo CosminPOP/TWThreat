@@ -14,12 +14,15 @@ TWT.tpss = {}
 TWT.raidTargetIconIndex = {}
 TWT.secondOnThreat = {}
 TWT.lastMessageTime = {}
+TWT.lastAggroWarningSoundTime = 0
+
+TWT.wipeThreats = false
 
 TWT.custom = {
     ['The Prophet Skeram'] = 0
 }
 
---todo hide tank window on combat leave
+--todo keep threat window up for healers somehow
 
 TWT.classColors = {
     ["warrior"] = { r = 0.78, g = 0.61, b = 0.43, c = "|cffc79c6e" },
@@ -44,7 +47,7 @@ TWT.fonts = {
 
 function twtprint(a)
     if a == nil then
-        DEFAULT_CHAT_FRAME:AddMessage('[TWT]|cff0070de:' .. math.floor(GetTime()) .. '|cffffffff attempt to print a nil value.')
+        DEFAULT_CHAT_FRAME:AddMessage('[TWT]|cff0070de:' .. GetTime() .. '|cffffffff attempt to print a nil value.')
         return false
     end
     DEFAULT_CHAT_FRAME:AddMessage(TWT.classColors[TWT.class].c .. "[TWT] |cffffffff" .. a)
@@ -56,13 +59,13 @@ function twtdebug(a)
     end
     if type(a) == 'boolean' then
         if a then
-            twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[true]')
+            twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff[true]')
         else
-            twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[false]')
+            twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff[false]')
         end
         return true
     end
-    twtprint('|cff0070de[TWTDEBUG:' .. time() .. ']|cffffffff[' .. a .. ']')
+    twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff[' .. a .. ']')
 end
 
 SLASH_TWT1 = "/twt"
@@ -153,6 +156,7 @@ TWT:SetScript("OnEvent", function()
                 TWT.targetChangedHelper:Hide()
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
                 twtdebug('helper stopped - have guid' .. tonumber(guidEx[2]))
+                --twtdebug('took ' .. GetTime() - TWT.targetChangedHelper.sentAt )
                 return true
             end
             TWT.targetChangedHelper:Hide()
@@ -172,21 +176,37 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_TARGET_CHANGED" then
 
-            if not UnitAffectingCombat('player') then
-                _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
-            end
-
-            if not UnitName('target') or not UnitAffectingCombat('player') or
-                    UnitIsPlayer('target') or UnitIsDead('target') then
-                twtdebug('not target or not combat or not player or unit dead')
+            if UnitIsDead('target') then
+                TWT.target = ''
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
-
             end
+
+            if UnitClassification('target') ~= 'worldboss' and
+                    UnitClassification('target') ~= 'elite' then
+                TWT.target = ''
+                TWT.updateTargetFrameThreatIndicators(-1)
+                return false
+            end
+
+            --if not UnitAffectingCombat('player') then
+            --    TWT.target = ''
+            --    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+            --    TWT.updateTargetFrameThreatIndicators(-1)
+            --    return false
+            --end
 
             if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
                 --_G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
-                _G['TWTMainTitle']:SetText('Threat: ' .. UnitName('target'))
+                TWT.target = ''
+                _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+                TWT.updateTargetFrameThreatIndicators(-1)
+                return false
+            end
+
+            if not UnitName('target') or UnitIsPlayer('target') then
+                TWT.target = ''
+                TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
@@ -198,39 +218,37 @@ TWT:SetScript("OnEvent", function()
 
             -- load from guids cache first
             -- even if its the wrong guid, it will update ui fast, not wait for server guid
-            local cacheGUID = 0
-            for guid, creature in TWT.guids do
-                if creature == UnitName('target') then
-                    cacheGUID = guid
-                end
-            end
+            --local cacheGUID = 0
+            --for guid, creature in TWT.guids do
+            --    if creature == UnitName('target') then
+            --        cacheGUID = guid
+            --    end
+            --end
+            --
+            --if cacheGUID ~= 0 then
+            --    --twtdebug('cached guid found')
+            --    TWT.targetChanged(cacheGUID, true)
+            --end
+            --
+            --if not TWT.threats[cacheGUID] then
+            --    TWT.updateTargetFrameThreatIndicators(-1)
+            --end
 
-            if cacheGUID ~= 0 then
-                --twtdebug('cached guid found')
-                TWT.targetChanged(cacheGUID, true)
-            end
+            TWT.target = ''
 
-            if not TWT.threats[cacheGUID] then
-                TWT.updateTargetFrameThreatIndicators(-1)
-            end
-
+            TWT.updateTargetFrameThreatIndicators(-1)
             TWT.targetChangedHelper:Show()
         end
-        if event == 'CHAT_MSG_COMBAT_HOSTILE_DEATH' then
+        if event == 'CHAT_MSG_COMBAT_HOSTILE_DEATH' and TWT_CONFIG.tankMode then
+            local wipe = false
             for guid, gData in next, TWT.threats do
                 if TWT.guids[guid] then
                     if arg1 == TWT.guids[guid] .. ' dies.' then
-                        twtdebug(guid .. ' died, perc = 0')
-                        TWT.targetChanged(0)
-                        --TWT.lastMessageTime[guid] = GetTime()
-                        --for player, data in next, gData do
-                        --    if player ~= TWT.AGRO then
-                        --        data.threat = 0
-                        --    end
-                        --end
+                        wipe = true
                     end
                 end
             end
+            TWT.wipeThreats = wipe
         end
     end
 end)
@@ -253,6 +271,7 @@ function TWT.init()
     TWT_CONFIG.font = TWT_CONFIG.font or 'Roboto'
     TWT_CONFIG.barHeight = TWT_CONFIG.barHeight or 20
     TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
+    TWT_CONFIG.aggroSound = TWT_CONFIG.aggroSound or false
     TWT_CONFIG.tankMode = TWT_CONFIG.tankMode or false
     TWT_CONFIG.lock = TWT_CONFIG.lock or false
     TWT_CONFIG.visible = TWT_CONFIG.visible or false
@@ -291,6 +310,7 @@ function TWT.init()
     _G['TWTMainSettingsShowInCombat']:SetChecked(TWT_CONFIG.showInCombat)
     _G['TWTMainSettingsHideOOC']:SetChecked(TWT_CONFIG.hideOOC)
     _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
+    _G['TWTMainSettingsAggroSound']:SetChecked(TWT_CONFIG.aggroSound)
     _G['TWTMainSettingsTankMode']:SetChecked(TWT_CONFIG.tankMode)
 
     _G['TWTMainSettingsColumnsTPS']:SetChecked(TWT_CONFIG.colTPS)
@@ -387,9 +407,9 @@ function TWT.handleServerMSG(msg)
 
         TWT.send(TWT.class .. ':' .. guid .. ':' .. threat, guid)
 
-        if TWT.target == '' then
-            TWT.target = guid
-        end
+        --if TWT.target == '' then
+        --    TWT.target = guid
+        --end
 
         TWT.guids[guid] = creature
 
@@ -413,10 +433,10 @@ function TWT.handleClientMSG(msg, sender)
 
         if not TWT.threats[guid][TWT.name] then
             TWT.threats[guid][TWT.name] = {
-                class = 'agro',
+                class = TWT.class,
                 threat = 0,
-                perc = 100,
-                tps = '',
+                perc = 0,
+                tps = 0,
                 history = {},
                 lastThreat = 0,
                 dir = '-'
@@ -560,6 +580,8 @@ end
 TWT.targetChangedHelper = CreateFrame('Frame')
 TWT.targetChangedHelper:Hide()
 
+TWT.targetChangedHelper.sentAt = 0
+
 TWT.targetChangedHelper:SetScript("OnShow", function()
     this.startTime = GetTime()
     this.canSend = true
@@ -578,7 +600,8 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
     if gt >= st then
         this.startTime = GetTime()
         if this.canSend then
-            --twtdebug('helper sent')
+            twtdebug('helper sent')
+            TWT.targetChangedHelper.sentAt = GetTime()
             SendAddonMessage("TWTGUID", "GETGUID", TWT.channel)
             this.canSend = false
         else
@@ -595,10 +618,11 @@ end)
 function TWT.targetChanged(guid, cached)
 
     if guid == 0 then
+        TWT.updateTargetFrameThreatIndicators(-1)
         return
     end
 
-    if TargetFrame:IsVisible() ~= nil then
+    if _G['TargetFrame']:IsVisible() ~= nil then
         TWT.targetFrameVisible = true
     else
         TWT.targetFrameVisible = false
@@ -619,45 +643,45 @@ function TWT.targetChanged(guid, cached)
 
     -- player check
     if UnitIsPlayer('target') then
-
         TWT.updateTargetFrameThreatIndicators(-1)
+        return
+    end
 
+    -- skeram hax
+    if not cached then
+        if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
+            TWT.custom[UnitName('target')] = guid
+            twtdebug('real skeram guid = ' .. guid)
+        end
+
+        if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
+            if guid == TWT.custom[UnitName('target')] then
+                twtdebug('targetting real skeram')
+            else
+                twtdebug('targetting a clone')
+            end
+        end
+    end
+
+    TWT.target = guid
+    TWT.lastTarget = UnitName('targettarget') --tank
+
+    local targetText = UnitName('target')
+
+    --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
+    _G['TWTMainTitle']:SetText('Threat: ' .. UnitName('target'))
+    if TWT.threats[TWT.target] then
+        if TWT.threats[TWT.target][TWT.name] then
+            --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
+            _G['TWTMainTitle']:SetText(targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
+        end
     else
+        TWT.updateTargetFrameThreatIndicators(-1)
+        return false
+    end
 
-        -- skeram hax
-        if not cached then
-            if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
-                TWT.custom[UnitName('target')] = guid
-                twtdebug('real skeram guid = ' .. guid)
-            end
-
-            if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
-                if guid == TWT.custom[UnitName('target')] then
-                    twtdebug('targetting real skeram')
-                else
-                    twtdebug('targetting a clone')
-                end
-            end
-        end
-
-        TWT.target = guid
-        TWT.lastTarget = UnitName('targettarget') --tank
-
-        local targetText = UnitName('target')
-
-        --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
-        _G['TWTMainTitle']:SetText('Threat: ' .. UnitName('target'))
-        if TWT.threats[TWT.target] then
-            if TWT.threats[TWT.target][TWT.name] then
-                --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
-                _G['TWTMainTitle']:SetText(targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
-            end
-        end
-
-        if not cached then
-            TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
-        end
-
+    if not cached then
+        TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
     end
 
     TWT.updateUI()
@@ -768,14 +792,19 @@ TWT.graphFrames = {}
 
 function TWT.updateUI()
 
-    if TWT.target == '' then
-        return false
+    if TWT.wipeThreats and TWT_CONFIG.tankMode then
+        TWT.threats = TWT.wipe(TWT.threats)
+        TWT.wipeThreats = false
     end
 
     _G['TWThreatListScrollFrameScrollBar']:Hide()
 
     for index in next, TWT.threatsFrames do
         TWT.threatsFrames[index]:Hide()
+    end
+
+    if TWT.target == '' then
+        return false
     end
 
     local index = 0
@@ -797,6 +826,7 @@ function TWT.updateUI()
     end
 
     if not TWT.threats[TWT.target] then
+        TWT.updateTargetFrameThreatIndicators(-1)
         return false
     end
 
@@ -839,6 +869,10 @@ function TWT.updateUI()
     end
 
     local maxThreat = TWT.threats[TWT.target][TWT.AGRO].threat
+
+    if maxThreat == 0 then
+        return false
+    end
 
     for name, data in TWT.ohShitHereWeSortAgain(TWT.threats[TWT.target], true) do
 
@@ -952,6 +986,11 @@ function TWT.updateUI()
 
             TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
 
+            if TWT_CONFIG.aggroSound and data.perc >= 99 and time() - TWT.lastAggroWarningSoundTime > 5 then
+                PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
+                TWT.lastAggroWarningSoundTime = time()
+            end
+
             --_G['TWTMainThreatTarget']:SetText('Threat: ' .. (TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
             _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
             _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
@@ -1028,8 +1067,7 @@ function TWT.updateUI()
 
         for guid, target in next, TWT.threats do
             if target[TWT.name] then
-                if target[TWT.name].perc == 100 then
-                    twtdebug('target me perc = 100, added ' .. guid)
+                if target[TWT.name].perc == 100 and TWT.tableSize(TWT.secondOnThreat) < 5 then
                     TWT.secondOnThreat[guid] = {
                         name = '',
                         class = '',
@@ -1038,8 +1076,6 @@ function TWT.updateUI()
                 end
             end
         end
-
-        --twtdebug('second on th = ' .. TWT.tableSize(TWT.secondOnThreat))
 
         if TWT.tableSize(TWT.secondOnThreat) > 1 then
 
@@ -1117,12 +1153,10 @@ function TWT.updateUI()
     for guid, data in next, TWT.threats do
         if TWT.lastMessageTime[guid] then
             if GetTime() - TWT.lastMessageTime[guid] > 2 then
-                --twtdebug('2secs passed, should send info about ' .. guid)
                 TWT.lastMessageTime[guid] = GetTime()
                 if data[TWT.threat] ~= 0 then
                     TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat, guid)
                 end
-                --twtdebug(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ' sent')
             end
         end
     end
@@ -1132,7 +1166,7 @@ TWT.ui:SetScript("OnShow", function()
     this.startTime = GetTime()
 end)
 TWT.ui:SetScript("OnUpdate", function()
-    local plus = 1
+    local plus = 0.5
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
@@ -1273,6 +1307,7 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
     end
 
     _G['TWThreatDisplayTarget']:Show()
+    --twtdebug('TWThreatDisplayTarget show1')
 
     if TWT_CONFIG.perc and not UnitIsPlayer('target') then
         _G['TWThreatDisplayTargetNumericPerc']:SetText(perc .. '%')
@@ -1320,10 +1355,10 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if UnitAffectingCombat('player') and TWT.targetFrameVisible then
         _G['TWThreatDisplayTarget']:Show()
+        --twtdebug('TWThreatDisplayTarget show2')
     else
         _G['TWThreatDisplayTarget']:Hide()
     end
-
 
 end
 
@@ -1357,6 +1392,9 @@ function TWTChangeSetting_OnClick(name, checked, code)
         else
             _G['TWTMainSettingsFullScreenGlow']:Enable()
         end
+    end
+    if code == 'aggroSound' and checked then
+        PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
     end
 
     if TWT_CONFIG.colTPS then
@@ -1420,7 +1458,7 @@ function TWTTargetButton_OnClick(guid)
 
         TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid)
     else
-        twtdebug('TWT.raidTargetIconIndex[' .. guid .. '] is nil')
+        --twtdebug('TWT.raidTargetIconIndex[' .. guid .. '] is nil')
     end
 
 end
