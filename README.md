@@ -1,4 +1,4 @@
-# TWThreat
+# TWThreat - NOT READY FOR PUBLIC USE 
 Threat Meter for Turtle WoW
 
 Features:
