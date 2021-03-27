@@ -209,32 +209,7 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
-                            justifyH="RIGHT">
-                    <Size>
-                        <AbsDimension x="40" y="20"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentName" relativePoint="RIGHT">
-                            <Offset>
-                                <AbsDimension x="-18" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="threat"
-                            justifyH="RIGHT">
-                    <Size>
-                        <AbsDimension x="70" y="20"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentTPS" relativePoint="RIGHT">
-                            <Offset>
-                                <AbsDimension x="5" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
+
                 <FontString name="$parentPerc" inherits="GameFontHighlightSmall" text="perc" justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="60" y="20"/>
@@ -242,11 +217,41 @@
                     <Anchors>
                         <Anchor point="RIGHT">
                             <Offset>
-                                <AbsDimension x="-2" y="0"/>
+                                <AbsDimension x="-5" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
+
+                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="threat"
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="80" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="RIGHT" relativeTo="$parentPerc" relativePoint="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="50" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="RIGHT" relativeTo="$parentThreat" relativePoint="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+
 
                 <Texture name="$parentArrowUp" file="interface\buttons\ui-sortarrow" hidden="true">
                     <Size>
@@ -320,7 +325,7 @@
         </ThumbTexture>
     </Slider>
 
-    <Frame name="TWTFullScreenGlow" hidden="true" toplevel="false" frameStrata="LOW">
+    <Frame name="TWTFullScreenGlow" alpha="0" hidden="true" toplevel="false" frameStrata="LOW">
         <Layers>
             <Layer level="BACKGROUND">
                 <Texture name="$parentTexture" file="Interface\addons\TWThreat\images\fs_glow" alphaMode="ADD">
@@ -340,10 +345,6 @@
         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                   tile="false">
         </Backdrop>
-        <ResizeBounds>
-            <minResize x="300" y="160"/>
-            <maxResize x="300" y="400"/>
-        </ResizeBounds>
         <Anchors>
             <Anchor point="CENTER">
                 <Offset>
@@ -406,56 +407,49 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-                <FontString name="$parentTPSLabel" inherits="GameFontHighlightSmall" text="TPS"
-                            justifyH="RIGHT">
-                    <Size>
-                        <AbsDimension x="60" y="20"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentNameLabel" relativePoint="RIGHT">
-                            <Offset>
-                                <AbsDimension x="-10" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
-                <FontString name="$parentThreatLabel" inherits="GameFontHighlightSmall" text="Threat"
-                            justifyH="RIGHT">
-                    <Size>
-                        <AbsDimension x="60" y="20"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentTPSLabel" relativePoint="RIGHT">
-                            <Offset>
-                                <AbsDimension x="5" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </FontString>
+
                 <FontString name="$parentPercLabel" inherits="GameFontHighlightSmall" text="%" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="50" y="20"/>
+                        <AbsDimension x="60" y="20"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentThreatLabel" relativePoint="RIGHT">
+                        <Anchor point="TOPRIGHT">
+                            <Offset>
+                                <AbsDimension x="-10" y="-21"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="$parentThreatLabel" inherits="GameFontHighlightSmall" text="Threat  "
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="80" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="RIGHT" relativeTo="$parentPercLabel" relativePoint="LEFT">
                             <Offset>
                                 <AbsDimension x="0" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
                 </FontString>
-<!--                <FontString name="$parentThreatTarget" inherits="GameFontHighlight" text="Threat:">-->
-<!--                    <Size>-->
-<!--                        <AbsDimension x="300" y="20"/>-->
-<!--                    </Size>-->
-<!--                    <Anchors>-->
-<!--                        <Anchor point="BOTTOM">-->
-<!--                            <Offset>-->
-<!--                                <AbsDimension x="0" y="1"/>-->
-<!--                            </Offset>-->
-<!--                        </Anchor>-->
-<!--                    </Anchors>-->
-<!--                </FontString>-->
+
+                <FontString name="$parentTPSLabel" inherits="GameFontHighlightSmall" text="TPS  "
+                            justifyH="RIGHT">
+                    <Size>
+                        <AbsDimension x="50" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="RIGHT" relativeTo="$parentThreatLabel" relativePoint="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+
             </Layer>
         </Layers>
         <Scripts>
