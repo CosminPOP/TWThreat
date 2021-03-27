@@ -1,5 +1,5 @@
-# TWThreat
-Threat Meter for Turtle WoW - NOT READY FOR PUBLIC USE 
+# TWThreat - NOT READY FOR PUBLIC USE 
+Threat Meter for Turtle WoW
 
 Features:
 - Threat, threat to pull aggro, TPS, %, % to pull
