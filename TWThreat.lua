@@ -4,6 +4,7 @@ local TWT = CreateFrame("Frame")
 TWT.addonVer = '0.5'
 TWT.addonName = '|cffabd473TW|cff11cc11 Threatmeter'
 TWT.dev = false
+TWT.windowMaxWidth = 300
 
 TWT.prefix = 'TWT'
 TWT.channel = 'RAID'
@@ -15,6 +16,7 @@ TWT.raidTargetIconIndex = {}
 TWT.secondOnThreat = {}
 TWT.lastMessageTime = {}
 TWT.lastAggroWarningSoundTime = 0
+TWT.lastAggroWarningGlowTime = 0
 
 TWT.wipeThreats = false
 
@@ -182,6 +184,14 @@ TWT:SetScript("OnEvent", function()
                 return false
             end
 
+            if not UnitName('target') or UnitIsPlayer('target') then
+                TWT.target = ''
+                -- twtdebug('player or none')
+                _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+                TWT.updateTargetFrameThreatIndicators(-1)
+                return false
+            end
+
             if UnitClassification('target') ~= 'worldboss' and
                     UnitClassification('target') ~= 'elite' then
                 TWT.target = ''
@@ -197,15 +207,8 @@ TWT:SetScript("OnEvent", function()
             --end
 
             if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
-                --_G['TWTMainThreatTarget']:SetText('Threat: ' .. UnitName('target'))
                 TWT.target = ''
                 _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
-            if not UnitName('target') or UnitIsPlayer('target') then
-                TWT.target = ''
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
@@ -216,23 +219,16 @@ TWT:SetScript("OnEvent", function()
                 TWT.channel = 'PARTY'
             end
 
-            -- load from guids cache first
-            -- even if its the wrong guid, it will update ui fast, not wait for server guid
-            --local cacheGUID = 0
-            --for guid, creature in TWT.guids do
-            --    if creature == UnitName('target') then
-            --        cacheGUID = guid
-            --    end
-            --end
-            --
-            --if cacheGUID ~= 0 then
-            --    --twtdebug('cached guid found')
-            --    TWT.targetChanged(cacheGUID, true)
-            --end
-            --
-            --if not TWT.threats[cacheGUID] then
-            --    TWT.updateTargetFrameThreatIndicators(-1)
-            --end
+            -- find target guid based on mark
+            if GetRaidTargetIndex("target") ~= 0 then
+                for guid, index in next, TWT.raidTargetIconIndex do
+                    if index == GetRaidTargetIndex("target") then
+                        TWT.target = guid
+                        --twtdebug('found target guid = ' .. guid ..' based on mark')
+                        return true
+                    end
+                end
+            end
 
             TWT.target = ''
 
@@ -250,6 +246,43 @@ TWT:SetScript("OnEvent", function()
             end
             TWT.wipeThreats = wipe
         end
+    end
+end)
+
+
+TWT.glowFader = CreateFrame('Frame')
+TWT.glowFader:Hide()
+
+TWT.glowFader:SetScript("OnShow", function()
+    this.startTime = GetTime()
+    this.dir = 10
+    _G['TWTFullScreenGlow']:SetAlpha(0.01)
+    _G['TWTFullScreenGlow']:Show()
+end)
+TWT.glowFader:SetScript("OnHide", function()
+    this.startTime = GetTime()
+end)
+TWT.glowFader:SetScript("OnUpdate", function()
+    local plus = 0.01
+    local gt = GetTime() * 1000
+    local st = (this.startTime + plus) * 1000
+    if gt >= st then
+        this.startTime = GetTime()
+
+
+
+        if _G['TWTFullScreenGlow']:GetAlpha() >= 1 then
+            this.dir = -1
+            --_G['TWTFullScreenGlow']:SetAlpha(1)
+        end
+
+        _G['TWTFullScreenGlow']:SetAlpha(_G['TWTFullScreenGlow']:GetAlpha() + 0.03 * this.dir)
+
+        if _G['TWTFullScreenGlow']:GetAlpha() <= 0 then
+            TWT.glowFader:Hide()
+        end
+
+
     end
 end)
 
@@ -287,6 +320,9 @@ function TWT.init()
     else
         _G['TWTMain']:Hide()
     end
+
+    _G['TWTMain']:SetMinResize(300, 100)
+    _G['TWTMain']:SetMaxResize(300, 300)
 
     if TWT_CONFIG.tankMode then
         _G['TWTMainSettingsFullScreenGlow']:Disable()
@@ -360,11 +396,9 @@ function TWT.init()
     _G['TWTMainLockButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
 
     _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
-    --_G['TWTMainThreatTarget']:SetText('Threat: <no target>')
 
     twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
-    _G['TWThreatListScrollFrameScrollBar']:Hide()
-    _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
+
     TWTMainMainWindow_Resized()
     TWT.ui:Show()
 
@@ -390,6 +424,22 @@ function TWT.init()
 
         fontFrames[i]:Show()
     end
+
+    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetNormalTexture('')
+    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetDisabledTexture('')
+    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetHighlightTexture('')
+    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetPushedTexture('')
+
+    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetNormalTexture('')
+    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetDisabledTexture('')
+    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetHighlightTexture('')
+    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetPushedTexture('')
+
+    _G['TWThreatListScrollFrameScrollBarThumbTexture']:SetTexture('')
+
+    --      tps -> threat -> perc
+    --tps rel ifvisiblethreat, if visible perc else right
+    --threat rel if visible perc
 
 end
 
@@ -543,7 +593,7 @@ function TWT.combatStart()
     end
 
     if TWT_CONFIG.fullScreenGlow then
-        TWT.fullScreenGlowAnimator:Show()
+        --TWT.fullScreenGlowAnimator:Show()
     end
 end
 
@@ -566,7 +616,7 @@ function TWT.combatEnd()
     end
 
     if TWT_CONFIG.fullScreenGlow then
-        TWT.fullScreenGlowAnimator:Hide()
+        --TWT.fullScreenGlowAnimator:Hide()
     end
 
     if TWT_CONFIG.tankMode then
@@ -634,7 +684,6 @@ function TWT.targetChanged(guid, cached)
 
     -- no target
     if not UnitName('target') then
-        --_G['TWTMainThreatTarget']:SetText('Threat: <no target>')
         _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
 
         TWT.updateTargetFrameThreatIndicators(-1, 'notarget')
@@ -668,11 +717,9 @@ function TWT.targetChanged(guid, cached)
 
     local targetText = UnitName('target')
 
-    --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText)
-    _G['TWTMainTitle']:SetText('Threat: ' .. UnitName('target'))
+    _G['TWTMainTitle']:SetText(TWT.unitNameForTitle(UnitName('target')))
     if TWT.threats[TWT.target] then
         if TWT.threats[TWT.target][TWT.name] then
-            --_G['TWTMainThreatTarget']:SetText('Threat: ' .. targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
             _G['TWTMainTitle']:SetText(targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
         end
     else
@@ -680,9 +727,9 @@ function TWT.targetChanged(guid, cached)
         return false
     end
 
-    if not cached then
-        TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
-    end
+    --if not cached then
+    --    TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
+    --end
 
     TWT.updateUI()
 end
@@ -797,8 +844,6 @@ function TWT.updateUI()
         TWT.wipeThreats = false
     end
 
-    _G['TWThreatListScrollFrameScrollBar']:Hide()
-
     for index in next, TWT.threatsFrames do
         TWT.threatsFrames[index]:Hide()
     end
@@ -806,6 +851,8 @@ function TWT.updateUI()
     if TWT.target == '' then
         return false
     end
+
+    TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
 
     local index = 0
 
@@ -835,12 +882,18 @@ function TWT.updateUI()
 
     local tankName = ''
 
-    if UnitIsPlayer('target') or not UnitName('target') then
+    if UnitIsPlayer('target') or not UnitName('target') or UnitIsDead('target') then
         tankName = TWT.lastTarget
     else
-        tankName = UnitName('targettarget')
-        TWT.lastTarget = tankName
+        if UnitName('targettarget') then
+            tankName = UnitName('targettarget')
+        else
+            -- not tt, target sunned
+            tankName = TWT.lastTarget
+        end
     end
+
+    TWT.lastTarget = tankName
 
     if TWT.threats[TWT.target] then
         if TWT.threats[TWT.target][tankName] then
@@ -871,6 +924,8 @@ function TWT.updateUI()
     local maxThreat = TWT.threats[TWT.target][TWT.AGRO].threat
 
     if maxThreat == 0 then
+        --twtdebug('max threat = 0 ')
+        --twtdebug('tank threat = 0 ' .. tankThreat)
         return false
     end
 
@@ -991,7 +1046,11 @@ function TWT.updateUI()
                 TWT.lastAggroWarningSoundTime = time()
             end
 
-            --_G['TWTMainThreatTarget']:SetText('Threat: ' .. (TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
+            if TWT_CONFIG.fullScreenGlow and data.perc >= 99 and time() - TWT.lastAggroWarningGlowTime > 5 then
+                TWT.glowFader:Show()
+                TWT.lastAggroWarningGlowTime = time()
+            end
+
             _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
             _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
@@ -1145,10 +1204,7 @@ function TWT.updateUI()
         _G['TWTMainTankModeWindow']:Hide()
     end
 
-    _G['TWThreatListScrollFrameScrollBar']:Hide()
-
     _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
-    _G['TWThreatListScrollFrameScrollBar']:Hide()
 
     for guid, data in next, TWT.threats do
         if TWT.lastMessageTime[guid] then
@@ -1290,7 +1346,7 @@ end)
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if TWT_CONFIG.fullScreenGlow then
-        _G['TWTFullScreenGlow']:SetAlpha((perc - 80) / 20)
+        --_G['TWTFullScreenGlow']:SetAlpha((perc - 80) / 20)
         _G['TWTFullScreenGlow']:Show()
     else
         _G['TWTFullScreenGlow']:Hide()
@@ -1364,13 +1420,9 @@ end
 
 function TWTMainWindow_Resizing()
     _G['TWTMain']:SetAlpha(0.5)
-    _G['TWThreatListScrollFrameScrollBar']:Hide()
-    _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
 end
 
 function TWTMainMainWindow_Resized()
-    _G['TWThreatListScrollFrameScrollBar']:Hide()
-    _G['TWThreatListScrollFrameScrollBar']:SetAlpha(0)
     _G['TWTMain']:SetAlpha(1)
 end
 
@@ -1395,6 +1447,10 @@ function TWTChangeSetting_OnClick(name, checked, code)
     end
     if code == 'aggroSound' and checked then
         PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
+    end
+
+    if code == 'fullScreenGlow' and checked then
+        TWT.glowFader:Show()
     end
 
     if TWT_CONFIG.colTPS then
@@ -1568,6 +1624,13 @@ function TWT.targetFromName(name)
     end
 
     return 'target'
+end
+
+function TWT.unitNameForTitle(name)
+    if string.len(name) > 20 then
+        return string.sub(name, 1, 20) .. '... '
+    end
+    return name
 end
 
 function TWT.targetRaidIcon(iconIndex, guid)
