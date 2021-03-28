@@ -1,9 +1,19 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.5'
-TWT.addonName = '|cffabd473TW|cff11cc11 Threatmeter'
+TWT.addonVer = '0.6'
+TWT.addonName = '|cffabd473TW|cff11cc11 |cff1dff00Th|cff58ff00r|cff89ff00e|cffcdfe00a|cfffffe00t|cfff2bc00m|cffe57500e|cffda3800t|cffcf0000er'
 TWT.windowMaxWidth = 300
+
+--|cff1dff00
+--|cff58ff00
+--|cff89ff00
+--|cffcdfe00
+--|cfffffe00
+--|cfff2bc00
+--|cffe57500
+--|cffda3800
+--|cffcf0000
 
 TWT.prefix = 'TWT'
 TWT.channel = 'RAID'
@@ -300,6 +310,7 @@ function TWT.init()
 
     if not TWT_CONFIG then
         TWT_CONFIG = {
+            visible = true,
             colTPS = true,
             colThreat = true,
             colPerc = true,
@@ -386,9 +397,6 @@ function TWT.init()
     if TWT_CONFIG.labelRow then
         _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
         _G['TWTMainNameLabel']:Show()
-        _G['TWTMainTPSLabel']:Show()
-        _G['TWTMainThreatLabel']:Show()
-        _G['TWTMainPercLabel']:Show()
     else
         _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -20)
         _G['TWTMainNameLabel']:Hide()
@@ -892,7 +900,7 @@ function TWT.updateUI()
         local maxThreatPerc = 0
         for guid, data in next, me do
             if data.maxThreat > 0 then
-                twtdebug(guid .. ' ' .. data.myThreat .. ' / ' .. data.maxThreat .. ' ' .. data.myPerc)
+                --twtdebug(guid .. ' ' .. data.myThreat .. ' / ' .. data.maxThreat .. ' ' .. data.myPerc)
                 if data.myPerc > maxThreatPerc then
                     maxThreatPerc = data.myPerc
                     maxThreatGuid = guid
@@ -1523,9 +1531,6 @@ function TWTChangeSetting_OnClick(name, checked, code)
     if TWT_CONFIG.labelRow then
         _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
         _G['TWTMainNameLabel']:Show()
-        _G['TWTMainTPSLabel']:Show()
-        _G['TWTMainThreatLabel']:Show()
-        _G['TWTMainPercLabel']:Show()
     else
         _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -20)
         _G['TWTMainNameLabel']:Hide()
