@@ -3,14 +3,15 @@ local _G, _ = _G or getfenv()
 local TWT = CreateFrame("Frame")
 TWT.addonVer = '0.5'
 TWT.addonName = '|cffabd473TW|cff11cc11 Threatmeter'
-TWT.dev = false
 TWT.windowMaxWidth = 300
 
 TWT.prefix = 'TWT'
 TWT.channel = 'RAID'
+
 TWT.name = UnitName('player')
 local _, cl = UnitClass('player')
 TWT.class = string.lower(cl)
+
 TWT.tpss = {}
 TWT.raidTargetIconIndex = {}
 TWT.secondOnThreat = {}
@@ -20,11 +21,15 @@ TWT.lastAggroWarningGlowTime = 0
 
 TWT.wipeThreats = false
 
+TWT.AGRO = '-Pull Aggro at-'
+TWT.threatsFrames = {}
+
 TWT.custom = {
     ['The Prophet Skeram'] = 0
 }
 
---todo keep threat window up for healers somehow
+--todo keep threat window up for healers somehow, target - target where healer
+-- has max threat
 
 TWT.classColors = {
     ["warrior"] = { r = 0.78, g = 0.61, b = 0.43, c = "|cffc79c6e" },
@@ -178,6 +183,18 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_TARGET_CHANGED" then
 
+            if GetNumRaidMembers() > 0 then
+                TWT.channel = 'RAID'
+            else
+                TWT.channel = 'PARTY'
+            end
+
+            if not UnitExists('target') then
+                TWT.target = ''
+                TWT.updateTargetFrameThreatIndicators(-1)
+                return false
+            end
+
             if UnitIsDead('target') then
                 TWT.target = ''
                 TWT.updateTargetFrameThreatIndicators(-1)
@@ -185,7 +202,9 @@ TWT:SetScript("OnEvent", function()
             end
 
             if not UnitName('target') or UnitIsPlayer('target') then
-                TWT.target = ''
+                --show topmost
+                TWT.target ='' -- UnitIsPlayer('target') and 'max' or ''
+                twtdebug('twt target = ' .. TWT.target)
                 -- twtdebug('player or none')
                 _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
                 TWT.updateTargetFrameThreatIndicators(-1)
@@ -213,18 +232,12 @@ TWT:SetScript("OnEvent", function()
                 return false
             end
 
-            if GetNumRaidMembers() > 0 then
-                TWT.channel = 'RAID'
-            else
-                TWT.channel = 'PARTY'
-            end
-
             -- find target guid based on mark
             if GetRaidTargetIndex("target") ~= 0 then
                 for guid, index in next, TWT.raidTargetIconIndex do
                     if index == GetRaidTargetIndex("target") then
                         TWT.target = guid
-                        --twtdebug('found target guid = ' .. guid ..' based on mark')
+                        twtdebug('found target guid = ' .. guid .. ' based on mark')
                         return true
                     end
                 end
@@ -249,7 +262,6 @@ TWT:SetScript("OnEvent", function()
     end
 end)
 
-
 TWT.glowFader = CreateFrame('Frame')
 TWT.glowFader:Hide()
 
@@ -268,8 +280,6 @@ TWT.glowFader:SetScript("OnUpdate", function()
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
-
-
 
         if _G['TWTFullScreenGlow']:GetAlpha() >= 1 then
             this.dir = -1
@@ -436,11 +446,11 @@ function TWT.init()
     _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetPushedTexture('')
 
     _G['TWThreatListScrollFrameScrollBarThumbTexture']:SetTexture('')
+end
 
-    --      tps -> threat -> perc
-    --tps rel ifvisiblethreat, if visible perc else right
-    --threat rel if visible perc
-
+function TWT.sendHandShake()
+    SendAddonMessage("TWT_HANDSHAKE", "twt", TWT.channel)
+    twtdebug('handshake sent')
 end
 
 function TWT.handleServerMSG(msg)
@@ -454,6 +464,8 @@ function TWT.handleServerMSG(msg)
         local creature = msgEx[2]
         local guid = tonumber(msgEx[3])
         local threat = tonumber(msgEx[4])
+
+        threat = threat >= 1 and threat or 1
 
         TWT.send(TWT.class .. ':' .. guid .. ':' .. threat, guid)
 
@@ -572,11 +584,14 @@ end
 
 function TWT.combatStart()
 
+    TWT.sendHandShake()
+
     TWT.updateTargetFrameThreatIndicators(-1, '')
     timeStart = GetTime()
     totalPackets = 0
 
     TWT.threats = TWT.wipe(TWT.threats)
+    TWT.raidTargetIconIndex = TWT.wipe(TWT.raidTargetIconIndex)
     TWT.guids = TWT.wipe(TWT.guids)
 
     TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
@@ -602,6 +617,13 @@ function TWT.combatEnd()
 
     TWT.updateTargetFrameThreatIndicators(-1, '')
     TWT.threats = TWT.wipe(TWT.threats)
+    TWT.raidTargetIconIndex = TWT.wipe(TWT.raidTargetIconIndex)
+    TWT.guids = TWT.wipe(TWT.guids)
+
+    twtdebug('threat wiped')
+    for guid, pData in next, TWT.threats do
+        twtdebug(guid)
+    end
     TWT.guids = TWT.wipe(TWT.guids)
 
     twtdebug('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
@@ -652,7 +674,7 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
         if this.canSend then
             twtdebug('helper sent')
             TWT.targetChangedHelper.sentAt = GetTime()
-            SendAddonMessage("TWTGUID", "GETGUID", TWT.channel)
+            SendAddonMessage("TWT_GUID", "twt", TWT.channel)
             this.canSend = false
         else
             this.canSendWaitIndex = this.canSendWaitIndex + 1
@@ -738,29 +760,6 @@ function TWT.send(msg, guid)
     SendAddonMessage(TWT.prefix, msg, TWT.channel)
     TWT.lastMessageTime[guid] = GetTime()
 end
-
-TWT.AGRO = '-Pull Aggro at-'
-
-if TWT.dev then
-    TWT.threats = {
-        [123456] = {
-            [TWT.AGRO] = {
-                class = 'agro',
-                threat = 1,
-                perc = 100,
-                tps = 10
-            },
-            ['Smultron'] = {
-                class = 'warrior',
-                threat = 10,
-                perc = 10,
-                tps = 10
-            },
-        }
-    }
-end
-
-TWT.threatsFrames = {}
 
 local nf = CreateFrame('Frame')
 nf:Hide()
@@ -849,25 +848,78 @@ function TWT.updateUI()
     end
 
     if TWT.target == '' then
-        return false
+        --return false
     end
 
-    TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
+    --twtdebug('target = ' .. TWT.target)
+
+    if TWT.target == '' or UnitIsPlayer('target') then
+        local me = {
+        }
+        for guid, pData in next, TWT.threats do
+            for player, data in next, pData do
+                if player ~= TWT.AGRO then
+                    if player == TWT.name then
+                        if me[guid] then
+                            me[guid].myThreat = data.threat
+                            me[guid].myPerc = me[guid].myThreat * 100 / me[guid].maxThreat
+                        else
+                            me[guid] = {}
+                            me[guid] = {
+                                myThreat = data.threat,
+                                maxThreat = 0,
+                                myPerc = 0
+                            }
+                        end
+                    else
+                        if me[guid] then
+                            if data.threat > me[guid].maxThreat then
+                                me[guid].maxThreat = data.threat
+                            end
+                            me[guid].myPerc = me[guid].myThreat * 100 / me[guid].maxThreat
+                        else
+                            me[guid] = {}
+                            me[guid].myThreat = 0
+                            me[guid].maxThreat = data.threat
+                            me[guid].myPerc = 0
+                        end
+                    end
+
+                end
+            end
+        end
+        local maxThreatGuid = 0
+        local maxThreatPerc = 0
+        for guid, data in next, me do
+            if data.maxThreat > 0 then
+                twtdebug(guid .. ' ' .. data.myThreat .. ' / ' .. data.maxThreat .. ' ' .. data.myPerc)
+                if data.myPerc > maxThreatPerc then
+                    maxThreatPerc = data.myPerc
+                    maxThreatGuid = guid
+                end
+
+            end
+        end
+        --twtdebug('max threat guid ' .. maxThreatGuid .. ' @ ' .. maxThreatPerc)
+        TWT.target = maxThreatGuid > 0 and maxThreatGuid or ''
+    end
+
+    --twtdebug('target = ' .. TWT.target)
+
+    if not UnitIsDead('target') and UnitName('target') and not UnitIsPlayer('target')
+            and (UnitClassification('target') == 'WorldBoss' or UnitClassification('target') == 'elite')
+            and GetRaidTargetIndex("target") ~= 0
+    then
+        TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target") or 0
+    end
 
     local index = 0
 
     for _, data in next, TWT.threats do
         for player, threatData in next, data do
-
             if player == TWT.AGRO then
                 threatData.tps = ''
                 threatData.threat = 1
-            else
-                if TWT.dev then
-                    local tps = math.random(1, 500)
-                    threatData.tps = tps
-                    threatData.threat = threatData.threat + tps
-                end
             end
         end
     end
@@ -893,7 +945,7 @@ function TWT.updateUI()
         end
     end
 
-    TWT.lastTarget = tankName
+    TWT.lastTarget = tankName ~= '' and tankName or UnitName('targettargettarget')
 
     if TWT.threats[TWT.target] then
         if TWT.threats[TWT.target][tankName] then
@@ -901,9 +953,6 @@ function TWT.updateUI()
                 tankThreat = TWT.threats[TWT.target][tankName].threat
             end
         end
-    end
-
-    if TWT.threats[TWT.target] then
         if TWT.threats[TWT.target][TWT.name] then
             if TWT.threats[TWT.target][TWT.name].threat then
                 myThreat = TWT.threats[TWT.target][TWT.name].threat
