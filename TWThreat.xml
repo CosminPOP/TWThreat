@@ -640,7 +640,7 @@
                 </ScrollChild>
             </ScrollFrame>
 
-            <Frame name="$parentSettings" hidden="false" toplevel="true"
+            <Frame name="$parentSettings" hidden="true" toplevel="true"
                    movable="true" enableMouse="true">
                 <Size>
                     <AbsDimension x="300" y="280"/>
@@ -1202,7 +1202,7 @@
                             <OnEnter>
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
-                                GameTooltip:AddLine('Show TPS Column');
+                                GameTooltip:AddLine('Show TPS/Threat/% Label Row');
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
