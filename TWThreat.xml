@@ -110,28 +110,6 @@
         </Frames>
     </Frame>
 
-    <Frame name="TWTGraphLineTemplate" virtual="true">
-        <Size>
-            <AbsDimension x="1" y="100"/>
-        </Size>
-        <Layers>
-            <Layer level="OVERLAY">
-                <Texture name="$parentLine" file="Interface\addons\TWThreat\images\textures\Smooth">
-                    <Size>
-                        <AbsDimension x="1" y="100"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="BOTTOM">
-                            <Offset>
-                                <AbsDimension x="0" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-            </Layer>
-        </Layers>
-    </Frame>
-
     <Button name="TWTFontFrameTemplate" inherits="UIPanelButtonTemplate" virtual="true">
         <NormalTexture/>
         <PushedTexture/>
@@ -250,35 +228,6 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-
-
-
-                <Texture name="$parentArrowUp" file="interface\buttons\ui-sortarrow" hidden="true">
-                    <Size>
-                        <AbsDimension x="16" y="8"/>
-                    </Size>
-                    <TexCoords left="1" right="0" top="1" bottom="0"/>
-                    <Anchors>
-                        <Anchor point="RIGHT" relativeTo="$parentThreat">
-                            <Offset>
-                                <AbsDimension x="9" y="2"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-
-                <Texture name="$parentArrowDown" file="interface\buttons\ui-sortarrow" hidden="true">
-                    <Size>
-                        <AbsDimension x="16" y="8"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="RIGHT" relativeTo="$parentThreat">
-                            <Offset>
-                                <AbsDimension x="16" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
 
                 <Texture name="$parentTank" file="Interface\addons\TWThreat\images\tank" hidden="true">
                     <Size>
