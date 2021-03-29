@@ -5,16 +5,6 @@ TWT.addonVer = '0.6'
 TWT.addonName = '|cffabd473TW|cff11cc11 |cff1dff00Th|cff58ff00r|cff89ff00e|cffcdfe00a|cfffffe00t|cfff2bc00m|cffe57500e|cffda3800t|cffcf0000er'
 TWT.windowMaxWidth = 300
 
---|cff1dff00
---|cff58ff00
---|cff89ff00
---|cffcdfe00
---|cfffffe00
---|cfff2bc00
---|cffe57500
---|cffda3800
---|cffcf0000
-
 TWT.prefix = 'TWT'
 TWT.channel = 'RAID'
 
@@ -213,7 +203,7 @@ TWT:SetScript("OnEvent", function()
 
             if not UnitName('target') or UnitIsPlayer('target') then
                 --show topmost
-                TWT.target ='' -- UnitIsPlayer('target') and 'max' or ''
+                TWT.target = '' -- UnitIsPlayer('target') and 'max' or ''
                 twtdebug('twt target = ' .. TWT.target)
                 -- twtdebug('player or none')
                 _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
@@ -618,6 +608,8 @@ function TWT.combatStart()
     if TWT_CONFIG.fullScreenGlow then
         --TWT.fullScreenGlowAnimator:Show()
     end
+
+    TWT.barAnimator:Show()
 end
 
 function TWT.combatEnd()
@@ -1143,13 +1135,9 @@ function TWT.updateUI()
         end
 
         -- bar width
-        if CheckInteractDistance(TWT.targetFromName(name), 1) then
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 110 + 1)
-        else
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 130 + 1)
-        end
-
         if name == TWT.AGRO then
+            --agro
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
             _G['TWThreat' .. name .. 'BG']:SetWidth(298)
 
             local percToAgro = 0
@@ -1170,7 +1158,22 @@ function TWT.updateUI()
                 _G['TWThreat' .. name .. 'Perc']:SetText()
             end
         elseif name == tankName then
+            -- me tank
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
             _G['TWThreat' .. name .. 'BG']:SetWidth(298)
+        else
+            --me and others
+            local width = TWT.round(298 * data.perc / 130) --ranged
+            if CheckInteractDistance(TWT.targetFromName(name), 1) then
+                --melee
+                width = TWT.round(298 * data.perc / 110)
+                --_G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 110 + 1)
+            else
+                --_G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 130 + 1)
+            end
+
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = width
+            --_G['TWThreat' .. name .. 'BG']:SetWidth(width)
         end
 
         TWT.threatsFrames[name]:Show()
@@ -1263,6 +1266,7 @@ function TWT.updateUI()
 
     _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
 
+    -- send threat data to others if not sent in last 2 secs
     for guid, data in next, TWT.threats do
         if TWT.lastMessageTime[guid] then
             if GetTime() - TWT.lastMessageTime[guid] > 2 then
@@ -1274,6 +1278,37 @@ function TWT.updateUI()
         end
     end
 end
+
+TWT.barAnimator = CreateFrame('Frame')
+TWT.barAnimator:Hide()
+TWT.barAnimator.frames = {}
+
+TWT.barAnimator:SetScript("OnShow", function()
+    this.startTime = GetTime()
+    TWT.barAnimator.frames = {}
+end)
+TWT.barAnimator:SetScript("OnUpdate", function()
+    --local plus = 0.001
+    --local gt = GetTime() * 1000
+    --local st = (this.startTime + plus) * 1000
+    --if gt >= st then
+    --    this.startTime = GetTime()
+        for frame, w in TWT.barAnimator.frames do
+            local currentW = TWT.round(_G[frame]:GetWidth())
+            if currentW ~= w and currentW ~= w - 1 and currentW ~= w + 1 then
+                if math.abs(currentW - w) > 200 then
+                    _G[frame]:SetWidth(w)
+                    return true
+                end
+                if currentW > w then
+                    _G[frame]:SetWidth(currentW - 2)
+                else
+                    _G[frame]:SetWidth(currentW + 2)
+                end
+            end
+        end
+    --end
+end)
 
 TWT.ui:SetScript("OnShow", function()
     this.startTime = GetTime()
@@ -1564,13 +1599,21 @@ end
 
 function TWTTargetButton_OnClick(guid)
 
-    if TWT.raidTargetIconIndex[guid] then
-
-        TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid)
+    if TWT.raidTargetIconIndex[guid] ~= 0 then
+        if TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid) then
+            return true
+        end
     else
-        --twtdebug('TWT.raidTargetIconIndex[' .. guid .. '] is nil')
+        -- try to target based on target's target
+        -- check if 2nd on threat is targetting a mob first, case healers
+        if UnitExists(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
+            if not UnitIsPlayer(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
+                AssistByName(TWT.secondOnThreat[guid].name)
+                return true
+            end
+        end
     end
-
+    twtprint("Cannot find target (second on threat is not targeting a creature).")
 end
 
 function TWTFontSelect(id)
@@ -1691,27 +1734,18 @@ function TWT.targetRaidIcon(iconIndex, guid)
 
     for i = 1, GetNumRaidMembers() do
         if TWT.targetRaidSymbolFromUnit("raid" .. i, iconIndex) then
-            return
+            return true
         end
     end
     for i = 1, GetNumPartyMembers() do
         if TWT.targetRaidSymbolFromUnit("party" .. i, iconIndex) then
-            return
+            return true
         end
     end
     if TWT.targetRaidSymbolFromUnit("player", iconIndex) then
-        return
+        return true
     end
-
-
-    -- try to target based on 2nd's target
-    if guid then
-        AssistByName(TWT.secondOnThreat[guid].name)
-        return
-    end
-
-    twtdebug('did not find index ' .. iconIndex)
-    return
+    return false
 end
 
 function TWT.targetRaidSymbolFromUnit(unit, index)
