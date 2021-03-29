@@ -12,7 +12,6 @@ TWT.name = UnitName('player')
 local _, cl = UnitClass('player')
 TWT.class = string.lower(cl)
 
-TWT.tpss = {}
 TWT.raidTargetIconIndex = {}
 TWT.secondOnThreat = {}
 TWT.lastMessageTime = {}
@@ -834,8 +833,6 @@ function np_test(heal, target)
 
 end
 
-TWT.graphFrames = {}
-
 function TWT.updateUI()
 
     if TWT.wipeThreats and TWT_CONFIG.tankMode then
@@ -1008,36 +1005,11 @@ function TWT.updateUI()
             _G['TWThreat' .. name .. 'Tank']:Hide()
         end
 
-        --graph
-        --if name == TWT.name then
-        --    local j = 0
-        --    for t, d in TWT.pairsByKeys(TWT.tpss) do
-        --        j = j + 1
-        --        if not TWT.graphFrames[j] then
-        --            TWT.graphFrames[j] = CreateFrame('Frame', 'TWTGF' .. j, _G["TWTMainRTTPS"], 'TWTGraphLineTemplate')
-        --        end
-        --        TWT.graphFrames[j]:SetPoint("BOTTOMLEFT", _G["TWTMainRTTPS"], "BOTTOMLEFT", j, 0) -- 6 - 6 - 1
-        --
-        --        _G['TWTGF' .. j .. 'Line']:SetHeight(d / 10)
-        --    end
-        --end
-
 
         -- tps
         data.history[math.floor(GetTime())] = data.threat
         data.tps = TWT.calcTPS(name, data)
-        --if name == TWT.name then
-        --    TWT.tpss[math.floor(GetTime())] = data.tps
-        --
-        --    if TWT.tpss[math.floor(GetTime()) - 1] then
-        --
-        --        TWT.tpss[math.floor(GetTime()) - 0.5] = (TWT.tpss[math.floor(GetTime())] + TWT.tpss[math.floor(GetTime()) - 1]) / 2
-        --
-        --        TWT.tpss[math.floor(GetTime()) - 0.75] = (TWT.tpss[math.floor(GetTime()) - 0.5] + TWT.tpss[math.floor(GetTime()) - 1]) / 2
-        --
-        --        TWT.tpss[math.floor(GetTime()) - 0.25] = (TWT.tpss[math.floor(GetTime()) - 0.5] + TWT.tpss[math.floor(GetTime())]) / 2
-        --    end
-        --end
+
         if TWT_CONFIG.colTPS then
             _G['TWThreat' .. name .. 'TPS']:Show()
         else
@@ -1116,24 +1088,6 @@ function TWT.updateUI()
             _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 0.9)
         end
 
-        -- dir
-        if name ~= TWT.AGRO and TWT_CONFIG.colThreat then
-            if data.dir then
-
-                if data.dir == 'down' then
-                    _G['TWThreat' .. name .. 'ArrowUp']:Hide()
-                    _G['TWThreat' .. name .. 'ArrowDown']:Show()
-                elseif data.dir == 'up' then
-                    _G['TWThreat' .. name .. 'ArrowDown']:Hide()
-                    _G['TWThreat' .. name .. 'ArrowUp']:Show()
-                else
-                    _G['TWThreat' .. name .. 'ArrowDown']:Hide()
-                    _G['TWThreat' .. name .. 'ArrowUp']:Hide()
-                end
-
-            end
-        end
-
         -- bar width
         if name == TWT.AGRO then
             --agro
@@ -1164,6 +1118,7 @@ function TWT.updateUI()
         else
             --me and others
             local width = TWT.round(298 * data.perc / 130) --ranged
+            --if CheckInteractDistance(TWT.targetFromName(name), 1) then
             if CheckInteractDistance(TWT.targetFromName(name), 1) then
                 --melee
                 width = TWT.round(298 * data.perc / 110)
@@ -1344,16 +1299,6 @@ function TWT.calcTPS(name, data)
         for i = 0, TWT.tableSize(data.history) - 1 do
             if data.history[math.floor(GetTime()) - i] and data.history[math.floor(GetTime()) - i - 1] then
                 tps_real = tps_real + data.history[math.floor(GetTime()) - i] - data.history[math.floor(GetTime()) - i - 1]
-            end
-        end
-
-        if data.history[math.floor(GetTime())] and data.history[math.floor(GetTime()) - 1] then
-            if data.history[math.floor(GetTime())] > data.history[math.floor(GetTime()) - 1] then
-                data.dir = 'up'
-            elseif data.history[math.floor(GetTime())] < data.history[math.floor(GetTime()) - 1] then
-                data.dir = 'down'
-            else
-                data.dir = '-'
             end
         end
 
