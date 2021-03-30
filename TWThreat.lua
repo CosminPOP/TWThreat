@@ -1,7 +1,7 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.6'
+TWT.addonVer = '0.7'
 TWT.addonName = '|cffabd473TW|cff11cc11 |cff1dff00Th|cff58ff00r|cff89ff00e|cffcdfe00a|cfffffe00t|cfff2bc00m|cffe57500e|cffda3800t|cffcf0000er'
 TWT.windowMaxWidth = 300
 
@@ -856,8 +856,6 @@ function TWT.updateUI()
         --return false
     end
 
-    --twtdebug('target = ' .. TWT.target)
-
     if TWT.target == '' or UnitIsPlayer('target') then
         local me = {
         }
@@ -908,8 +906,6 @@ function TWT.updateUI()
         --twtdebug('max threat guid ' .. maxThreatGuid .. ' @ ' .. maxThreatPerc)
         TWT.target = maxThreatGuid > 0 and maxThreatGuid or ''
     end
-
-    --twtdebug('target = ' .. TWT.target)
 
     if not UnitIsDead('target') and UnitName('target') and not UnitIsPlayer('target')
             and (UnitClassification('target') == 'WorldBoss' or UnitClassification('target') == 'elite')
@@ -973,12 +969,9 @@ function TWT.updateUI()
         TWT.threats[TWT.target][TWT.AGRO].perc = 130
     end
 
-
     local maxThreat = TWT.threats[TWT.target][TWT.AGRO].threat
 
     if maxThreat == 0 then
-        --twtdebug('max threat = 0 ')
-        --twtdebug('tank threat = 0 ' .. tankThreat)
         return false
     end
 
@@ -1026,7 +1019,6 @@ function TWT.updateUI()
 
 
         -- perc
-
         if name ~= TWT.AGRO then
             if data.melee then
                 data.perc = TWT.round(data.threat * 110 / maxThreat )
@@ -1040,20 +1032,6 @@ function TWT.updateUI()
                 end
             end
         end
-
-        --if data.melee then
-        --    if name == TWT.AGRO then
-        --        data.perc = TWT.round(110 - myThreat * 110 / maxThreat)
-        --    else
-        --        data.perc = TWT.round(data.threat * 110 / maxThreat)
-        --    end
-        --else
-        --    if name == TWT.AGRO then
-        --        data.perc = TWT.round(130 - myThreat * 130 / maxThreat)
-        --    else
-        --        data.perc = TWT.round(data.threat * 130 / maxThreat)
-        --    end
-        --end
 
         if name == tankName then
             data.perc = 100
@@ -1076,7 +1054,6 @@ function TWT.updateUI()
             end
 
         end
-
 
 
         -- name
@@ -1140,16 +1117,9 @@ function TWT.updateUI()
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (TWT.threats[TWT.target][TWT.name].perc - limit50) / limit50, 0)
             end
 
-            --if percToAgro >= 0 and percToAgro < 50 then
-            --    _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (percToAgro - 50) / 50, 0, 1)
-            --elseif percToAgro >= 50 then
-            --    _G['TWThreat' .. name .. 'BG']:SetVertexColor(percToAgro / 50, 1, 0, 1)
-            --end
-
-
             if tankName == TWT.name then
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0)
-                --_G['TWThreat' .. name .. 'Perc']:SetText()
+                _G['TWThreat' .. name .. 'Perc']:SetText()
             end
         elseif name == tankName then
 
@@ -1163,19 +1133,11 @@ function TWT.updateUI()
 
             local width = TWT.round(298 * data.perc / 130) --ranged
 
-            --if TWT.threats[TWT.target][name].melee then
             if TWT.threats[TWT.target][TWT.name].melee then
-                --melee
                 width = TWT.round(298 * data.perc / 110)
-                --_G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 110 + 1)
-            else
-                --_G['TWThreat' .. name .. 'BG']:SetWidth(298 * data.perc / 130 + 1)
             end
 
-
-
             TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = width
-            --_G['TWThreat' .. name .. 'BG']:SetWidth(width)
         end
 
         TWT.threatsFrames[name]:Show()
