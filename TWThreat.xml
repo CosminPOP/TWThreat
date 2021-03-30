@@ -330,6 +330,20 @@
                     </Size>
                 </FontString>
 
+                <FontString name="pps" inherits="GameFontHighlightSmall" text="pps"
+                            justifyH="LEFT" hidden="true">
+                    <Size>
+                        <AbsDimension x="305" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="5" y="20"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
 
                 <FontString name="$parentTitle" inherits="GameFontHighlight" text="Name">
                     <Size>
