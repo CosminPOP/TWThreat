@@ -1028,7 +1028,7 @@ function TWT.updateUI()
             else
                 data.perc = TWT.round(data.threat * 130 / maxThreat )
                 if TWT.threats[TWT.target][TWT.name].melee then
-                    data.perc = TWT.round(data.threat * 110 / ((maxThreat / 1.1 ) * 1.3))
+                    data.perc = TWT.round(data.threat * 130 / ((maxThreat / 1.1 ) * 1.3))
                 end
             end
         end
