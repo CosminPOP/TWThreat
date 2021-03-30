@@ -514,7 +514,7 @@
                 </Anchors>
                 <Scripts>
                     <OnClick>
-                        TWTChangeSetting_OnClick(0, 0, 'lock')
+                        TWTChangeSetting_OnClick(0, 'lock')
                     </OnClick>
                     <OnEnter>
                         GameTooltip:ClearLines();
@@ -753,7 +753,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'glow')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'glow')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -806,7 +806,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'fullScreenGlow')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'fullScreenGlow')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -856,13 +856,14 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'aggroSound')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'aggroSound')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Aggro Warning Sound');
                                 GameTooltip:AddLine('Plays a warning sound when you reach 99% threat.', 1, 1, 1);
+                                GameTooltip:AddLine('This feature is disabled in Tank Mode.', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
@@ -905,7 +906,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'perc')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'perc')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -954,7 +955,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'showInCombat')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'showInCombat')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -1003,7 +1004,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'hideOOC')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'hideOOC')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -1052,14 +1053,14 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'tankMode')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'tankMode')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Tank Mode');
                                 GameTooltip:AddLine('Extra window showing creatures you are tanking. ', 1, 1, 1);
-                                GameTooltip:AddLine('Disables Full Screen Glow effect. ', 1, 1, 1);
+                                GameTooltip:AddLine('Disables Full Screen Glow effect and agro warning sound. ', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
@@ -1160,7 +1161,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'labelRow')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'labelRow')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -1208,7 +1209,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'colTPS')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'colTPS')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -1257,7 +1258,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'colThreat')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'colThreat')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();
@@ -1306,7 +1307,7 @@
                         </Frames>
                         <Scripts>
                             <OnClick>
-                                TWTChangeSetting_OnClick(this:GetName(), this:GetChecked(), 'colPerc')
+                                TWTChangeSetting_OnClick(this:GetChecked(), 'colPerc')
                             </OnClick>
                             <OnEnter>
                                 GameTooltip:ClearLines();

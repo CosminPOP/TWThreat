@@ -1474,7 +1474,7 @@ function TWTMainMainWindow_Resized()
     _G['TWTMain']:SetAlpha(1)
 end
 
-function TWTChangeSetting_OnClick(name, checked, code)
+function TWTChangeSetting_OnClick(checked, code)
     if code == 'lock' then
         checked = not TWT_CONFIG[code]
         if checked then
@@ -1487,10 +1487,14 @@ function TWTChangeSetting_OnClick(name, checked, code)
     if code == 'tankMode' then
         if checked then
             TWT_CONFIG.fullScreenGlow = false
+            TWT_CONFIG.aggroSound = false
             _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
             _G['TWTMainSettingsFullScreenGlow']:Disable()
+            _G['TWTMainSettingsAggroSound']:SetChecked(TWT_CONFIG.fullScreenGlow)
+            _G['TWTMainSettingsAggroSound']:Disable()
         else
             _G['TWTMainSettingsFullScreenGlow']:Enable()
+            _G['TWTMainSettingsAggroSound']:Enable()
         end
     end
     if code == 'aggroSound' and checked then
