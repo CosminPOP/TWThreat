@@ -465,8 +465,6 @@ function TWT.handleServerMSG(msg)
 
         threat = threat >= 1 and threat or 1
 
-
-
         TWT.send(TWT.class .. ':' .. guid .. ':' .. threat .. ':' .. dist, guid)
 
         --if TWT.target == '' then
@@ -796,8 +794,12 @@ end
 
 function TWT.updateUI()
 
-
-    _G['pps']:SetText('Traffic: ' .. totalPackets / (GetTime() - timeStart) .. 'packets/s ('..TWT.round(totalData/(GetTime() - timeStart))..' Bps)')
+    if TWT_CONFIG.debug then
+        _G['pps']:SetText('Traffic: ' .. TWT.round((totalPackets / (GetTime() - timeStart)) * 10 ) / 10 .. 'packets/s (' .. TWT.round(totalData / (GetTime() - timeStart)) .. ' Bps)')
+        _G['pps']:Show()
+    else
+        _G['pps']:Hide()
+    end
 
     if not TWT.barAnimator:IsVisible() then
         TWT.barAnimator:Show()
@@ -933,6 +935,45 @@ function TWT.updateUI()
 
     if maxThreat == 0 then
         return false
+    end
+
+    local mt = {}
+
+    for guid, creature in next, TWT.threats do
+        mt[guid] = 0
+        local melee = true
+        for name, data in next, creature do
+            if data.threat > mt[guid] then
+                mt[guid] = data.threat
+                melee = data.melee
+            end
+        end
+        if melee then
+            mt[guid] = mt[guid] * 1.1
+        else
+            mt[guid] = mt[guid] * 1.3
+        end
+    end
+    TWT.tankModeThreats = {};
+    for guid, creature in next, TWT.threats do
+        TWT.tankModeThreats[guid] = creature
+        for name, data in next, TWT.tankModeThreats[guid] do
+
+            if name ~= TWT.AGRO then
+                if data.melee then
+                    data.perc = TWT.round(data.threat * 110 / mt[guid])
+                    if not TWT.threats[TWT.target][TWT.name].melee then
+                        data.perc = TWT.round(data.threat * 110 / ((mt[guid] / 1.3) * 1.1))
+                    end
+                else
+                    data.perc = TWT.round(data.threat * 130 / mt[guid])
+                    if TWT.threats[TWT.target][TWT.name].melee then
+                        data.perc = TWT.round(data.threat * 130 / ((mt[guid] / 1.1) * 1.3))
+                    end
+                end
+            end
+
+        end
     end
 
     for name, data in TWT.ohShitHereWeSortAgain(TWT.threats[TWT.target], true) do
@@ -1107,7 +1148,7 @@ function TWT.updateUI()
 
         TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
 
-        for guid, target in next, TWT.threats do
+        for guid, target in next, TWT.tankModeThreats do
             if target[TWT.name] then
                 if target[TWT.name].perc == 100 and TWT.tableSize(TWT.secondOnThreat) < 5 then
                     TWT.secondOnThreat[guid] = {
@@ -1126,7 +1167,7 @@ function TWT.updateUI()
                 player.name = ''
                 player.class = 'priest'
                 player.perc = 0
-                for name, data in TWT.threats[guid] do
+                for name, data in TWT.tankModeThreats[guid] do
                     if name ~= TWT.name and name ~= TWT.AGRO then
                         if data.perc > player.perc then
                             player.name = name
