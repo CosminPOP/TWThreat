@@ -28,9 +28,6 @@ TWT.custom = {
     ['The Prophet Skeram'] = 0
 }
 
---todo keep threat window up for healers somehow, target - target where healer
--- has max threat
-
 TWT.classColors = {
     ["warrior"] = { r = 0.78, g = 0.61, b = 0.43, c = "|cffc79c6e" },
     ["mage"] = { r = 0.41, g = 0.8, b = 0.94, c = "|cff69ccf0" },
@@ -140,6 +137,7 @@ TWT.targetType = 'normal'
 
 local timeStart = GetTime()
 local totalPackets = 0
+local totalData = 0
 
 TWT.guids = {}
 
@@ -454,6 +452,7 @@ end
 function TWT.handleServerMSG(msg)
 
     totalPackets = totalPackets + 1
+    totalData = totalData + string.len(msg)
 
     local msgEx = string.split(msg, ':')
 
@@ -535,50 +534,6 @@ function TWT.handleClientMSG(msg, sender)
             }
         end
 
-        if TWT_CONFIG.tankMode then
-
-            --for creature, pData in next, TWT.threats do
-            --
-            --    for victim, data in next, pData do
-            --
-            --        if data.melee then
-            --            pData[TWT.AGRO].threat = TWT.threats[creature][TWT.name].threat * 1.1
-            --            pData[TWT.AGRO].perc = 110
-            --        else
-            --            pData[TWT.AGRO].threat = TWT.threats[creature][TWT.name].threat * 1.3
-            --            pData[TWT.AGRO].perc = 130
-            --        end
-            --    end
-            --end
-            --
-            --for creature, pData in next, TWT.threats do
-            --
-            --    local maxThreat = pData[TWT.AGRO].threat
-            --
-            --    for victim, data in next, pData do
-            --
-            --        if data.melee then
-            --            if creature == TWT.AGRO then
-            --                data.perc = TWT.round(110 - data.threat * 110 / maxThreat)
-            --            else
-            --                data.perc = TWT.round(data.threat * 110 / maxThreat)
-            --            end
-            --        else
-            --            if creature == TWT.AGRO then
-            --                data.perc = TWT.round(130 - data.threat * 130 / maxThreat)
-            --            else
-            --                data.perc = TWT.round(data.threat * 130 / maxThreat)
-            --            end
-            --        end
-            --
-            --        --twtdebug('mt = ' .. maxThreat .. ' setting perc to ' .. data.perc .. ' for ' .. victim .. ' for ' .. creature)
-            --
-            --    end
-            --
-            --end
-
-        end
-
     end
     TWT.updateUI()
 end
@@ -590,6 +545,7 @@ function TWT.combatStart()
     TWT.updateTargetFrameThreatIndicators(-1, '')
     timeStart = GetTime()
     totalPackets = 0
+    totalData = 0
 
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.raidTargetIconIndex = TWT.wipe(TWT.raidTargetIconIndex)
@@ -634,6 +590,7 @@ function TWT.combatEnd()
 
     timeStart = GetTime()
     totalPackets = 0
+    totalData = 0
     TWT.updateUI()
 
     if TWT_CONFIG.hideOOC then
@@ -838,6 +795,9 @@ function np_test(heal, target)
 end
 
 function TWT.updateUI()
+
+
+    _G['pps']:SetText('Traffic: ' .. totalPackets / (GetTime() - timeStart) .. 'packets/s ('..TWT.round(totalData/(GetTime() - timeStart))..' Bps)')
 
     if not TWT.barAnimator:IsVisible() then
         TWT.barAnimator:Show()
@@ -1052,7 +1012,6 @@ function TWT.updateUI()
             if not TWT.threats[TWT.target][TWT.name].melee and name == TWT.AGRO then
                 _G['TWThreat' .. name .. 'Perc']:SetText(130 - TWT.threats[TWT.target][TWT.name].perc .. '%')
             end
-
         end
 
 
@@ -1193,7 +1152,7 @@ function TWT.updateUI()
 
                     if player.perc ~= 0 then
                         _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 21)
-                        _G['TWTMainTankModeWindow']:Show()
+
                     end
 
                     _G['TMEF' .. i .. 'Target']:SetText(TWT.guids[guid])
@@ -1221,6 +1180,8 @@ function TWT.updateUI()
 
                 end
             end
+
+            _G['TWTMainTankModeWindow']:Show()
         else
             _G['TWTMainTankModeWindow']:Hide()
         end
@@ -1235,7 +1196,7 @@ function TWT.updateUI()
         if TWT.lastMessageTime[guid] then
             if GetTime() - TWT.lastMessageTime[guid] > 2 then
                 TWT.lastMessageTime[guid] = GetTime()
-                if data[TWT.threat] ~= 0 then
+                if data[TWT.name].threat > 0 then
                     TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat, guid)
                 end
             end
