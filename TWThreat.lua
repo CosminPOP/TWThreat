@@ -896,8 +896,10 @@ function TWT.updateUI()
             and (UnitClassification('target') == 'WorldBoss' or UnitClassification('target') == 'elite')
             and GetRaidTargetIndex("target")
     then
-        TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target")
-        twtdebug('saved icon ' .. GetRaidTargetIndex("target") .. ' for target ' .. TWT.target)
+        if GetRaidTargetIndex("target") then
+            TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target")
+            twtdebug('saved icon ' .. GetRaidTargetIndex("target") .. ' for target ' .. TWT.target)
+        end
     end
 
     local index = 0
@@ -1097,7 +1099,7 @@ function TWT.updateUI()
                 if name == TWT.name then
                     if data.perc == 100
                             and TWT.tableSize(TWT.secondOnThreat) < 5
-                            and GetTime() - data.stamp < 4 then
+                            and GetTime() - data.stamp < 10 then
                         TWT.secondOnThreat[guid] = {
                             name = '',
                             class = '',
@@ -1140,8 +1142,7 @@ function TWT.updateUI()
                 if player.name ~= '' then
 
                     if player.perc ~= 0 then
-                        _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 21)
-
+                        _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 23)
                     end
 
                     _G['TMEF' .. i .. 'Target']:SetText(TWT.guids[guid])
@@ -1153,10 +1154,8 @@ function TWT.updateUI()
                     _G['TMEF' .. i .. 'RaidTargetIcon']:Hide()
 
                     if TWT.raidTargetIconIndex[guid] then
-                        if TWT.raidTargetIconIndex[guid] ~= 0 then
-                            SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
-                            _G['TMEF' .. i .. 'RaidTargetIcon']:Show()
-                        end
+                        SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
+                        _G['TMEF' .. i .. 'RaidTargetIcon']:Show()
                     end
 
                     if player.perc >= 0 and player.perc < 50 then
@@ -1189,10 +1188,10 @@ function TWT.updateUI()
                 TWT.lastMessageTime[guid] = GetTime()
                 if data[TWT.name].threat > 0 then
 
-                    twtdebug('send: ' .. TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
-                            (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid))
-                    TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
-                            (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid), guid)
+                    --twtdebug('send: ' .. TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
+                    --        (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid))
+                    --TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
+                    --        (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid), guid)
                 end
             end
         end
@@ -1510,13 +1509,17 @@ end
 
 function TWTTargetButton_OnClick(guid)
 
-    if TWT.raidTargetIconIndex[guid] ~= 0 then
+    twtdebug('target button click with guid ' .. guid)
+
+    if TWT.raidTargetIconIndex[guid] then
         if TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid) then
             return true
         end
     else
+        twtdebug('no marks, should assist name')
         if UnitExists(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
             if not UnitIsPlayer(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
+                twtdebug('no marks, should assist ' .. TWT.secondOnThreat[guid].name)
                 AssistByName(TWT.secondOnThreat[guid].name)
                 return true
             end
