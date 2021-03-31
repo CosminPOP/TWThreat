@@ -91,10 +91,12 @@ SlashCmdList["TWT"] = function(cmd)
         if string.sub(cmd, 1, 5) == 'debug' then
             if TWT_CONFIG.debug then
                 TWT_CONFIG.debug = false
+                _G['pps']:Hide()
                 twtprint('Debugging disabled')
                 return true
             end
             TWT_CONFIG.debug = true
+            _G['pps']:Show()
             twtdebug('Debugging enabled')
             return true
         end
@@ -1208,10 +1210,10 @@ function TWT.updateUI()
                 TWT.lastMessageTime[guid] = GetTime()
                 if data[TWT.name].threat > 0 then
 
-                    --twtdebug('send: ' .. TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
+                    --twtdebtwtdebug('send: ' .. TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
                     --        (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid))
-                    --TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
-                    --        (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid), guid)
+                    TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
+                            (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid), guid)
                 end
             end
         end
