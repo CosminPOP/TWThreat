@@ -841,7 +841,7 @@
                         <Layers>
                             <Layer level="ARTWORK">
                                 <FontString name="$parentLabel" inherits="GameFontNormal"
-                                            text="Play Warning at 99%">
+                                            text="Play Warning at 85%">
                                     <Anchors>
                                         <Anchor point="LEFT" relativePoint="RIGHT">
                                             <Offset>

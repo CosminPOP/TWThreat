@@ -1053,12 +1053,12 @@ function TWT.updateUI()
 
         if name == TWT.name then
 
-            if TWT_CONFIG.aggroSound and data.perc >= 99 and time() - TWT.lastAggroWarningSoundTime > 5 then
+            if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5 then
                 PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
                 TWT.lastAggroWarningSoundTime = time()
             end
 
-            if TWT_CONFIG.fullScreenGlow and data.perc >= 99 and time() - TWT.lastAggroWarningGlowTime > 5 then
+            if TWT_CONFIG.fullScreenGlow and data.perc >= 85 and time() - TWT.lastAggroWarningGlowTime > 5 then
                 TWT.glowFader:Show()
                 TWT.lastAggroWarningGlowTime = time()
             end
