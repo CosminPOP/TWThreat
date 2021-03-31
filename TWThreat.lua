@@ -605,7 +605,6 @@ function TWT.isTank(guid)
 
 end
 
-
 function TWT.combatStart()
 
     TWT.updateTargetFrameThreatIndicators(-1, '')
@@ -745,7 +744,6 @@ function TWT.targetChanged(guid, cached)
     end
 
     TWT.target = guid
-    twtdebug('target set ' .. guid)
     if UnitExists('targettarget') then
         TWT.lastTarget = UnitName('targettarget') --tank
     end
@@ -869,67 +867,24 @@ function TWT.updateUI()
         --return false
     end
 
-    --twtdebug('update ui target = ' .. TWT.target)
-
     if TWT.target == '' or UnitIsPlayer('target') then
-        twtdebug('should find max hated')
-        local me = {
+        local myThreatPercs = {
         }
 
         for guid, creature in next, TWT.threats do
-            me[guid] = 0
-            local melee = true
-            for name, data in next, creature do
-                if data.threat > me[guid] then
-                    me[guid] = data.threat
-                    melee = data.melee
-                end
-            end
-            if melee then
-                me[guid] = me[guid] * 1.1
-            else
-                me[guid] = me[guid] * 1.3
-            end
-        end
-
-        TWT.healerModeThreats = TWT.threats
-
-        if not TWT.healerModeThreats[TWT.target] then
-            return
-        end
-
-        for guid, creature in next, TWT.healerModeThreats do
-            for name, data in next, creature do
-
-                if name ~= TWT.AGRO then
-                    if data.melee then
-                        data.perc = TWT.round(data.threat * 110 / me[guid])
-                        if not TWT.healerModeThreats[TWT.target][TWT.name].melee then
-                            data.perc = TWT.round(data.threat * 110 / ((me[guid] / 1.3) * 1.1))
-                        end
-                    else
-                        data.perc = TWT.round(data.threat * 130 / me[guid])
-                        if TWT.healerModeThreats[TWT.target][TWT.name].melee then
-                            data.perc = TWT.round(data.threat * 130 / ((me[guid] / 1.1) * 1.3))
-                        end
-                    end
-                end
-            end
+            myThreatPercs[guid] = creature[TWT.name].perc
         end
 
         local maxThreatGuid = 0
         local maxThreatPerc = 0
-        for guid, creature in next, TWT.healerModeThreats do
-            for name, data in next, creature do
-                if data.perc > maxThreatPerc and name ~= TWT.AGRO then
-                    maxThreatPerc = data.perc
-                    maxThreatGuid = guid
-                end
+        for guid, perc in myThreatPercs do
+            if perc > maxThreatPerc then
+                maxThreatPerc = perc
+                maxThreatGuid = guid
             end
         end
 
         TWT.target = maxThreatGuid ~= 0 and maxThreatGuid or ''
-        twtdebug('target set to ' .. TWT.target .. ' ' .. maxThreatPerc)
     end
 
     if TWT.target == '' then
@@ -1099,7 +1054,6 @@ function TWT.updateUI()
             _G['TWThreat' .. name .. 'BG']:SetWidth(298)
             _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(maxThreat - myThreat))
 
-
             local limit50 = 50
 
             if TWT.threats[TWT.target][TWT.name].perc >= 0 and TWT.threats[TWT.target][TWT.name].perc < limit50 then
@@ -1243,6 +1197,7 @@ function TWT.updateUI()
             end
         end
     end
+
 end
 
 TWT.barAnimator = CreateFrame('Frame')
