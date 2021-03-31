@@ -2,6 +2,7 @@ local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
 TWT.addonVer = '0.8'
+TWT.showedUpdateNotification = false
 TWT.addonName = '|cffabd473TW|cff11cc11 |cff1dff00Th|cff58ff00r|cff89ff00e|cffcdfe00a|cfffffe00t|cfff2bc00m|cffe57500e|cffda3800t|cffcf0000er'
 TWT.windowMaxWidth = 300
 
@@ -122,6 +123,7 @@ TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
 TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
 TWT:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
+TWT:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 TWT:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF")
 TWT:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
@@ -153,11 +155,12 @@ TWT:SetScript("OnEvent", function()
         if event == 'ADDON_LOADED' and arg1 == 'TWThreat' then
             TWT.init()
         end
+        if event == "PLAYER_ENTERING_WORLD" then
+            TWT.sendMyVersion()
+        end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWTGUID:', 1, true) then
             local guidEx = string.split(arg1, ':')
             if guidEx[2] then
-
-                --twtdebug('have guid ' .. tonumber(guidEx[2]))
 
                 TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
@@ -170,6 +173,20 @@ TWT:SetScript("OnEvent", function()
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.prefix then
             TWT.handleClientMSG(arg2, arg4)
+
+            if string.sub(arg2, 1, 11) == 'TWTVersion:' and arg4 ~= TWT.name then
+                if not TWT.showedUpdateNotification then
+                    local verEx = string.split(arg2, ':')
+                    if TWT.version(verEx[2]) > TWT.version(TWT.addonVer) then
+                        twtprint('New version available ' ..
+                                TWT.classColors[TWT.class].c .. 'v' .. verEx[2] .. ' |cffffffff(current version ' ..
+                                TWT.classColors['paladin'].c .. 'v' .. TWT.addonVer .. '|cffffffff)')
+                        twtprint('Update at ' .. TWT.classColors[TWT.class].c .. 'https://github.com/CosminPOP/TWThreat')
+                        TWT.showedUpdateNotification = true
+                    end
+                end
+            end
+
         end
         if event == "PLAYER_REGEN_DISABLED" then
             TWT.combatStart()
@@ -1720,4 +1737,16 @@ end
 function TWT.round(num, numDecimalPlaces)
     local mult = 10 ^ (numDecimalPlaces or 0)
     return math.floor(num * mult + 0.5) / mult
+end
+
+function TWT.version(ver)
+    return tonumber(string.sub(ver, 1, 1)) * 10 +
+            tonumber(string.sub(ver, 3, 3)) * 1
+end
+
+function TWT.sendMyVersion()
+    SendAddonMessage(TWT.prefix, "TWTVersion:" .. TWT.addonVer, "PARTY")
+    SendAddonMessage(TWT.prefix, "TWTVersion:" .. TWT.addonVer, "GUILD")
+    SendAddonMessage(TWT.prefix, "TWTVersion:" .. TWT.addonVer, "RAID")
+    SendAddonMessage(TWT.prefix, "TWTVersion:" .. TWT.addonVer, "BATTLEGROUND")
 end
