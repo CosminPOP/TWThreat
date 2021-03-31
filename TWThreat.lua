@@ -583,7 +583,7 @@ function TWT.calcPerc(guid)
     --perc
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO then
-            data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (T.threat * (data.melee and 1.1 or 1.3)))
+            data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (T.threat * (data.melee and 1.1 or 1.3))) or 0
         end
     end
 
@@ -1040,49 +1040,30 @@ function TWT.updateUI()
         -- tps
         data.history[math.floor(GetTime())] = data.threat
         data.tps = TWT.calcTPS(name, data)
+        _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
+        -- labels
         if TWT_CONFIG.colTPS then
             _G['TWThreat' .. name .. 'TPS']:Show()
         else
             _G['TWThreat' .. name .. 'TPS']:Hide()
         end
-        _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
-
-
-        -- perc
-        --if name ~= TWT.AGRO then
-        --    if data.melee then
-        --        data.perc = TWT.round(data.threat * 110 / maxThreat)
-        --        if not TWT.threats[TWT.target][TWT.name].melee then
-        --            data.perc = TWT.round(data.threat * 110 / ((maxThreat / 1.3) * 1.1))
-        --        end
-        --    else
-        --        data.perc = TWT.round(data.threat * 130 / maxThreat)
-        --        if TWT.threats[TWT.target][TWT.name].melee then
-        --            data.perc = TWT.round(data.threat * 130 / ((maxThreat / 1.1) * 1.3))
-        --        end
-        --    end
-        --end
-
-        --if name == tankName then
-        --    data.perc = 100
-        --end
-
+        if TWT_CONFIG.colThreat then
+            _G['TWThreat' .. name .. 'Threat']:Show()
+        else
+            _G['TWThreat' .. name .. 'Threat']:Hide()
+        end
         if TWT_CONFIG.colPerc then
             _G['TWThreat' .. name .. 'Perc']:Show()
         else
             _G['TWThreat' .. name .. 'Perc']:Hide()
         end
 
+        -- perc
         _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
 
-        if TWT.name ~= tankName then
-            if TWT.threats[TWT.target][TWT.name].melee and name == TWT.AGRO then
-                _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.target][TWT.name].perc .. '%')
-            end
-            if not TWT.threats[TWT.target][TWT.name].melee and name == TWT.AGRO then
-                _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.target][TWT.name].perc .. '%')
-            end
+        if TWT.name ~= tankName and name == TWT.AGRO then
+            _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.target][TWT.name].perc .. '%')
         end
 
 
@@ -1090,18 +1071,10 @@ function TWT.updateUI()
         _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
 
 
-        -- bar
+        -- bar width and color
         local color = TWT.classColors[data.class]
-        if TWT_CONFIG.colThreat then
-            _G['TWThreat' .. name .. 'Threat']:Show()
-        else
-            _G['TWThreat' .. name .. 'Threat']:Hide()
-        end
+
         if name == TWT.name then
-
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
-
-            TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
 
             if TWT_CONFIG.aggroSound and data.perc >= 99 and time() - TWT.lastAggroWarningSoundTime > 5 then
                 PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
@@ -1114,32 +1087,20 @@ function TWT.updateUI()
             end
 
             _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
+
+            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
             _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
+
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round(298 * data.perc / 100)
 
         elseif name == TWT.AGRO then
-            _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(maxThreat - myThreat))
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
-        else
-            _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
-        end
-
-        if data.perc >= 100 then
-            -- red for anyone over 100%
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 0.9)
-        end
-
-        -- bar width
-        if name == TWT.AGRO then
-            --agro
             TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
+
             _G['TWThreat' .. name .. 'BG']:SetWidth(298)
+            _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(maxThreat - myThreat))
+
 
             local limit50 = 50
-
-            --if not TWT.threats[TWT.target][TWT.name].melee then
-            --    limit50 = 70
-            --end
 
             if TWT.threats[TWT.target][TWT.name].perc >= 0 and TWT.threats[TWT.target][TWT.name].perc < limit50 then
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(TWT.threats[TWT.target][TWT.name].perc / limit50, 1, 0)
@@ -1149,23 +1110,26 @@ function TWT.updateUI()
 
             if tankName == TWT.name then
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0)
-                --_G['TWThreat' .. name .. 'Perc']:SetText()
+                _G['TWThreat' .. name .. 'Perc']:SetText('')
             end
-        elseif name == tankName then
 
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298)
-            --if TWT.threats[TWT.target][TWT.name].melee then
-            --    _G['TWThreat' .. name .. 'BG']:SetWidth(298 * 100 / 110)
-            --else
-            --    _G['TWThreat' .. name .. 'BG']:SetWidth(298 * 100 / 130)
-            --end
         else
-
-            local width = TWT.round(298 * data.perc / 100) --ranged
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = width
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round(298 * data.perc / 100)
+            _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
+            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
         end
 
+        if data.perc >= 100 then
+            -- red for anyone over 100%
+            _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 0.9)
+        end
+
+        if name == tankName then
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
+            _G['TWThreat' .. name .. 'BG']:SetWidth(298)
+        end
+
+        TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
         TWT.threatsFrames[name]:Show()
 
     end
@@ -1290,24 +1254,9 @@ TWT.barAnimator:SetScript("OnShow", function()
     TWT.barAnimator.frames = {}
 end)
 TWT.barAnimator:SetScript("OnUpdate", function()
-    --local plus = 0.001
-    --local gt = GetTime() * 1000
-    --local st = (this.startTime + plus) * 1000
-    --if gt >= st then
-    --    this.startTime = GetTime()
     for frame, w in TWT.barAnimator.frames do
         local currentW = TWT.round(_G[frame]:GetWidth())
-        --current = 11
-        -- animate to 9
-        -- c = c + 5 = 16 too much
-        -- current 11
-        -- animate to 13
-        -- 11 + 5 = 16
         if currentW ~= w then
-            --if math.abs(currentW - w) > 100 then
-            --    _G[frame]:SetWidth(w)
-            --    return true
-            --end
             if currentW > w then
                 local diff = 5
                 if currentW - w < 5 then
@@ -1444,7 +1393,6 @@ end)
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if TWT_CONFIG.fullScreenGlow then
-        --_G['TWTFullScreenGlow']:SetAlpha((perc - 80) / 20)
         _G['TWTFullScreenGlow']:Show()
     else
         _G['TWTFullScreenGlow']:Hide()
@@ -1461,7 +1409,6 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
     end
 
     _G['TWThreatDisplayTarget']:Show()
-    --twtdebug('TWThreatDisplayTarget show1')
 
     if TWT_CONFIG.perc and not UnitIsPlayer('target') then
         _G['TWThreatDisplayTargetNumericPerc']:SetText(perc .. '%')
@@ -1509,7 +1456,6 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if UnitAffectingCombat('player') and TWT.targetFrameVisible then
         _G['TWThreatDisplayTarget']:Show()
-        --twtdebug('TWThreatDisplayTarget show2')
     else
         _G['TWThreatDisplayTarget']:Hide()
     end
@@ -1614,8 +1560,6 @@ function TWTTargetButton_OnClick(guid)
             return true
         end
     else
-        -- try to target based on target's target
-        -- check if 2nd on threat is targetting a mob first, case healers
         if UnitExists(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
             if not UnitIsPlayer(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
                 AssistByName(TWT.secondOnThreat[guid].name)
