@@ -23,6 +23,14 @@ TWT.lastAggroWarningGlowTime = 0
 
 TWT.AGRO = '-Pull Aggro at-'
 TWT.threatsFrames = {}
+TWT.tank = {}
+
+TWT.threats = {}
+TWT.target = ''
+TWT.lastTarget = ''
+TWT.guids = {}
+
+TWT.targetFrameVisible = false
 
 TWT.custom = {
     ['The Prophet Skeram'] = 0
@@ -128,19 +136,12 @@ TWT:RegisterEvent("PLAYER_ENTERING_WORLD")
 TWT:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF")
 TWT:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
 
-TWT.threats = {}
-TWT.target = ''
-TWT.lastTarget = ''
-
 TWT.ui = CreateFrame("Frame")
 TWT.ui:Hide()
-TWT.targetType = 'normal'
 
 local timeStart = GetTime()
 local totalPackets = 0
 local totalData = 0
-
-TWT.guids = {}
 
 TWT:SetScript("OnEvent", function()
     if event then
@@ -157,6 +158,7 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_ENTERING_WORLD" then
             TWT.sendMyVersion()
+            TWT.combatEnd()
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWTGUID:', 1, true) then
             local guidEx = string.split(arg1, ':')
@@ -164,7 +166,7 @@ TWT:SetScript("OnEvent", function()
 
                 TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
-
+                twtdebug('got guid: ' .. guidEx[2])
                 return true
             end
         end
@@ -484,10 +486,8 @@ function TWT.sendHandShake()
     twtdebug('handshake sent')
 end
 
-TWT.tank = {}
-
 function TWT.handleServerMSG(msg)
-
+    twtdebug('smesg: ' .. msg)
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
 
@@ -516,6 +516,7 @@ end
 function TWT.handleClientMSG(msg, sender)
     -- format "class:guid:threat:melee:tank"
     --twtdebug(msg)
+    twtdebug('Cmesg: ' .. msg)
     local ex = string.split(msg, ':')
     if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
 
@@ -608,6 +609,10 @@ end
 
 function TWT.isTank(guid)
 
+    if not TWT.tank[guid] then
+        TWT.tank[guid] = 0
+    end
+
     if UnitExists('target') and not UnitIsPlayer('target')
             and UnitExists('targettarget') and UnitName('targettarget') ~= TWT.name then
         TWT.tank[guid] = 0
@@ -624,6 +629,8 @@ end
 
 function TWT.combatStart()
 
+    TWT.sendHandShake()
+
     TWT.updateTargetFrameThreatIndicators(-1, '')
     timeStart = GetTime()
     totalPackets = 0
@@ -635,6 +642,8 @@ function TWT.combatStart()
 
     TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
     TWT.lastMessageTime = TWT.wipe(TWT.lastMessageTime)
+
+    TWT.tank = TWT.wipe(TWT.tank)
 
     TWT.updateUI()
 
@@ -654,17 +663,12 @@ function TWT.combatStart()
 end
 
 function TWT.combatEnd()
-    --left combat
 
     TWT.updateTargetFrameThreatIndicators(-1, '')
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.raidTargetIconIndex = TWT.wipe(TWT.raidTargetIconIndex)
     TWT.guids = TWT.wipe(TWT.guids)
 
-    twtdebug('threat wiped')
-    for guid, pData in next, TWT.threats do
-        twtdebug(guid)
-    end
     TWT.guids = TWT.wipe(TWT.guids)
 
     twtdebug('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
@@ -699,7 +703,6 @@ TWT.targetChangedHelper:SetScript("OnShow", function()
 end)
 TWT.targetChangedHelper:SetScript("OnHide", function()
     this.startTime = GetTime()
-    twtdebug('TWT.targetChangedHelper hidden')
 end)
 TWT.targetChangedHelper:SetScript("OnUpdate", function()
     local plus = 0.2
@@ -709,7 +712,7 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
         this.startTime = GetTime()
         twtdebug('asking for guid ')
         SendAddonMessage("TWT_GUID", "twt", TWT.channel)
-        this:Hide()
+        TWT.targetChangedHelper:Hide()
     end
 end)
 
@@ -1293,40 +1296,6 @@ function TWT.calcTPS(name, data)
 
     return ''
 end
-
-TWT.targetFrameVisible = false
-
-function st(t)
-    TWT.updateTargetFrameThreatIndicators(t)
-end
-
-function start_test()
-    TWT.test:Show()
-end
-
-TWT.test = CreateFrame('Frame')
-TWT.test:Hide()
-
-TWT.test:SetScript("OnShow", function()
-    this.startTime = GetTime()
-    this.threat = 1
-    this.f = 1
-end)
-TWT.test:SetScript("OnUpdate", function()
-    local plus = 0.02
-    local gt = GetTime() * 1000
-    local st = (this.startTime + plus) * 1000
-    if gt >= st then
-        this.startTime = GetTime()
-        this.threat = this.threat + this.f * 1
-        if this.threat >= 50 then
-            this.f = -1
-        end
-        if this.threat <= 0 then
-            this.f = 1
-        end
-    end
-end)
 
 TWT.fullScreenGlowAnimator = CreateFrame('Frame')
 TWT.fullScreenGlowAnimator:Hide()
