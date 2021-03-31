@@ -1,7 +1,7 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.7'
+TWT.addonVer = '0.8'
 TWT.addonName = '|cffabd473TW|cff11cc11 |cff1dff00Th|cff58ff00r|cff89ff00e|cffcdfe00a|cfffffe00t|cfff2bc00m|cffe57500e|cffda3800t|cffcf0000er'
 TWT.windowMaxWidth = 300
 
