@@ -8,4 +8,8 @@ Features:
 - Options for bar height and font style
 - Tankmode !
 
-Contributors: Henry, Laughadin, Faralynn
+Slashcommands:
+- `/twtshow`, `/twt show`
+
+Contributors and testers: 
+Henry, Laughadin, Faralynn, Draxer
