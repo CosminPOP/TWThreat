@@ -3,7 +3,7 @@ Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
-## Features:
+## Features
 - Threat, threat to pull aggro, TPS, % Max, % to pull
 - Target glow based on threat for default game target frame
 - Target threat percent indicator for default game target frame
@@ -75,7 +75,7 @@ Shows or hides the Percent Max column.
 <br>
 
 
-## Contributors and testers: <BR>
+## Contributors and tester
 [Henry](https://armory.turtle-wow.org/#!/character/Henry), [Laughadin](https://armory.turtle-wow.org/#!/character/Laughadin), 
 [Faralynn](https://armory.turtle-wow.org/#!/character/Faralynn), [Draxer](https://armory.turtle-wow.org/#!/character/Draxer) <BR><BR>
 
