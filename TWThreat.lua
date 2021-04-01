@@ -932,6 +932,10 @@ function TWT.updateUI()
 
     TWT.lastTarget = tankName ~= '' and tankName or UnitName('targettargettarget')
 
+    if _G['TWTMainSettings']:IsVisible() and not UnitAffectingCombat('player') then
+        tankName = 'BarTestMode'
+    end
+
     if TWT.threats[TWT.target] then
         if TWT.threats[TWT.target][tankName] then
             if TWT.threats[TWT.target][tankName].threat then
@@ -1502,6 +1506,76 @@ function TWT.setBarLabels(perc, threat, tps)
 
 end
 
+function TWT.testBars(show)
+
+    if UnitAffectingCombat('player') then
+        return false
+    end
+
+    if show then
+        TWT.guids[69] = 'Patchwerk TESTMODE'
+        TWT.threats[69] = {
+            [TWT.AGRO] = {
+                class = 'agro',
+                threat = 1,
+                perc = 100,
+                tps = '',
+                history = {},
+                melee = true,
+                tank = false
+            },
+            ['BarTestMode'] = {
+                class = 'warrior',
+                threat = 1000,
+                perc = 100,
+                tps = 100,
+                history = {},
+                melee = true,
+                tank = true
+            },
+            [TWT.name] = {
+                class = TWT.class,
+                threat = 750,
+                perc = 75,
+                tps = 75,
+                history = {},
+                melee = false,
+                tank = false
+            },
+            ['Gorx'] = {
+                class = 'shaman',
+                threat = 500,
+                perc = 50,
+                tps = 50,
+                history = {},
+                melee = false,
+                tank = false
+            },
+            ['Nephew'] = {
+                class = 'warlock',
+                threat = 250,
+                perc = 25,
+                tps = 25,
+                history = {},
+                melee = false,
+                tank = false
+            },
+            ['Rake'] = {
+                class = 'hunter',
+                threat = 100,
+                perc = 10,
+                tps = 10,
+                history = {},
+                melee = false,
+                tank = false
+            }
+        }
+        TWT.target = 69
+        TWT.updateUI()
+    else
+        TWT.combatEnd()
+    end
+end
 function TWTCloseButton_OnClick()
     _G['TWTMain']:Hide()
     twtprint('Window closed. Type |cff69ccf0/twt show|cffffffff or |cff69ccf0/twtshow|cffffffff to restore it.')
@@ -1511,8 +1585,10 @@ end
 function TWTSettingsToggle_OnClick()
     if _G['TWTMainSettings']:IsVisible() == 1 then
         _G['TWTMainSettings']:Hide()
+        TWT.testBars(false)
     else
         _G['TWTMainSettings']:Show()
+        TWT.testBars(true)
     end
 end
 
