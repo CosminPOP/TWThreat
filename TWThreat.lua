@@ -46,6 +46,8 @@ TWT.nameLimit = 30
 TWT.windowStartWidth = 300
 TWT.windowWidth = 300
 
+--TWT.combatStartTime = time()
+
 TWT.custom = {
     ['The Prophet Skeram'] = 0
 }
@@ -477,7 +479,7 @@ function TWT.sendHandShake()
 end
 
 function TWT.handleServerMSG(msg)
-    twtdebug('Smesg: ' .. msg)
+    --twtdebug('Smesg: ' .. msg)
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
 
@@ -634,6 +636,8 @@ function TWT.combatStart()
     if TWT_CONFIG.showInCombat then
         _G['TWTMain']:Show()
     end
+
+    --TWT.combatStartTime = time()
 
     TWT.barAnimator:Show()
 end
@@ -963,6 +967,7 @@ function TWT.updateUI()
         end
 
         _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
+        TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = 1
 
         _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
         _G['TWThreat' .. name .. 'TPS']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
@@ -989,7 +994,7 @@ function TWT.updateUI()
 
 
         -- tps
-        data.history[math.floor(GetTime())] = data.threat
+        data.history[time()] = data.threat
         data.tps = TWT.calcTPS(name, data)
         _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
@@ -1225,33 +1230,35 @@ TWT.ui:SetScript("OnUpdate", function()
 end)
 
 function TWT.calcTPS(name, data)
+
     if name ~= TWT.AGRO then
 
-        local older = math.floor(GetTime())
-        for i, j in TWT.pairsByKeys(data.history) do
+        local older = time()
+        for i in TWT.pairsByKeys(data.history) do
             if i < older then
                 older = i
             end
         end
 
-        if TWT.tableSize(data.history) > 5 then
+        if TWT.tableSize(data.history) > 6 then
             data.history[older] = nil
         end
 
-        local tps_real = 0
+        local tps = 0
+        local mean = 0
 
         for i = 0, TWT.tableSize(data.history) - 1 do
-            if data.history[math.floor(GetTime()) - i] and data.history[math.floor(GetTime()) - i - 1] then
-                tps_real = tps_real + data.history[math.floor(GetTime()) - i] - data.history[math.floor(GetTime()) - i - 1]
+            if data.history[time() - i] and data.history[time() - i - 1] then
+                tps = tps + data.history[time() - i] - data.history[time() - i - 1]
+                mean = mean + 1
             end
         end
 
-        if tps_real >= 0 then
-            return TWT.round(tps_real / TWT.tableSize(data.history))
-        else
-            return 0
+        if mean > 0 and tps > 0 then
+            return TWT.round(tps / mean)
         end
 
+        return 0
     end
 
     return ''
