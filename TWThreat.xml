@@ -175,7 +175,7 @@
                 </Texture>
             </Layer>
             <Layer level="OVERLAY">
-                <FontString name="$parentName" justifyH="LEFT">
+                <FontString name="$parentName" inherits="GameFontHighlightSmall" justifyH="LEFT" text="Name">
                     <Size>
                         <AbsDimension x="130" y="20"/>
                     </Size>
@@ -190,7 +190,7 @@
 
                 <FontString name="$parentPerc" inherits="GameFontHighlightSmall" text="perc" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="60" y="20"/>
+                        <AbsDimension x="70" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="RIGHT">
@@ -201,8 +201,7 @@
                     </Anchors>
                 </FontString>
 
-                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="threat"
-                            justifyH="RIGHT">
+                <FontString name="$parentThreat" inherits="GameFontHighlightSmall" text="threat" justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="80" y="20"/>
                     </Size>
@@ -215,10 +214,9 @@
                     </Anchors>
                 </FontString>
 
-                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS"
-                            justifyH="RIGHT">
+                <FontString name="$parentTPS" inherits="GameFontHighlightSmall" text="TPS" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="50" y="20"/>
+                        <AbsDimension x="70" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="RIGHT" relativeTo="$parentThreat" relativePoint="LEFT">
@@ -313,6 +311,11 @@
                                 <AbsDimension x="1" y="0"/>
                             </Offset>
                         </Anchor>
+                        <Anchor point="TOPRIGHT">
+                            <Offset>
+                                <AbsDimension x="-1" y="0"/>
+                            </Offset>
+                        </Anchor>
                     </Anchors>
                 </Texture>
             </Layer>
@@ -344,15 +347,14 @@
                     </Anchors>
                 </FontString>
 
-
-                <FontString name="$parentTitle" inherits="GameFontHighlight" text="Name">
+                <FontString name="$parentTitle" inherits="GameFontHighlight" text="Name" justifyH="LEFT">
                     <Size>
                         <AbsDimension x="300" y="20"/>
                     </Size>
                     <Anchors>
-                        <Anchor point="TOP">
+                        <Anchor point="TOPLEFT">
                             <Offset>
-                                <AbsDimension x="0" y="0"/>
+                                <AbsDimension x="5" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -371,9 +373,9 @@
                     </Anchors>
                 </FontString>
 
-                <FontString name="$parentPercLabel" inherits="GameFontHighlightSmall" text="%" justifyH="RIGHT">
+                <FontString name="$parentPercLabel" inherits="GameFontHighlightSmall" text="% Max" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="60" y="20"/>
+                        <AbsDimension x="70" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="TOPRIGHT">
@@ -384,10 +386,9 @@
                     </Anchors>
                 </FontString>
 
-                <FontString name="$parentThreatLabel" inherits="GameFontHighlightSmall" text="Threat  "
-                            justifyH="RIGHT">
+                <FontString name="$parentThreatLabel" inherits="GameFontHighlightSmall" text="Threat" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="80" y="20"/>
+                        <AbsDimension x="70" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="RIGHT" relativeTo="$parentPercLabel" relativePoint="LEFT">
@@ -398,10 +399,9 @@
                     </Anchors>
                 </FontString>
 
-                <FontString name="$parentTPSLabel" inherits="GameFontHighlightSmall" text="TPS  "
-                            justifyH="RIGHT">
+                <FontString name="$parentTPSLabel" inherits="GameFontHighlightSmall" text="TPS" justifyH="RIGHT">
                     <Size>
-                        <AbsDimension x="50" y="20"/>
+                        <AbsDimension x="70" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="RIGHT" relativeTo="$parentThreatLabel" relativePoint="LEFT">
@@ -411,8 +411,6 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-
-
             </Layer>
         </Layers>
         <Scripts>
@@ -443,9 +441,9 @@
                     <AbsDimension x="16" y="16"/>
                 </Size>
                 <Anchors>
-                    <Anchor point="TOPLEFT">
+                    <Anchor point="TOPRIGHT">
                         <Offset>
-                            <AbsDimension x="3" y="-2"/>
+                            <AbsDimension x="-38" y="-2"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
@@ -476,7 +474,7 @@
                 <Anchors>
                     <Anchor point="TOPRIGHT">
                         <Offset>
-                            <AbsDimension x="-3" y="-2"/>
+                            <AbsDimension x="-2" y="-2"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
@@ -508,7 +506,7 @@
                 <Anchors>
                     <Anchor point="TOPRIGHT">
                         <Offset>
-                            <AbsDimension x="-23" y="-2"/>
+                            <AbsDimension x="-20" y="-2"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
@@ -599,11 +597,10 @@
                         <Frames>
                         </Frames>
                     </Frame>
-
                 </ScrollChild>
             </ScrollFrame>
 
-            <Frame name="$parentSettings" hidden="true" toplevel="true"
+            <Frame name="$parentSettings" hidden="false" toplevel="true"
                    movable="true" enableMouse="true">
                 <Size>
                     <AbsDimension x="300" y="280"/>
@@ -960,7 +957,7 @@
                             <OnEnter>
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
-                                GameTooltip:AddLine('Combat');
+                                GameTooltip:AddLine('Combat Show');
                                 GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
@@ -1009,7 +1006,7 @@
                             <OnEnter>
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
-                                GameTooltip:AddLine('Combat');
+                                GameTooltip:AddLine('Combat Hide');
                                 GameTooltip:AddLine('Automatically hides the window when combat begins.', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
@@ -1060,7 +1057,7 @@
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Tank Mode');
                                 GameTooltip:AddLine('Extra window showing creatures you are tanking. ', 1, 1, 1);
-                                GameTooltip:AddLine('Disables Full Screen Glow effect and agro warning sound. ', 1, 1, 1);
+                                GameTooltip:AddLine('Disables Full Screen Glow effect and Agro Warning Sound. ', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
@@ -1215,7 +1212,6 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Show TPS Column');
-<!--                                GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);-->
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
@@ -1264,7 +1260,6 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Show Threat Column');
-<!--                                GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);-->
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
@@ -1313,7 +1308,6 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Show Percent Column');
-<!--                                GameTooltip:AddLine('Automatically shows the window when combat begins.', 1, 1, 1);-->
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
