@@ -1,6 +1,8 @@
 # TWThreat v0.9 - BETA
 Threat Meter for Turtle WoW
-
+<br>
+Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
+<br>
 ### Features:
 - Threat, threat to pull aggro, TPS, % Max, % to pull
 - Target glow based on threat for default game target frame
