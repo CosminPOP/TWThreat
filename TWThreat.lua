@@ -1,10 +1,20 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.8'
+TWT.addonVer = '0.9'
 TWT.showedUpdateNotification = false
-TWT.addonName = '|cffabd473TW|cff11cc11 |cff1dff00Th|cff58ff00r|cff89ff00e|cffcdfe00a|cfffffe00t|cfff2bc00m|cffe57500e|cffda3800t|cffcf0000er'
-TWT.windowMaxWidth = 300
+TWT.addonName = '|cffabd473TW|cff11cc11 |cffcdfe00Threatmeter'
+
+--|cff1dff00
+--|cff58ff00
+--|cff89ff00
+--|cffcdfe00
+--|cfffffe00
+--|cfff2bc00
+--|cffe57500
+--|cffda3800
+--|cffcf0000
+
 
 TWT.prefix = 'TWT'
 TWT.channel = 'RAID'
@@ -31,6 +41,10 @@ TWT.lastTarget = ''
 TWT.guids = {}
 
 TWT.targetFrameVisible = false
+
+TWT.nameLimit = 30
+TWT.windowStartWidth = 300
+TWT.windowWidth = 300
 
 TWT.custom = {
     ['The Prophet Skeram'] = 0
@@ -200,6 +214,8 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_TARGET_CHANGED" then
 
+            _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+
             if GetNumRaidMembers() > 0 then
                 TWT.channel = 'RAID'
             else
@@ -343,6 +359,9 @@ function TWT.init()
     TWT_CONFIG.colPerc = TWT_CONFIG.colPerc or false
     TWT_CONFIG.labelRow = TWT_CONFIG.labelRow or false
 
+    --TWT_CONFIG.combatAlpha = TWT_CONFIG.combatAlpha or 1
+    --TWT_CONFIG.oocAlpha = TWT_CONFIG.oocAlpha or 1
+
     TWT_CONFIG.debug = TWT_CONFIG.debug or false
 
     if TWT_CONFIG.visible then
@@ -350,9 +369,6 @@ function TWT.init()
     else
         _G['TWTMain']:Hide()
     end
-
-    _G['TWTMain']:SetMinResize(300, 100)
-    _G['TWTMain']:SetMaxResize(300, 300)
 
     if TWT_CONFIG.tankMode then
         _G['TWTMainSettingsFullScreenGlow']:Disable()
@@ -385,23 +401,7 @@ function TWT.init()
 
     _G['TWTMainSettingsLabelRow']:SetChecked(TWT_CONFIG.labelRow)
 
-    if TWT_CONFIG.colTPS then
-        _G['TWTMainTPSLabel']:Show()
-    else
-        _G['TWTMainTPSLabel']:Hide()
-    end
-
-    if TWT_CONFIG.colThreat then
-        _G['TWTMainThreatLabel']:Show()
-    else
-        _G['TWTMainThreatLabel']:Hide()
-    end
-
-    if TWT_CONFIG.colPerc then
-        _G['TWTMainPercLabel']:Show()
-    else
-        _G['TWTMainPercLabel']:Hide()
-    end
+    TWT.setColumnLabels()
 
     if TWT_CONFIG.labelRow then
         _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
@@ -586,24 +586,19 @@ end
 
 function TWT.calcPerc(guid)
 
-    local T = {
-        threat = 0,
-        factor = 1.1
-    }
+    local tankThreat = 1
 
     -- max
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO and data.tank then
-            T.threat = data.threat
-            T.factor = data.melee and 1.1 or 1.3
-            T.perc = 100
+            tankThreat = data.threat
         end
     end
 
     --perc
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO then
-            data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (T.threat * (data.melee and 1.1 or 1.3))) or 0
+            data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (tankThreat * (data.melee and 1.1 or 1.3)))
         end
     end
 
@@ -771,9 +766,9 @@ function TWT.targetChanged(guid, cached)
     end
     --TWT.lastTarget = guid
 
-    local targetText = UnitName('target')
+    local targetText = TWT.unitNameForTitle(UnitName('target'))
 
-    _G['TWTMainTitle']:SetText(TWT.unitNameForTitle(UnitName('target')))
+    _G['TWTMainTitle']:SetText(targetText)
     if TWT.threats[TWT.target] then
         if TWT.threats[TWT.target][TWT.name] then
             _G['TWTMainTitle']:SetText(targetText .. ' (' .. TWT.threats[TWT.target][TWT.name].perc .. '%)')
@@ -992,6 +987,8 @@ function TWT.updateUI()
             TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWThreatListScrollFrameChildren"], 'TWThreat')
         end
 
+        _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
+
         _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
         _G['TWThreat' .. name .. 'TPS']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
         _G['TWThreat' .. name .. 'Threat']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
@@ -1022,21 +1019,7 @@ function TWT.updateUI()
         _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
         -- labels
-        if TWT_CONFIG.colTPS then
-            _G['TWThreat' .. name .. 'TPS']:Show()
-        else
-            _G['TWThreat' .. name .. 'TPS']:Hide()
-        end
-        if TWT_CONFIG.colThreat then
-            _G['TWThreat' .. name .. 'Threat']:Show()
-        else
-            _G['TWThreat' .. name .. 'Threat']:Hide()
-        end
-        if TWT_CONFIG.colPerc then
-            _G['TWThreat' .. name .. 'Perc']:Show()
-        else
-            _G['TWThreat' .. name .. 'Perc']:Hide()
-        end
+        TWT.setBarLabels(_G['TWThreat' .. name .. 'Perc'], _G['TWThreat' .. name .. 'Threat'], _G['TWThreat' .. name .. 'TPS'])
 
         -- perc
         _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
@@ -1065,49 +1048,48 @@ function TWT.updateUI()
                 TWT.lastAggroWarningGlowTime = time()
             end
 
-            _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] or '') .. ' (' .. data.perc .. '%)')
+            _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] and TWT.unitNameForTitle(TWT.guids[TWT.target]) or '') .. ' (' .. data.perc .. '%)')
 
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
+            --_G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
             _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round(298 * data.perc / 100)
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
 
         elseif name == TWT.AGRO then
             TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
 
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298)
+            _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
             _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(maxThreat - myThreat))
 
-            local limit50 = 50
+            local colorLimit = 50
 
-            if TWT.threats[TWT.target][TWT.name].perc >= 0 and TWT.threats[TWT.target][TWT.name].perc < limit50 then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(TWT.threats[TWT.target][TWT.name].perc / limit50, 1, 0)
-            elseif TWT.threats[TWT.target][TWT.name].perc >= 50 then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (TWT.threats[TWT.target][TWT.name].perc - limit50) / limit50, 0)
+            if TWT.threats[TWT.target][TWT.name].perc >= 0 and TWT.threats[TWT.target][TWT.name].perc < colorLimit then
+                _G['TWThreat' .. name .. 'BG']:SetVertexColor(TWT.threats[TWT.target][TWT.name].perc / colorLimit, 1, 0, 0.9)
+            elseif TWT.threats[TWT.target][TWT.name].perc >= colorLimit then
+                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (TWT.threats[TWT.target][TWT.name].perc - colorLimit) / colorLimit, 0, 0.9)
             end
 
             if tankName == TWT.name then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0)
+                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 1)
                 _G['TWThreat' .. name .. 'Perc']:SetText('')
             end
 
         else
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round(298 * data.perc / 100)
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
             _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
             _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
         end
 
-        if data.perc >= 100 then
-            -- red for anyone over 100%
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 0.9)
-        end
-
         if name == tankName then
             TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
-            _G['TWThreat' .. name .. 'BG']:SetWidth(298)
+            _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
         end
 
-        TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
+        if name == TWT.name then
+            _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.2, 0.2, 1)
+            TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
+        end
+
         TWT.threatsFrames[name]:Show()
 
     end
@@ -1443,23 +1425,7 @@ function TWTChangeSetting_OnClick(checked, code)
         TWT.glowFader:Show()
     end
 
-    if TWT_CONFIG.colTPS then
-        _G['TWTMainTPSLabel']:Show()
-    else
-        _G['TWTMainTPSLabel']:Hide()
-    end
-
-    if TWT_CONFIG.colThreat then
-        _G['TWTMainThreatLabel']:Show()
-    else
-        _G['TWTMainThreatLabel']:Hide()
-    end
-
-    if TWT_CONFIG.colPerc then
-        _G['TWTMainPercLabel']:Show()
-    else
-        _G['TWTMainPercLabel']:Hide()
-    end
+    TWT.setColumnLabels()
 
     if TWT_CONFIG.labelRow then
         _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
@@ -1471,6 +1437,115 @@ function TWTChangeSetting_OnClick(checked, code)
         _G['TWTMainThreatLabel']:Hide()
         _G['TWTMainPercLabel']:Hide()
     end
+
+    TWT.updateUI()
+end
+
+function TWT.setColumnLabels()
+    _G['TWTMain']:SetWidth(TWT.windowStartWidth - 70 - 70 - 70)
+
+    TWT.nameLimit = 5
+
+    if TWT_CONFIG.colPerc then
+        _G['TWTMainPercLabel']:Show()
+        _G['TWTMain']:SetWidth(_G['TWTMain']:GetWidth() + 70)
+        TWT.nameLimit = TWT.nameLimit + 8
+    else
+        _G['TWTMainPercLabel']:Hide()
+    end
+
+    if TWT_CONFIG.colThreat then
+        _G['TWTMain']:SetWidth(_G['TWTMain']:GetWidth() + 70)
+        TWT.nameLimit = TWT.nameLimit + 8
+
+        if TWT_CONFIG.colPerc then
+            _G['TWTMainThreatLabel']:SetPoint('TOPRIGHT', _G['TWTMain'], -10 - 70 - 5, -21)
+        else
+            _G['TWTMainThreatLabel']:SetPoint('TOPRIGHT', _G['TWTMain'], -10, -21)
+        end
+
+        _G['TWTMainThreatLabel']:Show()
+    else
+        _G['TWTMainThreatLabel']:Hide()
+    end
+
+    if TWT_CONFIG.colTPS then
+        _G['TWTMain']:SetWidth(_G['TWTMain']:GetWidth() + 70)
+        TWT.nameLimit = TWT.nameLimit + 8
+
+        if TWT_CONFIG.colThreat then
+            if TWT_CONFIG.colPerc then
+                _G['TWTMainTPSLabel']:SetPoint('TOPRIGHT', _G['TWTMain'], -10 - 70 - 70, -21)
+            else
+                _G['TWTMainTPSLabel']:SetPoint('TOPRIGHT', _G['TWTMain'], -10 - 70, -21)
+            end
+        elseif TWT_CONFIG.colPerc then
+            _G['TWTMainTPSLabel']:SetPoint('TOPRIGHT', _G['TWTMain'], -10 - 70, -21)
+        else
+            _G['TWTMainTPSLabel']:SetPoint('TOPRIGHT', _G['TWTMain'], 'TOPRIGHT', -10, -21)
+        end
+
+        _G['TWTMainTPSLabel']:Show()
+    else
+        _G['TWTMainTPSLabel']:Hide()
+    end
+
+    if TWT.nameLimit < 17 then
+        TWT.nameLimit = 17
+    end
+
+    if _G['TWTMain']:GetWidth() < 190 then
+        _G['TWTMain']:SetWidth(190)
+    end
+
+    TWT.windowWidth = _G['TWTMain']:GetWidth()
+
+    twtdebug('TWT.windowWidth = ' .. TWT.windowWidth)
+
+    _G['TWTMain']:SetMinResize(TWT.windowWidth, 100)
+    _G['TWTMain']:SetMaxResize(TWT.windowWidth, 300)
+end
+
+function TWT.setBarLabels(perc, threat, tps)
+
+    if TWT_CONFIG.colPerc then
+        perc:Show()
+    else
+        perc:Hide()
+    end
+
+    if TWT_CONFIG.colThreat then
+
+        if TWT_CONFIG.colPerc then
+            threat:SetPoint('RIGHT', -10 - 70 + 4, 0)
+        else
+            threat:SetPoint('RIGHT', -10 + 4, 0)
+        end
+
+        threat:Show()
+    else
+        threat:Hide()
+    end
+
+    if TWT_CONFIG.colTPS then
+
+        if TWT_CONFIG.colThreat then
+            if TWT_CONFIG.colPerc then
+                tps:SetPoint('RIGHT', -10 - 70 - 70 + 4, 0)
+            else
+                tps:SetPoint('RIGHT', -10 - 70 + 4, 0)
+            end
+        elseif TWT_CONFIG.colPerc then
+            tps:SetPoint('RIGHT', -10 - 70 + 4, 0)
+        else
+            tps:SetPoint('RIGHT', -10 + 4, 0)
+        end
+
+        tps:Show()
+    else
+        tps:Hide()
+    end
+
 end
 
 function TWTCloseButton_OnClick()
@@ -1624,8 +1699,8 @@ function TWT.targetFromName(name)
 end
 
 function TWT.unitNameForTitle(name)
-    if string.len(name) > 20 then
-        return string.sub(name, 1, 20) .. '... '
+    if string.len(name) > TWT.nameLimit then
+        return string.sub(name, 1, TWT.nameLimit) .. '-'
     end
     return name
 end
