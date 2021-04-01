@@ -518,20 +518,20 @@ function TWT.handleClientMSG(msg, sender)
         if not TWT.threats[guid][TWT.name] then
             TWT.threats[guid][TWT.name] = {
                 class = TWT.class,
-                threat = 0,
-                perc = 0,
+                threat = 1,
+                perc = 1,
                 tps = 0,
                 history = {},
-                melee = melee,
+                melee = true,
                 stamp = GetTime(),
-                tank = tank
+                tank = false
             }
         end
 
         if not TWT.threats[guid][TWT.AGRO] then
             TWT.threats[guid][TWT.AGRO] = {
                 class = 'agro',
-                threat = 0,
+                threat = 1,
                 perc = 100,
                 tps = '',
                 history = {},
@@ -551,7 +551,7 @@ function TWT.handleClientMSG(msg, sender)
             TWT.threats[guid][player] = {
                 class = class,
                 threat = threat,
-                perc = 0,
+                perc = 1,
                 tps = 0,
                 history = {},
                 melee = melee,
@@ -581,6 +581,7 @@ function TWT.calcPerc(guid)
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO then
             data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (tankThreat * (data.melee and 1.1 or 1.3)))
+            data.perc = data.perc > 100 and 100 or data.perc
         end
     end
 
