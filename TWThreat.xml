@@ -385,7 +385,6 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-
                 <FontString name="$parentThreatLabel" inherits="GameFontHighlightSmall" text="Threat" justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="70" y="20"/>
@@ -398,7 +397,6 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-
                 <FontString name="$parentTPSLabel" inherits="GameFontHighlightSmall" text="TPS" justifyH="RIGHT">
                     <Size>
                         <AbsDimension x="70" y="20"/>
@@ -600,7 +598,7 @@
                 </ScrollChild>
             </ScrollFrame>
 
-            <Frame name="$parentSettings" hidden="false" toplevel="true"
+            <Frame name="$parentSettings" hidden="true" toplevel="true"
                    movable="true" enableMouse="true">
                 <Size>
                     <AbsDimension x="300" y="280"/>
