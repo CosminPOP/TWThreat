@@ -284,6 +284,12 @@
         </Layers>
     </Frame>
 
+    <Font name="Mono" font="Interface\addons\TWThreat\fonts\RobotoMono.ttf" virtual="true">
+        <FontHeight>
+            <AbsValue val="10"/>
+        </FontHeight>
+    </Font>
+
     <Frame name="TWTMain" hidden="true" toplevel="true"
            parent="UIParent" movable="true" enableMouse="true" resizable="true">
         <Size>
@@ -836,7 +842,7 @@
                         <Layers>
                             <Layer level="ARTWORK">
                                 <FontString name="$parentLabel" inherits="GameFontNormal"
-                                            text="Play Warning at 85%">
+                                            text="Sound Warning at 85%">
                                     <Anchors>
                                         <Anchor point="LEFT" relativePoint="RIGHT">
                                             <Offset>
@@ -1533,6 +1539,126 @@
                 </FontString>
             </Layer>
         </Layers>
+    </Frame>
+
+    <Frame name="TWTWithAddonList" hidden="true" toplevel="true" parent="UIParent" movable="true" enableMouse="true">
+        <Size>
+            <AbsDimension x="540" y="210"/>
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER">
+                <Offset>
+                    <AbsDimension x="0" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" tile="true">
+        </Backdrop>
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
+                    <Size>
+                        <AbsDimension x="298" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                        <Anchor point="TOPRIGHT">
+                            <Offset>
+                                <AbsDimension x="-1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString name="$parentTitle" inherits="GameFontHighlight" text="Addon Raid Status">
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="-5"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentText" inherits="Mono" text="">
+                    <Anchors>
+                        <Anchor point="CENTER">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button name="$parentRefreshButton" inherits="UIPanelButtonTemplate" text="Refresh">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                        <Anchor point="BOTTOMLEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="1"/>
+                            </Offset>
+                        </Anchor>
+                        <Anchor point="BOTTOMRIGHT">
+                            <Offset>
+                                <AbsDimension x="-1" y="10"/>
+                            </Offset>
+                        </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        QueryWho_OnClick()
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentCloseButton" inherits="UIPanelButtonTemplate" text="x">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPRIGHT">
+                        <Offset>
+                            <AbsDimension x="-2" y="-2"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        getglobal('TWTWithAddonList'):Hide()
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+        <Scripts>
+            <OnLoad>
+                this:RegisterForDrag("LeftButton");
+                this:SetMovable(1);
+                this:SetUserPlaced(true);
+            </OnLoad>
+            <OnDragStart>
+                this:StartMoving();
+                this.isMoving = true;
+            </OnDragStart>
+            <OnDragStop>
+                this:StopMovingOrSizing();
+                this.isMoving = false;
+            </OnDragStop>
+        </Scripts>
     </Frame>
 
 </Ui>

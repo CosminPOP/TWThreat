@@ -116,6 +116,12 @@ SlashCmdList["TWT"] = function(cmd)
             twtdebug('Debugging enabled')
             return true
         end
+
+        if string.sub(cmd, 1, 3,'who') then
+            TWT.queryWho()
+            return true
+        end
+
         twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff available commands:')
         twtprint('/twt show - shows the main window (also /twtshow)')
     end
@@ -192,7 +198,6 @@ TWT:SetScript("OnEvent", function()
             TWT.handleServerMSG(arg1)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.prefix then
-            TWT.handleClientMSG(arg2, arg4)
 
             if string.sub(arg2, 1, 11) == 'TWTVersion:' and arg4 ~= TWT.name then
                 if not TWT.showedUpdateNotification then
@@ -205,7 +210,37 @@ TWT:SetScript("OnEvent", function()
                         TWT.showedUpdateNotification = true
                     end
                 end
+                return true
             end
+
+            if string.sub(arg2, 1, 7) == 'TWT_WHO' then
+                TWT.send('TWT_ME:' .. TWT.addonVer)
+                return true
+            end
+
+            if string.sub(arg2, 1, 7) == 'TWT_ME:' then
+
+                local msg = string.split(arg2, ':')[2]
+                local verColor = ""
+                if TWT.version(msg) == TWT.version(TWT.addonVer) then
+                    verColor = TWT.classColors['hunter'].c
+                end
+                if TWT.version(msg) < TWT.version(TWT.addonVer) then
+                    verColor = '|cffff1111'
+                end
+                if TWT.version(msg) + 1 == TWT.version(TWT.addonVer) then
+                    verColor = '|cffff8810'
+                end
+
+                TWT.addonStatus[arg4]['v'] = '    ' .. verColor .. msg
+                TWT.withAddon = TWT.withAddon + 1
+
+                TWT.updateWithAddon()
+
+                return true
+            end
+
+            TWT.handleClientMSG(arg2, arg4)
 
         end
         if event == "PLAYER_REGEN_DISABLED" then
@@ -287,6 +322,56 @@ TWT:SetScript("OnEvent", function()
         end
     end
 end)
+
+TWT.withAddon = 0
+TWT.addonStatus = {}
+
+function QueryWho_OnClick()
+    TWT.queryWho()
+end
+
+function TWT.queryWho()
+    TWT.withAddon = 0
+    TWT.addonStatus = {}
+    for i = 0, GetNumRaidMembers() do
+        if (GetRaidRosterInfo(i)) then
+            local n, _, _, _, _, _, z = GetRaidRosterInfo(i);
+            local _, class = UnitClass('raid' .. i)
+
+            TWT.addonStatus[n] = {
+                ['class'] = string.lower(class),
+                ['v'] = '|cff888888   -   '
+            }
+            if z == 'Offline' then
+                TWT.addonStatus[n]['v'] = '|cffff0000offline'
+            end
+        end
+    end
+    twtprint('Sending who query...')
+    _G['TWTWithAddonList']:Show()
+    TWT.send('TWT_WHO')
+end
+
+function TWT.updateWithAddon()
+
+    local rosterList = ''
+    local i = 0
+    for n, data in next, TWT.addonStatus do
+        i = i + 1
+        rosterList = rosterList .. TWT.classColors[data['class']].c .. n .. string.rep(' ', 12 - string.len(n)) .. ' ' .. data['v'] .. ' |cff888888'
+        if i < 4 then
+            rosterList = rosterList .. '| '
+        end
+        if i == 4 then
+            rosterList = rosterList .. '\n'
+            i = 0
+        end
+    end
+    _G['TWTWithAddonListText']:SetText(rosterList)
+    _G['TWTWithAddonListTitle']:SetText('Addon Raid Status ' .. TWT.withAddon .. '/' .. GetNumRaidMembers())
+end
+
+
 
 TWT.glowFader = CreateFrame('Frame')
 TWT.glowFader:Hide()
@@ -766,7 +851,9 @@ end
 
 function TWT.send(msg, guid)
     SendAddonMessage(TWT.prefix, msg, TWT.channel)
-    TWT.lastMessageTime[guid] = GetTime()
+    if guid then
+        TWT.lastMessageTime[guid] = GetTime()
+    end
 end
 
 local nf = CreateFrame('Frame')
@@ -1450,8 +1537,8 @@ function TWT.setColumnLabels()
         _G['TWTMainTPSLabel']:Hide()
     end
 
-    if TWT.nameLimit < 17 then
-        TWT.nameLimit = 17
+    if TWT.nameLimit < 14 then
+        TWT.nameLimit = 14
     end
 
     if _G['TWTMain']:GetWidth() < 190 then
@@ -1532,6 +1619,15 @@ function TWT.testBars(show)
                 history = {},
                 melee = true,
                 tank = true
+            },
+            ['Chad'] = {
+                class = 'paladin',
+                threat = 990,
+                perc = 99,
+                tps = 99,
+                history = {},
+                melee = false,
+                tank = false
             },
             [TWT.name] = {
                 class = TWT.class,
