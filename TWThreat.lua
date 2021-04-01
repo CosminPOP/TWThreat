@@ -163,8 +163,8 @@ TWT:SetScript("OnEvent", function()
     if event then
         -- heal above name stuff
         if event == 'CHAT_MSG_SPELL_SELF_BUFF' or event == 'CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS' then
-            local _, _, heal = string.find(arg1, "for (%d+)");
-            local _, _, target = string.find(arg1, "heals (%a+) for");
+            local _, _, heal = string.find(arg1, "for (%d+)")
+            local _, _, target = string.find(arg1, "heals (%a+) for")
             if target and heal then
                 --np_test(heal, target)
             end
@@ -283,17 +283,6 @@ TWT:SetScript("OnEvent", function()
             TWT.updateTargetFrameThreatIndicators(-1)
             TWT.targetChangedHelper:Show()
         end
-        --if event == 'CHAT_MSG_COMBAT_HOSTILE_DEATH' and TWT_CONFIG.tankMode then
-        --    local wipe = false
-        --    for guid, gData in next, TWT.threats do
-        --        if TWT.guids[guid] then
-        --            if arg1 == TWT.guids[guid] .. ' dies.' then
-        --                wipe = true
-        --            end
-        --        end
-        --    end
-        --    TWT.wipeThreats = wipe
-        --end
     end
 end)
 
@@ -301,7 +290,7 @@ TWT.glowFader = CreateFrame('Frame')
 TWT.glowFader:Hide()
 
 TWT.glowFader:SetScript("OnShow", function()
-    this.startTime = GetTime()
+    this.startTime = GetTime() - 1
     this.dir = 10
     _G['TWTFullScreenGlow']:SetAlpha(0.01)
     _G['TWTFullScreenGlow']:Show()
@@ -310,15 +299,14 @@ TWT.glowFader:SetScript("OnHide", function()
     this.startTime = GetTime()
 end)
 TWT.glowFader:SetScript("OnUpdate", function()
-    local plus = 0.01
+    local plus = 0.04
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
 
-        if _G['TWTFullScreenGlow']:GetAlpha() >= 1 then
+        if _G['TWTFullScreenGlow']:GetAlpha() >= 0.6 then
             this.dir = -1
-            --_G['TWTFullScreenGlow']:SetAlpha(1)
         end
 
         _G['TWTFullScreenGlow']:SetAlpha(_G['TWTFullScreenGlow']:GetAlpha() + 0.03 * this.dir)
@@ -489,7 +477,7 @@ function TWT.sendHandShake()
 end
 
 function TWT.handleServerMSG(msg)
-    twtdebug('smesg: ' .. msg)
+    twtdebug('Smesg: ' .. msg)
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
 
@@ -506,10 +494,6 @@ function TWT.handleServerMSG(msg)
 
         TWT.send(TWT.class .. ':' .. guid .. ':' .. threat .. ':' .. melee .. ':' .. TWT.isTank(guid), guid)
 
-        --if TWT.target == '' then
-        --    TWT.target = guid
-        --end
-
         TWT.guids[guid] = creature
 
     end
@@ -517,8 +501,6 @@ end
 
 function TWT.handleClientMSG(msg, sender)
     -- format "class:guid:threat:melee:tank"
-    --twtdebug(msg)
-    twtdebug('Cmesg: ' .. msg)
     local ex = string.split(msg, ':')
     if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
 
@@ -595,7 +577,7 @@ function TWT.calcPerc(guid)
         end
     end
 
-    --perc
+    -- perc
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO then
             data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (tankThreat * (data.melee and 1.1 or 1.3)))
@@ -652,10 +634,6 @@ function TWT.combatStart()
         _G['TWTMain']:Show()
     end
 
-    if TWT_CONFIG.fullScreenGlow then
-        --TWT.fullScreenGlowAnimator:Show()
-    end
-
     TWT.barAnimator:Show()
 end
 
@@ -678,10 +656,6 @@ function TWT.combatEnd()
 
     if TWT_CONFIG.hideOOC then
         _G['TWTMain']:Hide()
-    end
-
-    if TWT_CONFIG.fullScreenGlow then
-        --TWT.fullScreenGlowAnimator:Hide()
     end
 
     if TWT_CONFIG.tankMode then
@@ -1028,17 +1002,16 @@ function TWT.updateUI()
             _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.target][TWT.name].perc .. '%')
         end
 
-
         -- name
         _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
-
 
         -- bar width and color
         local color = TWT.classColors[data.class]
 
         if name == TWT.name then
 
-            if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5 then
+            if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5
+                    and not TWT_CONFIG.fullScreenGlow then
                 PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
                 TWT.lastAggroWarningSoundTime = time()
             end
@@ -1046,6 +1019,9 @@ function TWT.updateUI()
             if TWT_CONFIG.fullScreenGlow and data.perc >= 85 and time() - TWT.lastAggroWarningGlowTime > 5 then
                 TWT.glowFader:Show()
                 TWT.lastAggroWarningGlowTime = time()
+                if TWT_CONFIG.aggroSound then
+                    PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
+                end
             end
 
             _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] and TWT.unitNameForTitle(TWT.guids[TWT.target]) or '') .. ' (' .. data.perc .. '%)')
@@ -1230,7 +1206,6 @@ TWT.barAnimator:SetScript("OnUpdate", function()
             end
         end
     end
-    --end
 end)
 
 TWT.ui:SetScript("OnShow", function()
@@ -1281,38 +1256,6 @@ function TWT.calcTPS(name, data)
     return ''
 end
 
-TWT.fullScreenGlowAnimator = CreateFrame('Frame')
-TWT.fullScreenGlowAnimator:Hide()
-
-TWT.fullScreenGlowAnimator:SetScript("OnShow", function()
-    this.startTime = GetTime()
-    this.sizeDiff = 100
-    this.sizeNow = 0
-    this.factor = 1
-end)
-TWT.fullScreenGlowAnimator:SetScript("OnHide", function()
-end)
-TWT.fullScreenGlowAnimator:SetScript("OnUpdate", function()
-    local plus = 0.02
-    local gt = GetTime() * 1000
-    local st = (this.startTime + plus) * 1000
-    if gt >= st then
-        this.startTime = GetTime()
-        if this.sizeNow >= this.sizeDiff then
-            this.factor = -1
-        end
-        if this.sizeNow <= 0 then
-            this.factor = 1
-        end
-
-        this.sizeNow = this.sizeNow + this.factor * 4
-
-        if TWT_CONFIG.fullScreenGlow then
-            _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth() + this.sizeNow)
-            _G['TWTFullScreenGlowTexture']:SetHeight(GetScreenHeight() + this.sizeNow)
-        end
-    end
-end)
 
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
@@ -1499,8 +1442,6 @@ function TWT.setColumnLabels()
     end
 
     TWT.windowWidth = _G['TWTMain']:GetWidth()
-
-    twtdebug('TWT.windowWidth = ' .. TWT.windowWidth)
 
     _G['TWTMain']:SetMinResize(TWT.windowWidth, 100)
     _G['TWTMain']:SetMaxResize(TWT.windowWidth, 300)
@@ -1727,14 +1668,14 @@ function TWT.targetRaidSymbolFromUnit(unit, index)
     if UnitExists(unit) then
         if GetRaidTargetIndex(unit) == index then
             twtdebug('found ! ' .. unit)
-            TargetUnit(unit);
+            TargetUnit(unit)
             return true
         end
         if UnitExists(unit .. "target") then
             if GetRaidTargetIndex(unit .. "target") == index then
                 twtdebug('found ! ' .. unit .. 'target')
-                TargetUnit(unit .. "target");
-                return true;
+                TargetUnit(unit .. "target")
+                return true
             end
         end
     end
