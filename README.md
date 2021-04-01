@@ -3,7 +3,7 @@ Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
-### Features:
+## Features:
 - Threat, threat to pull aggro, TPS, % Max, % to pull
 - Target glow based on threat for default game target frame
 - Target threat percent indicator for default game target frame
@@ -13,13 +13,13 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 - Customizable labels for TPS, Threat, Percent Max
 - Tankmode !
 
-### Slashcommands:
+## Slashcommands
 - `/twtshow`, `/twt show`
 
-### Settings
+## Settings
 ![settings](https://imgur.com/S5zpbSX.png)
 
-#### Glow
+### Glow
 Shows a colored aura ranging from Green/Yellow/Red on the Default UI's unit frame.<br>
 The color of the aura is based on your current threat threshold:<br>
 - green - yellow for 0% - 49%<Br>
@@ -28,49 +28,49 @@ The color of the aura is based on your current threat threshold:<br>
 ![glow](https://imgur.com/7rZt20N.png)
 <br>
 
-#### Full Screen Glow
+### Full Screen Glow
 Red glowing screen edges when your threat is above 80%.<Br>
 This feature is disabled in Tank Mode.<br>
 <br>
 
-#### Aggro Warning Sound
+### Aggro Warning Sound
 Plays a warning sound when you reach 99% threat.<br>
 This feature is disabled in Tank Mode.<br>
 <br>
 
-#### Percentages
+### Percentages
 Shows threat percentages on the default target frame.<Br>
 ![percentages](https://imgur.com/jTlY6Gj.png)
 <br>
 
-#### Combat Show
+### Combat Show
 Automatically shows the window when combat begins.<br>
 <br>
 
-#### Combat Hide
+### Combat Hide
 Automatically hides the window when combat begins.<br>
 <br>
 
-#### Tank Mode
+### Tank Mode
 Shows an additional window with targets that you are currently tanking and the name and threat
 percent of the next player in threat list for quick target swap (this mode disables
 Full Screen Glow and Aggro Warning Sound).<br><br>
 ![tankmode](https://imgur.com/daZ3vuv.png)
 <br>
 
-#### Show Name/TPS/Threat/% Max Label Row
+### Show Name/TPS/Threat/% Max Label Row
 Shows or hides the row above the threat bars.
 <br>
 
-#### Show TPS Column
+### Show TPS Column
 Shows or hides the TPS column.
 <br>
 
-#### Show Threat Column
+### Show Threat Column
 Shows or hides the Threat column.
 <br>
 
-#### Show Percent Column
+### Show Percent Column
 Shows or hides the Percent Max column.
 <br>
 
