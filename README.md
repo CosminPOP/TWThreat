@@ -13,13 +13,13 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 - Customizable labels for TPS, Threat, Percent Max
 - Tankmode !
 
-Slashcommands:
+### Slashcommands:
 - `/twtshow`, `/twt show`
 
-## Settings
+### Settings
 ![settings](https://imgur.com/S5zpbSX.png)
 
-**Glow**<br>
+#### **Glow**
 Shows a colored aura ranging from Green/Yellow/Red on the Default UI's unit frame.<br>
 The color of the aura is based on your current threat threshold:<br>
 - green - yellow for 0% - 49%<Br>
