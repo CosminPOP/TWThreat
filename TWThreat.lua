@@ -1273,6 +1273,11 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
         _G['TWTFullScreenGlow']:Hide()
     end
 
+    if not UnitExists('target') or UnitIsPlayer('target') then
+        _G['TWThreatDisplayTarget']:Hide()
+        return false
+    end
+
     if not creature or creature ~= UnitName('target') or perc == -1 then
         _G['TWThreatDisplayTarget']:Hide()
         return false
