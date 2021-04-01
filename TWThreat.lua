@@ -225,7 +225,7 @@ TWT:SetScript("OnEvent", function()
             if not UnitExists('target') then
                 --twtdebug('lost target, prev target = ' .. TWT.target)
                 --TWT.target = ''
-                --TWT.updateTargetFrameThreatIndicators(-1)
+                TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
