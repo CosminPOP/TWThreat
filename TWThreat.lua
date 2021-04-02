@@ -46,6 +46,7 @@ TWT.nameLimit = 30
 TWT.windowStartWidth = 300
 TWT.windowWidth = 300
 
+TWT.roles = {}
 --TWT.combatStartTime = time()
 
 TWT.custom = {
@@ -117,7 +118,7 @@ SlashCmdList["TWT"] = function(cmd)
             return true
         end
 
-        if string.sub(cmd, 1, 3,'who') then
+        if string.sub(cmd, 1, 3, 'who') then
             TWT.queryWho()
             return true
         end
@@ -215,6 +216,12 @@ TWT:SetScript("OnEvent", function()
 
             if string.sub(arg2, 1, 7) == 'TWT_WHO' then
                 TWT.send('TWT_ME:' .. TWT.addonVer)
+                return true
+            end
+
+            if string.sub(arg2, 1, 15) == 'TWTRoleTexture:' then
+                local tex = string.split(arg2, ':')[2] or ''
+                TWT.roles[arg4] = tex
                 return true
             end
 
@@ -370,8 +377,6 @@ function TWT.updateWithAddon()
     _G['TWTWithAddonListText']:SetText(rosterList)
     _G['TWTWithAddonListTitle']:SetText('Addon Raid Status ' .. TWT.withAddon .. '/' .. GetNumRaidMembers())
 end
-
-
 
 TWT.glowFader = CreateFrame('Frame')
 TWT.glowFader:Hide()
@@ -724,6 +729,64 @@ function TWT.combatStart()
 
     --TWT.combatStartTime = time()
 
+    local spec = {
+        {
+            talents = 0,
+            talentString = '',
+            texture = '',
+            name = ''
+        },
+        {
+            talents = 0,
+            talentString = '',
+            texture = '',
+            name = ''
+        },
+        {
+            talents = 0,
+            talentString = '',
+            texture = '',
+            name = ''
+        },
+    }
+    for t = 1, GetNumTalentTabs() do
+        for i = 1, GetNumTalents(t) do
+            local nameTalent, icon, tier, column, currRank, maxRank = GetTalentInfo(t, i);
+            spec[t].talents = spec[t].talents + currRank
+            spec[t].talentString = spec[t].talentString .. currRank
+            --twtdebug("- " .. nameTalent .. ": " .. currRank .. "/" .. maxRank);
+        end
+    end
+
+    local specIndex = 1
+    for i = 1, MAX_SKILLLINE_TABS do
+        local name, texture = GetSpellTabInfo(i);
+        if name and name ~= 'General' and texture and i > 1 then
+            spec[specIndex].name = name
+            texture = string.split(texture, '\\')
+            texture = texture[table.getn(texture)]
+            spec[specIndex].texture = texture
+            specIndex = specIndex + 1
+        end
+    end
+
+    --twtdebug(spec[1].talents .. ':' .. spec[2].talents .. ':' .. spec[3].talents)
+    --twtdebug(spec[1].talentString .. ':' .. spec[2].talentString .. ':' .. spec[3].talentString)
+
+    local sendTex = spec[1].texture
+    if spec[2].talents > spec[1].talents and spec[2].talents > spec[3].talents then
+        sendTex = spec[2].texture
+    end
+    if spec[3].talents > spec[1].talents and spec[3].talents > spec[2].talents then
+        sendTex = spec[3].texture
+    end
+
+    if TWT.class == 'warrior' and string.lower(sendTex) == 'ability_rogue_eviscerate' then
+        sendTex = 'ability_warrior_savageblow' --ms
+    end
+
+    TWT.send('TWTRoleTexture:' .. sendTex)
+
     TWT.barAnimator:Show()
 end
 
@@ -1072,15 +1135,17 @@ function TWT.updateUI()
 
 
         -- icons
-        if name == tankName then
-            _G['TWThreat' .. name .. 'Tank']:Show()
-            _G['TWThreat' .. name .. 'AGRO']:Hide()
-        elseif name == TWT.AGRO then
+        _G['TWThreat' .. name .. 'AGRO']:Hide()
+        _G['TWThreat' .. name .. 'Role']:Hide()
+        if TWT.roles[name] then
+            _G['TWThreat' .. name .. 'Role']:SetTexture('Interface\\Icons\\' .. TWT.roles[name])
+            _G['TWThreat' .. name .. 'Role']:SetWidth(TWT_CONFIG.barHeight - 2)
+            _G['TWThreat' .. name .. 'Role']:SetHeight(TWT_CONFIG.barHeight - 2)
+            _G['TWThreat' .. name .. 'Name']:SetPoint('LEFT', _G['TWThreat' .. name .. 'Role'], 'RIGHT', 1 + (TWT_CONFIG.barHeight / 15), -1)
+            _G['TWThreat' .. name .. 'Role']:Show()
+        end
+        if name == TWT.AGRO then
             _G['TWThreat' .. name .. 'AGRO']:Show()
-            _G['TWThreat' .. name .. 'Tank']:Hide()
-        else
-            _G['TWThreat' .. name .. 'AGRO']:Hide()
-            _G['TWThreat' .. name .. 'Tank']:Hide()
         end
 
 
@@ -1355,7 +1420,6 @@ function TWT.calcTPS(name, data)
     return ''
 end
 
-
 function TWT.updateTargetFrameThreatIndicators(perc, creature)
 
     if TWT_CONFIG.fullScreenGlow then
@@ -1601,6 +1665,12 @@ function TWT.testBars(show)
 
     if show then
         TWT.guids[69] = 'Patchwerk TESTMODE'
+        TWT.roles['BarTestMode'] = 'ability_warrior_defensivestance'
+        TWT.roles['Chad'] = 'spell_holy_auraoflight'
+        TWT.roles[TWT.name] = 'ability_warrior_defensivestance'
+        TWT.roles['Gorx'] = 'spell_nature_lightning'
+        TWT.roles['Rake'] = 'ability_marksmanship'
+        TWT.roles['Nephew'] = 'spell_shadow_shadowbolt'
         TWT.threats[69] = {
             [TWT.AGRO] = {
                 class = 'agro',

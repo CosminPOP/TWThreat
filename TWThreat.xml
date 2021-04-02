@@ -175,6 +175,36 @@
                 </Texture>
             </Layer>
             <Layer level="OVERLAY">
+
+                <Texture name="$parentAGRO" file="Interface\CharacterFrame\UI-StateIcon" hidden="true">
+                    <Size>
+                        <AbsDimension x="24" y="24"/>
+                    </Size>
+                    <TexCoords left="0.5" right="1.0" top="0" bottom="0.49"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
+                <!--                <Texture name="$parentTank" file="Interface\addons\TWThreat\images\tank" hidden="true">-->
+                <Texture name="$parentRole" file="" hidden="true">
+                    <Size>
+                        <AbsDimension x="24" y="24"/>
+                    </Size>
+                    <TexCoords left="0.08" right="0.92" top="0.08" bottom="0.92"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
                 <FontString name="$parentName" inherits="GameFontHighlightSmall" justifyH="LEFT" text="Name">
                     <Size>
                         <AbsDimension x="130" y="20"/>
@@ -226,33 +256,6 @@
                         </Anchor>
                     </Anchors>
                 </FontString>
-
-                <Texture name="$parentTank" file="Interface\addons\TWThreat\images\tank" hidden="true">
-                    <Size>
-                        <AbsDimension x="24" y="24"/>
-                    </Size>
-                    <Anchors>
-                        <Anchor point="LEFT">
-                            <Offset>
-                                <AbsDimension x="3" y="-3"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-
-                <Texture name="$parentAGRO" file="Interface\CharacterFrame\UI-StateIcon" hidden="true">
-                    <Size>
-                        <AbsDimension x="24" y="24"/>
-                    </Size>
-                    <TexCoords left="0.5" right="1.0" top="0" bottom="0.49"/>
-                    <Anchors>
-                        <Anchor point="LEFT">
-                            <Offset>
-                                <AbsDimension x="0" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
 
             </Layer>
         </Layers>
