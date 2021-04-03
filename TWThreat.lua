@@ -47,7 +47,7 @@ TWT.windowStartWidth = 300
 TWT.windowWidth = 300
 
 TWT.roles = {}
---TWT.combatStartTime = time()
+TWT.spec = {}
 
 TWT.custom = {
     ['The Prophet Skeram'] = 0
@@ -85,6 +85,10 @@ end
 function twtdebug(a)
     if not TWT_CONFIG.debug then
         return false
+    end
+    if a == nil then
+        twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff attempt to print a nil value.')
+        return
     end
     if type(a) == 'boolean' then
         if a then
@@ -191,7 +195,7 @@ TWT:SetScript("OnEvent", function()
 
                 TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
-                twtdebug('got guid: ' .. guidEx[2])
+                --twtdebug('got guid: ' .. guidEx[2])
                 return true
             end
         end
@@ -225,26 +229,138 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
-            if string.sub(arg2, 1, 7) == 'TWT_ME:' then
+            if string.sub(arg2, 1, 15) == 'TWTShowTalents:' and arg4 ~= TWT.name then
 
-                local msg = string.split(arg2, ':')[2]
-                local verColor = ""
-                if TWT.version(msg) == TWT.version(TWT.addonVer) then
-                    verColor = TWT.classColors['hunter'].c
-                end
-                if TWT.version(msg) < TWT.version(TWT.addonVer) then
-                    verColor = '|cffff1111'
-                end
-                if TWT.version(msg) + 1 == TWT.version(TWT.addonVer) then
-                    verColor = '|cffff8810'
+                local name = string.split(arg2, ':')[2] or ''
+
+                if name ~= TWT.name then
+                    return false
                 end
 
-                TWT.addonStatus[arg4]['v'] = '    ' .. verColor .. msg
-                TWT.withAddon = TWT.withAddon + 1
+                for tree = 1, GetNumTalentTabs() do
+                    local treeName, iconTexture, pointsSpent = GetTalentTabInfo(tree)
+                    local numTalents = GetNumTalents(tree)
+                    TWT.send('TWTTalentTabInfo;' .. arg4 .. ';' .. tree .. ';' ..
+                            treeName .. ';' .. pointsSpent .. ';' .. numTalents)
 
-                TWT.updateWithAddon()
+                    for i = 1, GetNumTalents(tree) do
+                        local nameTalent, _, tier, column, currRank, maxRank, _, meetsPrereq = GetTalentInfo(tree, i)
+                        local ptier, pcolumn, isLearnable = GetTalentPrereqs(tree, i);
+                        if not ptier then
+                            ptier = -1
+                        end
+                        if not pcolumn then
+                            pcolumn = -1
+                        end
+                        if not isLearnable then
+                            isLearnable = -1
+                        end
+                        TWT.send('TWTTalentInfo;' .. arg4 .. ';' .. tree .. ';' .. i .. ';' ..
+                                nameTalent .. ';' .. tier .. ';' .. column .. ';' ..
+                                currRank .. ';' .. maxRank .. ';' .. meetsPrereq .. ';' ..
+                                ptier .. ';' .. pcolumn .. ';' .. isLearnable)
+                    end
+                end
+
+                TWT.send('TWTTalentEND;' .. arg4)
 
                 return true
+            end
+
+            if string.sub(arg2, 1, 13) == 'TWTTalentEND;' then
+                local talentEx = string.split(arg2, ';')
+                local name = talentEx[2]
+                if name == TWT.name then
+                    _G['TWTTalentFrame']:Show()
+                end
+                return true
+            end
+
+            if string.sub(arg2, 1, 17) == 'TWTTalentTabInfo;' then
+
+                local talentEx = string.split(arg2, ';')
+
+                if talentEx[2] ~= TWT.name then
+                    return false
+                end
+
+                local index = tonumber(talentEx[3])
+                local name = talentEx[4]
+                local pointsSpent = tonumber(talentEx[5])
+                local numTalents = tonumber(talentEx[6])
+
+                TWT_SPEC[index].name = name
+                TWT_SPEC[index].pointsSpent = pointsSpent
+                TWT_SPEC[index].numTalents = numTalents
+
+                return true
+            end
+
+            if string.sub(arg2, 1, 14) == 'TWTTalentInfo;' and arg4 ~= TWT.name then
+
+                local talentEx = string.split(arg2, ';')
+
+                if talentEx[2] ~= TWT.name then
+                    return false
+                end
+
+                local tree = tonumber(talentEx[3])
+                local i = tonumber(talentEx[4])
+                local nameTalent = talentEx[5]
+                local tier = tonumber(talentEx[6])
+                local column = tonumber(talentEx[7])
+                local currRank = tonumber(talentEx[8])
+                local maxRank = tonumber(talentEx[9])
+                local meetsPrereq = talentEx[10] == '1'
+
+                local ptier = talentEx[11] ~= '-1' and tonumber(talentEx[11]) or nil
+                local pcolumn = talentEx[12] ~= '-1' and tonumber(talentEx[12]) or nil
+                local isLearnable = talentEx[13] == '1' and 1 or nil
+
+                if not TWT_SPEC[tree][i] then
+                    TWT_SPEC[tree][i] = {}
+                end
+
+                TWT_SPEC[tree][i].name = nameTalent
+                TWT_SPEC[tree][i].tier = tier
+                TWT_SPEC[tree][i].column = column
+                TWT_SPEC[tree][i].rank = currRank
+                TWT_SPEC[tree][i].maxRank = maxRank
+                TWT_SPEC[tree][i].meetsPrereq = meetsPrereq
+
+                TWT_SPEC[tree][i].ptier = ptier
+                TWT_SPEC[tree][i].pcolumn = pcolumn
+                TWT_SPEC[tree][i].isLearnable = isLearnable
+
+                return true
+            end
+
+            if string.sub(arg2, 1, 7) == 'TWT_ME:' then
+
+                if TWT.addonStatus[arg4] then
+
+                    local msg = string.split(arg2, ':')[2]
+                    local verColor = ""
+                    if TWT.version(msg) == TWT.version(TWT.addonVer) then
+                        verColor = TWT.classColors['hunter'].c
+                    end
+                    if TWT.version(msg) < TWT.version(TWT.addonVer) then
+                        verColor = '|cffff1111'
+                    end
+                    if TWT.version(msg) + 1 == TWT.version(TWT.addonVer) then
+                        verColor = '|cffff8810'
+                    end
+
+                    -- errors out to everyone else cause they dont have the array init
+                    TWT.addonStatus[arg4]['v'] = '    ' .. verColor .. msg
+                    TWT.withAddon = TWT.withAddon + 1
+
+                    TWT.updateWithAddon()
+
+                    return true
+                else
+                    return false
+                end
             end
 
             TWT.handleClientMSG(arg2, arg4)
@@ -281,7 +397,7 @@ TWT:SetScript("OnEvent", function()
 
             if UnitIsPlayer('target') then
                 --show topmost
-                twtdebug('target is player, showing threat for ' .. TWT.target)
+                --twtdebug('target is player, showing threat for ' .. TWT.target)
                 --TWT.target = '' -- UnitIsPlayer('target') and 'max' or ''
 
                 -- twtdebug('player or none')
@@ -316,7 +432,7 @@ TWT:SetScript("OnEvent", function()
                 for guid, index in next, TWT.raidTargetIconIndex do
                     if index == GetRaidTargetIndex("target") then
                         TWT.target = guid
-                        twtdebug('found target guid = ' .. guid .. ' based on mark')
+                        --twtdebug('found target guid = ' .. guid .. ' based on mark')
                         return true
                     end
                 end
@@ -442,6 +558,10 @@ function TWT.init()
     --TWT_CONFIG.combatAlpha = TWT_CONFIG.combatAlpha or 1
     --TWT_CONFIG.oocAlpha = TWT_CONFIG.oocAlpha or 1
 
+    --todo temporary until its fixed
+    TWT_CONFIG.tankMode = false
+    _G['TWTMainSettingsTankMode']:Disable()
+
     TWT_CONFIG.debug = TWT_CONFIG.debug or false
 
     if TWT_CONFIG.visible then
@@ -545,6 +665,64 @@ function TWT.init()
     _G['TWThreatListScrollFrameScrollBarThumbTexture']:SetTexture('')
 
     TWT.handShakeDelay:Show()
+
+    --UnitPopupButtons["INSPECT_TALENTS"] = { text = 'Inspect Talents', dist = 0 }
+    --
+    --TWT.addInspectMenu("PARTY")
+    --TWT.addInspectMenu("PLAYER")
+    --TWT.addInspectMenu("RAID")
+    --
+    --TWT.hooksecurefunc("UnitPopup_OnClick", function()
+    --    local button = this.value
+    --    if button == "INSPECT_TALENTS" then
+    --
+    --        _G['TWTTalentFrame']:Hide()
+    --
+    --        TWT_SPEC = {
+    --            class = UnitClass('target'),
+    --            {
+    --                name = 'Arms',
+    --                iconTexture = 'interface\\icons\\ability_warrior_cleave',
+    --                pointsSpent = 27,
+    --                numTalents = 18
+    --            },
+    --            {
+    --                name = 'Fury',
+    --                iconTexture = 'interface\\icons\\ability_warrior_cleave',
+    --                pointsSpent = 24,
+    --                numTalents = 17
+    --            },
+    --            {
+    --                name = 'Protection',
+    --                iconTexture = 'interface\\icons\\ability_warrior_cleave',
+    --                pointsSpent = 0,
+    --                numTalents = 17
+    --            }
+    --        }
+    --
+    --        TWT.send('TWTShowTalents:' .. UnitName('target'))
+    --
+    --    end
+    --end)
+    --
+    --UIParentLoadAddOn("Blizzard_TalentUI")
+
+end
+
+function TWT.addInspectMenu(to)
+    local found = 0
+    for i, j in UnitPopupMenus[to] do
+        if j == "TRADE" then
+            found = i
+        end
+    end
+    if found ~= 0 then
+        UnitPopupMenus[to][table.getn(UnitPopupMenus[to]) + 1] = UnitPopupMenus[to][table.getn(UnitPopupMenus[to])]
+        for i = table.getn(UnitPopupMenus[to]) - 1, found, -1 do
+            UnitPopupMenus[to][i] = UnitPopupMenus[to][i - 1]
+        end
+    end
+    UnitPopupMenus[to][found] = "INSPECT_TALENTS"
 end
 
 TWT.handShakeDelay = CreateFrame('Frame')
@@ -582,7 +760,7 @@ function TWT.handleServerMSG(msg)
         local threat = tonumber(msgEx[4])
         local melee = tonumber(msgEx[5]) <= TWT.meleeRange and 1 or 0
 
-        threat = threat >= 1 and threat or 1
+        threat = threat >= 0 and threat or 0
 
         TWT.send(TWT.class .. ':' .. guid .. ':' .. threat .. ':' .. melee .. ':' .. TWT.isTank(guid), guid)
 
@@ -592,12 +770,23 @@ function TWT.handleServerMSG(msg)
 end
 
 function TWT.handleClientMSG(msg, sender)
-    -- format "class:guid:threat:melee:tank"
+    if not UnitAffectingCombat('player') then
+        return false
+    end
+
     local ex = string.split(msg, ':')
     if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
 
         local player = sender
         local class = ex[1]
+
+        --ghetto protection
+        if class ~= 'warrior' and class ~= 'paladin' and class ~= 'warlock' and
+                class ~= 'priest' and class ~= 'mage' and class ~= 'druid' and class ~= 'rogue' and
+                class ~= 'hunter' and class ~= 'shaman' then
+            return false
+        end
+
         local guid = tonumber(ex[2])
         local threat = tonumber(ex[3])
         local melee = tonumber(ex[4]) == 1
@@ -610,7 +799,7 @@ function TWT.handleClientMSG(msg, sender)
         if not TWT.threats[guid][TWT.name] then
             TWT.threats[guid][TWT.name] = {
                 class = TWT.class,
-                threat = 1,
+                threat = 0,
                 perc = 1,
                 tps = 0,
                 history = {},
@@ -623,7 +812,7 @@ function TWT.handleClientMSG(msg, sender)
         if not TWT.threats[guid][TWT.AGRO] then
             TWT.threats[guid][TWT.AGRO] = {
                 class = 'agro',
-                threat = 1,
+                threat = 0,
                 perc = 100,
                 tps = '',
                 history = {},
@@ -653,14 +842,13 @@ function TWT.handleClientMSG(msg, sender)
         end
 
         TWT.calcPerc(guid)
-
+        TWT.updateUI()
     end
-    TWT.updateUI()
 end
 
 function TWT.calcPerc(guid)
 
-    local tankThreat = 1
+    local tankThreat = 0
 
     -- max
     for name, data in next, TWT.threats[guid] do
@@ -671,8 +859,17 @@ function TWT.calcPerc(guid)
 
     -- perc
     for name, data in next, TWT.threats[guid] do
+        if name == TWT.AGRO then
+            data.threat = tankThreat * (data.melee and 1.1 or 1.3)
+            data.perc = data.melee and 110 or 130
+        end
         if name ~= TWT.AGRO then
-            data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (tankThreat * (data.melee and 1.1 or 1.3)))
+            if tankThreat == 0 then
+                data.perc = 0
+            else
+                data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (tankThreat * (data.melee and 1.1 or 1.3)))
+            end
+
             data.perc = data.perc > 100 and 100 or data.perc
         end
     end
@@ -729,32 +926,15 @@ function TWT.combatStart()
 
     --TWT.combatStartTime = time()
 
-    local spec = {
-        {
-            talents = 0,
-            talentString = '',
-            texture = '',
-            name = ''
-        },
-        {
-            talents = 0,
-            talentString = '',
-            texture = '',
-            name = ''
-        },
-        {
-            talents = 0,
-            talentString = '',
-            texture = '',
-            name = ''
-        },
-    }
+    TWT.spec = {}
     for t = 1, GetNumTalentTabs() do
+        TWT.spec[t] = {
+            talents = 0,
+            texture = ''
+        }
         for i = 1, GetNumTalents(t) do
-            local nameTalent, icon, tier, column, currRank, maxRank = GetTalentInfo(t, i);
-            spec[t].talents = spec[t].talents + currRank
-            spec[t].talentString = spec[t].talentString .. currRank
-            --twtdebug("- " .. nameTalent .. ": " .. currRank .. "/" .. maxRank);
+            local _, _, _, _, currRank = GetTalentInfo(t, i);
+            TWT.spec[t].talents = TWT.spec[t].talents + currRank
         end
     end
 
@@ -762,23 +942,20 @@ function TWT.combatStart()
     for i = 1, MAX_SKILLLINE_TABS do
         local name, texture = GetSpellTabInfo(i);
         if name and name ~= 'General' and texture and i > 1 then
-            spec[specIndex].name = name
+            TWT.spec[specIndex].name = name
             texture = string.split(texture, '\\')
             texture = texture[table.getn(texture)]
-            spec[specIndex].texture = texture
+            TWT.spec[specIndex].texture = texture
             specIndex = specIndex + 1
         end
     end
 
-    --twtdebug(spec[1].talents .. ':' .. spec[2].talents .. ':' .. spec[3].talents)
-    --twtdebug(spec[1].talentString .. ':' .. spec[2].talentString .. ':' .. spec[3].talentString)
-
-    local sendTex = spec[1].texture
-    if spec[2].talents > spec[1].talents and spec[2].talents > spec[3].talents then
-        sendTex = spec[2].texture
+    local sendTex = TWT.spec[1].texture
+    if TWT.spec[2].talents > TWT.spec[1].talents and TWT.spec[2].talents > TWT.spec[3].talents then
+        sendTex = TWT.spec[2].texture
     end
-    if spec[3].talents > spec[1].talents and spec[3].talents > spec[2].talents then
-        sendTex = spec[3].texture
+    if TWT.spec[3].talents > TWT.spec[1].talents and TWT.spec[3].talents > TWT.spec[2].talents then
+        sendTex = TWT.spec[3].texture
     end
 
     if TWT.class == 'warrior' and string.lower(sendTex) == 'ability_rogue_eviscerate' then
@@ -834,7 +1011,7 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
-        twtdebug('asking for guid ')
+        --twtdebug('asking for guid ')
         SendAddonMessage("TWT_GUID", "twt", TWT.channel)
         TWT.targetChangedHelper:Hide()
     end
@@ -880,9 +1057,9 @@ function TWT.targetChanged(guid, cached)
 
         if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
             if guid == TWT.custom[UnitName('target')] then
-                twtdebug('targetting real skeram')
+                twtdebug('real skeram')
             else
-                twtdebug('targetting a clone')
+                twtdebug('clone')
             end
         end
     end
@@ -1009,8 +1186,9 @@ function TWT.updateUI()
         TWT.threatsFrames[index]:Hide()
     end
 
-    if TWT.target == '' then
-        --return false
+    if not UnitAffectingCombat('player') and not _G['TWTMainSettings']:IsVisible()  then
+        TWT.updateTargetFrameThreatIndicators(-1, '')
+        return false
     end
 
     if TWT.target == '' or UnitIsPlayer('target') then
@@ -1024,9 +1202,11 @@ function TWT.updateUI()
         local maxThreatGuid = 0
         local maxThreatPerc = 0
         for guid, perc in myThreatPercs do
-            if perc > maxThreatPerc then
-                maxThreatPerc = perc
-                maxThreatGuid = guid
+            if TWT.threats[guid][TWT.name].stamp then
+                if perc > maxThreatPerc and GetTime() - TWT.threats[guid][TWT.name].stamp < 5 then
+                    maxThreatPerc = perc
+                    maxThreatGuid = guid
+                end
             end
         end
 
@@ -1044,191 +1224,173 @@ function TWT.updateUI()
     then
         if GetRaidTargetIndex("target") then
             TWT.raidTargetIconIndex[TWT.target] = GetRaidTargetIndex("target")
-            twtdebug('saved icon ' .. GetRaidTargetIndex("target") .. ' for target ' .. TWT.target)
+            --twtdebug('saved icon ' .. GetRaidTargetIndex("target") .. ' for target ' .. TWT.target)
         end
     end
 
     local index = 0
 
-    for _, creature in next, TWT.threats do
-        for player, data in next, creature do
-            if player == TWT.AGRO then
-                data.tps = ''
-                data.threat = 1
-            end
-        end
-    end
+    --for _, creature in next, TWT.threats do
+    --    for player, data in next, creature do
+    --        if player == TWT.AGRO then
+    --            data.tps = ''
+    --            data.threat = 1
+    --        end
+    --    end
+    --end
 
     if not TWT.threats[TWT.target] then
         TWT.updateTargetFrameThreatIndicators(-1)
         return false
     end
 
-    local tankThreat = 0
-    local myThreat = 0
+    --if UnitExists('target') and (UnitIsPlayer('target') or UnitIsDead('target')) then
+    --    tankName = TWT.lastTarget
+    --else
+    --    if UnitName('targettarget') then
+    --        tankName = UnitName('targettarget')
+    --    else
+    --        -- not tt, target sunned
+    --        tankName = TWT.lastTarget
+    --    end
+    --end
+
+    --local tankThreat = 0
+    --local myThreat = 0
 
     local tankName = ''
 
-    if UnitExists('target') and (UnitIsPlayer('target') or UnitIsDead('target')) then
-        tankName = TWT.lastTarget
-    else
-        if UnitName('targettarget') then
-            tankName = UnitName('targettarget')
-        else
-            -- not tt, target sunned
-            tankName = TWT.lastTarget
-        end
+    if UnitExists('targettarget') and UnitIsPlayer('targettarget') and
+            not UnitIsPlayer('target') then
+        tankName = UnitName('targettarget')
     end
 
-    TWT.lastTarget = tankName ~= '' and tankName or UnitName('targettargettarget')
+    TWT.lastTarget = tankName
 
     if _G['TWTMainSettings']:IsVisible() and not UnitAffectingCombat('player') then
         tankName = 'BarTestMode'
     end
 
-    if TWT.threats[TWT.target] then
-        if TWT.threats[TWT.target][tankName] then
-            if TWT.threats[TWT.target][tankName].threat then
-                tankThreat = TWT.threats[TWT.target][tankName].threat
-            end
-        end
-        if TWT.threats[TWT.target][TWT.name] then
-            if TWT.threats[TWT.target][TWT.name].threat then
-                myThreat = TWT.threats[TWT.target][TWT.name].threat
-            end
-        end
-    end
-
-    if TWT.threats[TWT.target][TWT.name].melee then
-        TWT.threats[TWT.target][TWT.AGRO].threat = tankThreat * 1.1
-        TWT.threats[TWT.target][TWT.AGRO].perc = 110
-    else
-        TWT.threats[TWT.target][TWT.AGRO].threat = tankThreat * 1.3
-        TWT.threats[TWT.target][TWT.AGRO].perc = 130
-    end
-
-    local maxThreat = TWT.threats[TWT.target][TWT.AGRO].threat
-
-    if maxThreat == 0 then
-        return false
-    end
-
     for name, data in TWT.ohShitHereWeSortAgain(TWT.threats[TWT.target], true) do
 
-        index = index + 1
-        if not TWT.threatsFrames[name] then
-            TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWThreatListScrollFrameChildren"], 'TWThreat')
-        end
+        if data.threat > 0 then
 
-        _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
-        TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = 1
-
-        _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
-        _G['TWThreat' .. name .. 'TPS']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
-        _G['TWThreat' .. name .. 'Threat']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
-        _G['TWThreat' .. name .. 'Perc']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
-
-        _G['TWThreat' .. name]:SetHeight(TWT_CONFIG.barHeight - 1)
-        _G['TWThreat' .. name .. 'BG']:SetHeight(TWT_CONFIG.barHeight - 2)
-
-        TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWThreatListScrollFrameChildren"], "TOPLEFT", 0, TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
-
-
-        -- icons
-        _G['TWThreat' .. name .. 'AGRO']:Hide()
-        _G['TWThreat' .. name .. 'Role']:Hide()
-        if TWT.roles[name] then
-            _G['TWThreat' .. name .. 'Role']:SetTexture('Interface\\Icons\\' .. TWT.roles[name])
-            _G['TWThreat' .. name .. 'Role']:SetWidth(TWT_CONFIG.barHeight - 2)
-            _G['TWThreat' .. name .. 'Role']:SetHeight(TWT_CONFIG.barHeight - 2)
-            _G['TWThreat' .. name .. 'Name']:SetPoint('LEFT', _G['TWThreat' .. name .. 'Role'], 'RIGHT', 1 + (TWT_CONFIG.barHeight / 15), -1)
-            _G['TWThreat' .. name .. 'Role']:Show()
-        end
-        if name == TWT.AGRO then
-            _G['TWThreat' .. name .. 'AGRO']:Show()
-        end
-
-
-        -- tps
-        data.history[time()] = data.threat
-        data.tps = TWT.calcTPS(name, data)
-        _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
-
-        -- labels
-        TWT.setBarLabels(_G['TWThreat' .. name .. 'Perc'], _G['TWThreat' .. name .. 'Threat'], _G['TWThreat' .. name .. 'TPS'])
-
-        -- perc
-        _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
-
-        if TWT.name ~= tankName and name == TWT.AGRO then
-            _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.target][TWT.name].perc .. '%')
-        end
-
-        -- name
-        _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
-
-        -- bar width and color
-        local color = TWT.classColors[data.class]
-
-        if name == TWT.name then
-
-            if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5
-                    and not TWT_CONFIG.fullScreenGlow then
-                PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
-                TWT.lastAggroWarningSoundTime = time()
+            index = index + 1
+            if not TWT.threatsFrames[name] then
+                TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWThreatListScrollFrameChildren"], 'TWThreat')
             end
 
-            if TWT_CONFIG.fullScreenGlow and data.perc >= 85 and time() - TWT.lastAggroWarningGlowTime > 5 then
-                TWT.glowFader:Show()
-                TWT.lastAggroWarningGlowTime = time()
-                if TWT_CONFIG.aggroSound then
+            _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
+            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = 1
+
+            _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+            _G['TWThreat' .. name .. 'TPS']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+            _G['TWThreat' .. name .. 'Threat']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+            _G['TWThreat' .. name .. 'Perc']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
+
+            _G['TWThreat' .. name]:SetHeight(TWT_CONFIG.barHeight - 1)
+            _G['TWThreat' .. name .. 'BG']:SetHeight(TWT_CONFIG.barHeight - 2)
+
+            TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWThreatListScrollFrameChildren"], "TOPLEFT", 0, TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
+
+
+            -- icons
+            _G['TWThreat' .. name .. 'AGRO']:Hide()
+            _G['TWThreat' .. name .. 'Role']:Hide()
+            if TWT.roles[name] then
+                _G['TWThreat' .. name .. 'Role']:SetTexture('Interface\\Icons\\' .. TWT.roles[name])
+                _G['TWThreat' .. name .. 'Role']:SetWidth(TWT_CONFIG.barHeight - 2)
+                _G['TWThreat' .. name .. 'Role']:SetHeight(TWT_CONFIG.barHeight - 2)
+                _G['TWThreat' .. name .. 'Name']:SetPoint('LEFT', _G['TWThreat' .. name .. 'Role'], 'RIGHT', 1 + (TWT_CONFIG.barHeight / 15), -1)
+                _G['TWThreat' .. name .. 'Role']:Show()
+            end
+            if name == TWT.AGRO then
+                _G['TWThreat' .. name .. 'AGRO']:Show()
+            end
+
+
+            -- tps
+            data.history[time()] = data.threat
+            data.tps = TWT.calcTPS(name, data)
+            _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
+
+            -- labels
+            TWT.setBarLabels(_G['TWThreat' .. name .. 'Perc'], _G['TWThreat' .. name .. 'Threat'], _G['TWThreat' .. name .. 'TPS'])
+
+            -- perc
+            _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
+
+            if TWT.name ~= tankName and name == TWT.AGRO then
+                _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.target][TWT.name].perc .. '%')
+            end
+
+            -- name
+            _G['TWThreat' .. name .. 'Name']:SetText(TWT.classColors['priest'].c .. name)
+
+            -- bar width and color
+            local color = TWT.classColors[data.class]
+
+            if name == TWT.name then
+
+                if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5
+                        and not TWT_CONFIG.fullScreenGlow then
                     PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
+                    TWT.lastAggroWarningSoundTime = time()
                 end
+
+                if TWT_CONFIG.fullScreenGlow and data.perc >= 85 and time() - TWT.lastAggroWarningGlowTime > 5 then
+                    TWT.glowFader:Show()
+                    TWT.lastAggroWarningGlowTime = time()
+                    if TWT_CONFIG.aggroSound then
+                        PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
+                    end
+                end
+
+                _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] and TWT.unitNameForTitle(TWT.guids[TWT.target]) or '') .. ' (' .. data.perc .. '%)')
+
+                --_G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
+                _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
+
+                TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
+
+            elseif name == TWT.AGRO then
+                TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
+
+                _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
+                _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(data.threat - TWT.threats[TWT.target][TWT.name].threat))
+
+                local colorLimit = 50
+
+                if TWT.threats[TWT.target][TWT.name].perc >= 0 and TWT.threats[TWT.target][TWT.name].perc < colorLimit then
+                    _G['TWThreat' .. name .. 'BG']:SetVertexColor(TWT.threats[TWT.target][TWT.name].perc / colorLimit, 1, 0, 0.9)
+                elseif TWT.threats[TWT.target][TWT.name].perc >= colorLimit then
+                    _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (TWT.threats[TWT.target][TWT.name].perc - colorLimit) / colorLimit, 0, 0.9)
+                end
+
+                if tankName == TWT.name then
+                    _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 1)
+                    _G['TWThreat' .. name .. 'Perc']:SetText('')
+                end
+
+            else
+                TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
+                _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
+                _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
             end
 
-            _G['TWTMainTitle']:SetText((TWT.guids[TWT.target] and TWT.unitNameForTitle(TWT.guids[TWT.target]) or '') .. ' (' .. data.perc .. '%)')
-
-            --_G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 1)
-            _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
-
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
-
-        elseif name == TWT.AGRO then
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
-
-            _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
-            _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(maxThreat - myThreat))
-
-            local colorLimit = 50
-
-            if TWT.threats[TWT.target][TWT.name].perc >= 0 and TWT.threats[TWT.target][TWT.name].perc < colorLimit then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(TWT.threats[TWT.target][TWT.name].perc / colorLimit, 1, 0, 0.9)
-            elseif TWT.threats[TWT.target][TWT.name].perc >= colorLimit then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 1 - (TWT.threats[TWT.target][TWT.name].perc - colorLimit) / colorLimit, 0, 0.9)
+            if name == tankName then
+                TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
+                _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
             end
 
-            if tankName == TWT.name then
-                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0, 0, 1)
-                _G['TWThreat' .. name .. 'Perc']:SetText('')
+            if name == TWT.name then
+                _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.2, 0.2, 1)
+                TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
             end
 
-        else
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
-            _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
-        end
+            TWT.threatsFrames[name]:Show()
 
-        if name == tankName then
-            TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
-            _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
         end
-
-        if name == TWT.name then
-            _G['TWThreat' .. name .. 'BG']:SetVertexColor(1, 0.2, 0.2, 1)
-            TWT.updateTargetFrameThreatIndicators(data.perc, TWT.guids[TWT.target])
-        end
-
-        TWT.threatsFrames[name]:Show()
 
     end
 
@@ -1330,8 +1492,6 @@ function TWT.updateUI()
                 TWT.lastMessageTime[guid] = GetTime()
                 if data[TWT.name].threat > 0 then
 
-                    --twtdebtwtdebug('send: ' .. TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
-                    --        (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid))
                     TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
                             (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid), guid)
                 end
@@ -1768,17 +1928,13 @@ end
 
 function TWTTargetButton_OnClick(guid)
 
-    twtdebug('target button click with guid ' .. guid)
-
     if TWT.raidTargetIconIndex[guid] then
         if TWT.targetRaidIcon(TWT.raidTargetIconIndex[guid], guid) then
             return true
         end
     else
-        twtdebug('no marks, should assist name')
         if UnitExists(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
             if not UnitIsPlayer(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
-                twtdebug('no marks, should assist ' .. TWT.secondOnThreat[guid].name)
                 AssistByName(TWT.secondOnThreat[guid].name)
                 return true
             end
@@ -1922,13 +2078,11 @@ end
 function TWT.targetRaidSymbolFromUnit(unit, index)
     if UnitExists(unit) then
         if GetRaidTargetIndex(unit) == index then
-            twtdebug('found ! ' .. unit)
             TargetUnit(unit)
             return true
         end
         if UnitExists(unit .. "target") then
             if GetRaidTargetIndex(unit .. "target") == index then
-                twtdebug('found ! ' .. unit .. 'target')
                 TargetUnit(unit .. "target")
                 return true
             end
@@ -1953,6 +2107,32 @@ function TWT.wipe(src)
         src[k] = nil
     end
     return src
+end
+
+TWT.hooks = {}
+--https://github.com/shagu/pfUI/blob/master/compat/vanilla.lua#L37
+function TWT.hooksecurefunc(name, func, append)
+    if not _G[name] then
+        return
+    end
+
+    TWT.hooks[tostring(func)] = {}
+    TWT.hooks[tostring(func)]["old"] = _G[name]
+    TWT.hooks[tostring(func)]["new"] = func
+
+    if append then
+        TWT.hooks[tostring(func)]["function"] = function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[tostring(func)]["old"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[tostring(func)]["new"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        end
+    else
+        TWT.hooks[tostring(func)]["function"] = function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[tostring(func)]["new"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[tostring(func)]["old"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        end
+    end
+
+    _G[name] = TWT.hooks[tostring(func)]["function"]
 end
 
 function TWT.pairsByKeys(t, f)
