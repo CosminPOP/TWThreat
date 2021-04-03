@@ -5,3 +5,5 @@
 ## Notes: Turtle WoW's own Threatmeter !
 ## SavedVariablesPerCharacter: TWT_CONFIG
 TWThreat.xml
+TWTalentDescriptions.lua
+TWTalent.xml
