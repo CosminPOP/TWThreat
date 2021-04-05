@@ -293,6 +293,34 @@
         </FontHeight>
     </Font>
 
+    <Frame name="TWTWarning" hidden="true" parent="UIParent">
+    <Size>
+        <AbsDimension x="500" y="40"/>
+    </Size>
+    <Anchors>
+        <Anchor point="CENTER">
+            <Offset>
+                <AbsDimension x="0" y="0"/>
+            </Offset>
+        </Anchor>
+    </Anchors>
+    <Layers>
+        <Layer level="OVERLAY">
+            <FontString name="$parentText" font="Fonts\FRIZQT__.TTF" text="care">
+                <FontHeight val="40"/>
+                <Color r="1" g="0.1" b="0.1" a="1"/>
+                <Shadow>
+                    <Offset x="1" y="-1"/>
+                    <Color r="0" g="0" b="0"/>
+                </Shadow>
+                <Size>
+                    <AbsDimension x="500" y="40"/>
+                </Size>
+            </FontString>
+        </Layer>
+    </Layers>
+    </Frame>
+
     <Frame name="TWTMain" hidden="true" toplevel="true"
            parent="UIParent" movable="true" enableMouse="true" resizable="true">
         <Size>
