@@ -1,4 +1,4 @@
-# TWThreat v0.9 - BETA
+# TWThreat v1.0rc
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
@@ -11,7 +11,7 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 - Full Screen Glow on high threat percentage
 - Aggro Warning Sound on high threat percentage
 - Customizable labels for TPS, Threat, Percent Max
-- Tankmode !
+- Tankmode _(disabled for now)_ !
 
 ## Slashcommands
 - `/twtshow`, `/twt show`
