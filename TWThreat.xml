@@ -324,7 +324,7 @@
     <Frame name="TWTMain" hidden="true" toplevel="true"
            parent="UIParent" movable="true" enableMouse="true" resizable="true">
         <Size>
-            <AbsDimension x="300" y="200"/>
+            <AbsDimension x="300"/>
         </Size>
         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                   tile="false">
@@ -594,9 +594,9 @@
             </Button>
 
             <ScrollFrame name="TWThreatListScrollFrame" hidden="false" inherits="UIPanelScrollFrameTemplate">
-                <Size>
-                    <AbsDimension x="298" y="200"/>
-                </Size>
+<!--                <Size>-->
+<!--                    <AbsDimension x="298" y="200"/>-->
+<!--                </Size>-->
                 <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                           tile="false">
                 </Backdrop>
