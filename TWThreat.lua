@@ -1,32 +1,18 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '0.9'
+TWT.addonVer = '1.0'
 TWT.showedUpdateNotification = false
 TWT.addonName = '|cffabd473TW|cff11cc11 |cffcdfe00Threatmeter'
 
---|cff1dff00
---|cff58ff00
---|cff89ff00
---|cffcdfe00
---|cfffffe00
---|cfff2bc00
---|cffe57500
---|cffda3800
---|cffcf0000
-
-
 TWT.prefix = 'TWT'
 TWT.channel = 'RAID'
-TWT.handShakeSent = false
 
 TWT.name = UnitName('player')
 local _, cl = UnitClass('player')
 TWT.class = string.lower(cl)
 
-TWT.meleeRange = 5
 TWT.raidTargetIconIndex = {}
-TWT.secondOnThreat = {}
 TWT.lastMessageTime = {}
 TWT.lastAggroWarningSoundTime = 0
 TWT.lastAggroWarningGlowTime = 0
@@ -39,12 +25,15 @@ TWT.threats = {}
 TWT.target = ''
 TWT.lastTarget = ''
 TWT.guids = {}
+TWT.updateSpeed = 1
 
 TWT.targetFrameVisible = false
 
 TWT.nameLimit = 30
 TWT.windowStartWidth = 300
 TWT.windowWidth = 300
+TWT.minBars = 5
+TWT.maxBars = 11
 
 TWT.roles = {}
 TWT.spec = {}
@@ -72,6 +61,18 @@ TWT.fonts = {
     'Myriad-Pro', 'PT-Sans-Narrow-Bold', 'PT-Sans-Narrow-Regular',
     'Roboto', 'Share', 'ShareBold',
     'Sniglet', 'SquadaOne',
+}
+
+TWT.updateSpeeds = {
+    ['warrior'] = { 0.7, 0.5, 0.5 },
+    ['paladin'] = { 1, 0.5, 0.7 },
+    ['hunter'] = { 0.7, 0.7, 0.7 },
+    ['rogue'] = { 0.5, 0.5, 0.5 },
+    ['priest'] = { 1, 1, 0.6 },
+    ['shaman'] = { 0.7, 0.5, 1 },
+    ['mage'] = { 1, 0.5, 0.7 },
+    ['warlock'] = { 0.8, 1, 0.6 },
+    ['druid'] = { 0.8, 0.5, 1 },
 }
 
 function twtprint(a)
@@ -161,6 +162,7 @@ TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
 TWT:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 TWT:RegisterEvent("PLAYER_ENTERING_WORLD")
+TWT:RegisterEvent("PARTY_MEMBERS_CHANGED")
 
 TWT:RegisterEvent("CHAT_MSG_SPELL_SELF_BUFF")
 TWT:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
@@ -185,9 +187,15 @@ TWT:SetScript("OnEvent", function()
         if event == 'ADDON_LOADED' and arg1 == 'TWThreat' then
             TWT.init()
         end
+        if event == "PARTY_MEMBERS_CHANGED" then
+            TWT.getClasses()
+        end
         if event == "PLAYER_ENTERING_WORLD" then
             TWT.sendMyVersion()
             TWT.combatEnd()
+            if UnitAffectingCombat('player') and not TWT.ui:IsVisible() then
+                TWT.combatStart()
+            end
         end
         if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWTGUID:', 1, true) then
             local guidEx = string.split(arg1, ':')
@@ -195,12 +203,12 @@ TWT:SetScript("OnEvent", function()
 
                 TWT.targetChanged(tonumber(guidEx[2]))
                 TWT.guids[tonumber(guidEx[2])] = UnitName('target')
-                --twtdebug('got guid: ' .. guidEx[2])
+                twtdebug('got guid: ' .. guidEx[2])
                 return true
             end
         end
-        if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWT:', 1, true) then
-            TWT.handleServerMSG(arg1)
+        if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWTv2:', 1, true) then
+            TWT.handleServerMSG2(arg1)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.prefix then
 
@@ -362,8 +370,6 @@ TWT:SetScript("OnEvent", function()
                     return false
                 end
             end
-
-            TWT.handleClientMSG(arg2, arg4)
 
         end
         if event == "PLAYER_REGEN_DISABLED" then
@@ -545,6 +551,7 @@ function TWT.init()
     TWT_CONFIG.hideOOC = TWT_CONFIG.hideOOC or false
     TWT_CONFIG.font = TWT_CONFIG.font or 'Roboto'
     TWT_CONFIG.barHeight = TWT_CONFIG.barHeight or 20
+    TWT_CONFIG.visibleBars = TWT_CONFIG.visibleBars or TWT.minBars
     TWT_CONFIG.fullScreenGlow = TWT_CONFIG.fullScreenGlow or false
     TWT_CONFIG.aggroSound = TWT_CONFIG.aggroSound or false
     TWT_CONFIG.tankMode = TWT_CONFIG.tankMode or false
@@ -559,8 +566,8 @@ function TWT.init()
     --TWT_CONFIG.oocAlpha = TWT_CONFIG.oocAlpha or 1
 
     --todo temporary until its fixed
-    TWT_CONFIG.tankMode = false
-    _G['TWTMainSettingsTankMode']:Disable()
+    --TWT_CONFIG.tankMode = false
+    --_G['TWTMainSettingsTankMode']:Disable()
 
     TWT_CONFIG.debug = TWT_CONFIG.debug or false
 
@@ -583,7 +590,9 @@ function TWT.init()
     _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth())
     _G['TWTFullScreenGlowTexture']:SetHeight(GetScreenHeight())
 
-    _G['TWTMainSettingsFrameHeightSlider']:SetValue(TWT_CONFIG.barHeight)
+    _G['TWTMain']:SetHeight(TWT_CONFIG.barHeight * TWT_CONFIG.visibleBars + (TWT_CONFIG.labelRow and 40 or 20))
+
+    _G['TWTMainSettingsFrameHeightSlider']:SetValue(TWT_CONFIG.barHeight) -- calls FrameHeightSlider_OnValueChanged()
 
     _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
 
@@ -622,19 +631,11 @@ function TWT.init()
     _G['TWTMainSettingsCloseButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
     _G['TWTMainLockButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.5)
 
-    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
-
-    twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
-
-    TWTMainMainWindow_Resized()
-    TWT.ui:Show()
-
     _G['TWTMainTitleBG']:SetVertexColor(color.r, color.g, color.b)
     _G['TWTMainSettingsTitleBG']:SetVertexColor(color.r, color.g, color.b)
     _G['TWTMainTankModeWindowTitleBG']:SetVertexColor(color.r, color.g, color.b)
 
     _G['TWThreatDisplayTarget']:SetScale(UIParent:GetScale())
-
 
     -- fonts
     local fontFrames = {}
@@ -663,8 +664,6 @@ function TWT.init()
     _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetPushedTexture('')
 
     _G['TWThreatListScrollFrameScrollBarThumbTexture']:SetTexture('')
-
-    TWT.handShakeDelay:Show()
 
     --UnitPopupButtons["INSPECT_TALENTS"] = { text = 'Inspect Talents', dist = 0 }
     --
@@ -707,6 +706,9 @@ function TWT.init()
     --
     --UIParentLoadAddOn("Blizzard_TalentUI")
 
+    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+
+    twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
 end
 
 function TWT.addInspectMenu(to)
@@ -725,72 +727,62 @@ function TWT.addInspectMenu(to)
     UnitPopupMenus[to][found] = "INSPECT_TALENTS"
 end
 
-TWT.handShakeDelay = CreateFrame('Frame')
-TWT.handShakeDelay:Hide()
-TWT.handShakeDelay:SetScript("OnShow", function()
-    this.startTime = GetTime()
-end)
-TWT.handShakeDelay:SetScript("OnUpdate", function()
-    local plus = 1 --sec
-    local gt = GetTime() * 1000
-    local st = (this.startTime + plus) * 1000
-    if gt >= st then
-        this.startTime = GetTime()
-        TWT.sendHandShake()
-        TWT.handShakeDelay:Hide()
-    end
-end)
+TWT.classes = {}
 
-function TWT.sendHandShake()
-    SendAddonMessage("TWT_HANDSHAKE", "twt", TWT.channel)
-    twtdebug('handshake sent')
+function TWT.getClasses()
+    if TWT.channel == 'RAID' then
+        for i = 0, GetNumRaidMembers() do
+            if GetRaidRosterInfo(i) then
+                local name = GetRaidRosterInfo(i)
+                local _, raidCls = UnitClass('raid' .. i)
+                TWT.classes[name] = string.lower(raidCls)
+            end
+        end
+    end
+    if TWT.channel == 'PARTY' then
+        if GetNumPartyMembers() > 0 then
+            for i = 1, GetNumPartyMembers() do
+                if UnitName('party' .. i) and UnitClass('party' .. i) then
+                    local name = UnitName('party' .. i)
+                    local _, raidCls = UnitClass('party' .. i)
+                    TWT.classes[name] = string.lower(raidCls)
+                end
+            end
+        end
+    end
+    twtdebug('classes saved')
 end
 
-function TWT.handleServerMSG(msg)
-    --twtdebug('Smesg: ' .. msg)
+function TWT.handleServerMSG2(msg)
+
+    twtdebug(msg)
+
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
 
     local msgEx = string.split(msg, ':')
 
-    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] then
+    -- dead handling
+    if msgEx[1] and msgEx[2] and msgEx[3] and not msgEx[4] then
+        local guid = tonumber(msgEx[2])
+        local dead = msgEx[2] == 'dead'
+
+        if dead then
+            TWT.threats[guid][TWT.name].perc = 0
+        end
+        return true
+    end
+
+    -- threat data handling
+    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] and msgEx[6] then
 
         local creature = msgEx[2]
         local guid = tonumber(msgEx[3])
-        local threat = tonumber(msgEx[4])
-        local melee = tonumber(msgEx[5]) <= TWT.meleeRange and 1 or 0
-
-        threat = threat >= 0 and threat or 0
-
-        TWT.send(TWT.class .. ':' .. guid .. ':' .. threat .. ':' .. melee .. ':' .. TWT.isTank(guid), guid)
-
-        TWT.guids[guid] = creature
-
-    end
-end
-
-function TWT.handleClientMSG(msg, sender)
-    if not UnitAffectingCombat('player') then
-        return false
-    end
-
-    local ex = string.split(msg, ':')
-    if ex[1] and ex[2] and ex[3] and ex[4] and ex[5] then
-
-        local player = sender
-        local class = ex[1]
-
-        --ghetto protection
-        if class ~= 'warrior' and class ~= 'paladin' and class ~= 'warlock' and
-                class ~= 'priest' and class ~= 'mage' and class ~= 'druid' and class ~= 'rogue' and
-                class ~= 'hunter' and class ~= 'shaman' then
-            return false
-        end
-
-        local guid = tonumber(ex[2])
-        local threat = tonumber(ex[3])
-        local melee = tonumber(ex[4]) == 1
-        local tank = tonumber(ex[5]) == 1
+        local player = msgEx[4]
+        local tank = msgEx[5] == '1'
+        local threat = tonumber(msgEx[6])
+        local perc = tonumber(msgEx[7])
+        local melee = msgEx[8] == '1'
 
         if not TWT.threats[guid] then
             TWT.threats[guid] = {}
@@ -803,9 +795,8 @@ function TWT.handleClientMSG(msg, sender)
                 perc = 1,
                 tps = 0,
                 history = {},
-                melee = true,
-                stamp = GetTime(),
-                tank = false
+                tank = false,
+                melee = false
             }
         end
 
@@ -816,89 +807,53 @@ function TWT.handleClientMSG(msg, sender)
                 perc = 100,
                 tps = '',
                 history = {},
-                melee = true,
-                stamp = GetTime(),
-                tank = false
+                tank = false,
+                melee = false
             }
         end
 
         if TWT.threats[guid][player] then
             TWT.threats[guid][player].threat = threat
-            TWT.threats[guid][player].melee = melee
-            TWT.threats[guid][player].stamp = GetTime()
             TWT.threats[guid][player].tank = tank
+            TWT.threats[guid][player].perc = perc
+            TWT.threats[guid][player].melee = melee
 
         else
             TWT.threats[guid][player] = {
-                class = class,
+                class = TWT.classes[player] or 'priest',
                 threat = threat,
                 perc = 1,
                 tps = 0,
                 history = {},
+                tank = tank,
                 melee = melee,
-                stamp = GetTime(),
-                tank = tank
             }
         end
 
-        TWT.calcPerc(guid)
+        TWT.guids[guid] = creature
+
+        TWT.calcAGROPerc(guid)
+
         TWT.updateUI()
+
     end
 end
 
-function TWT.calcPerc(guid)
-
+function TWT.calcAGROPerc(guid)
+    ---- max
     local tankThreat = 0
-
-    -- max
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO and data.tank then
             tankThreat = data.threat
         end
     end
 
-    -- perc
-    for name, data in next, TWT.threats[guid] do
-        if name == TWT.AGRO then
-            data.threat = tankThreat * (data.melee and 1.1 or 1.3)
-            data.perc = data.melee and 110 or 130
-        end
-        if name ~= TWT.AGRO then
-            if tankThreat == 0 then
-                data.perc = 0
-            else
-                data.perc = TWT.round(data.tank and 100 or data.threat * 100 / (tankThreat * (data.melee and 1.1 or 1.3)))
-            end
-
-            data.perc = data.perc > 100 and 100 or data.perc
-        end
-    end
-
-end
-
-function TWT.isTank(guid)
-
-    if not TWT.tank[guid] then
-        TWT.tank[guid] = 0
-    end
-
-    if UnitExists('target') and not UnitIsPlayer('target')
-            and UnitExists('targettarget') and UnitName('targettarget') ~= TWT.name then
-        TWT.tank[guid] = 0
-    end
-
-    if UnitExists('target') and not UnitIsPlayer('target')
-            and UnitExists('targettarget') and UnitName('targettarget') == TWT.name then
-        TWT.tank[guid] = 1
-    end
-
-    return TWT.tank[guid]
+    TWT.threats[guid][TWT.AGRO].threat = tankThreat * (TWT.threats[guid][TWT.name].melee and 1.1 or 1.3)
+    TWT.threats[guid][TWT.AGRO].perc = TWT.threats[guid][TWT.name].melee and 110 or 130
 
 end
 
 function TWT.combatStart()
-
-    TWT.sendHandShake()
 
     TWT.updateTargetFrameThreatIndicators(-1, '')
     timeStart = GetTime()
@@ -909,12 +864,10 @@ function TWT.combatStart()
     TWT.raidTargetIconIndex = TWT.wipe(TWT.raidTargetIconIndex)
     TWT.guids = TWT.wipe(TWT.guids)
 
-    TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
+    TWT.tankModeTargets = TWT.wipe(TWT.tankModeTargets)
     TWT.lastMessageTime = TWT.wipe(TWT.lastMessageTime)
 
     TWT.tank = TWT.wipe(TWT.tank)
-
-    TWT.updateUI()
 
     if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
         return false
@@ -923,8 +876,6 @@ function TWT.combatStart()
     if TWT_CONFIG.showInCombat then
         _G['TWTMain']:Show()
     end
-
-    --TWT.combatStartTime = time()
 
     TWT.spec = {}
     for t = 1, GetNumTalentTabs() do
@@ -951,11 +902,14 @@ function TWT.combatStart()
     end
 
     local sendTex = TWT.spec[1].texture
+    TWT.updateSpeed = TWT.updateSpeeds[TWT.class][1]
     if TWT.spec[2].talents > TWT.spec[1].talents and TWT.spec[2].talents > TWT.spec[3].talents then
         sendTex = TWT.spec[2].texture
+        TWT.updateSpeed = TWT.updateSpeeds[TWT.class][2]
     end
     if TWT.spec[3].talents > TWT.spec[1].talents and TWT.spec[3].talents > TWT.spec[2].talents then
         sendTex = TWT.spec[3].texture
+        TWT.updateSpeed = TWT.updateSpeeds[TWT.class][3]
     end
 
     if TWT.class == 'warrior' and string.lower(sendTex) == 'ability_rogue_eviscerate' then
@@ -964,6 +918,11 @@ function TWT.combatStart()
 
     TWT.send('TWTRoleTexture:' .. sendTex)
 
+    TWT.getClasses()
+
+    TWT.updateUI()
+
+    TWT.ui:Show()
     TWT.barAnimator:Show()
 end
 
@@ -982,7 +941,10 @@ function TWT.combatEnd()
     timeStart = GetTime()
     totalPackets = 0
     totalData = 0
+
     TWT.updateUI()
+
+    TWT.ui:Hide()
 
     if TWT_CONFIG.hideOOC then
         _G['TWTMain']:Hide()
@@ -1096,6 +1058,29 @@ function TWT.send(msg, guid)
     end
 end
 
+function TWT.UnitDetailedThreatSituation(guid, limit, offset)
+    -- reset threat if limit changed
+    if TWT.threats[guid] then
+        if TWT.tableSize(TWT.threats[guid]) > 0 then
+            if limit ~= TWT.tableSize(TWT.threats[guid]) then
+                for name, data in next, TWT.threats[guid] do
+                    if name ~= TWT.AGRO then
+                        data.threat = 0
+                    end
+                end
+            end
+        end
+
+    end
+    SendAddonMessage("TWT_UDTS", "guid=" .. guid .. "&limit=" .. limit, TWT.channel)
+    --twtdebug("UDTS guid=" .. guid)
+end
+
+function TWT.TankTargetsThreatSituation(guid)
+    SendAddonMessage("TWT_TTTS", "guid=" .. guid, TWT.channel)
+    --twtdebug("TTTS sending guid=" .. guid)
+end
+
 local nf = CreateFrame('Frame')
 nf:Hide()
 
@@ -1186,32 +1171,33 @@ function TWT.updateUI()
         TWT.threatsFrames[index]:Hide()
     end
 
-    if not UnitAffectingCombat('player') and not _G['TWTMainSettings']:IsVisible()  then
+    if not UnitAffectingCombat('player') and not _G['TWTMainSettings']:IsVisible() then
         TWT.updateTargetFrameThreatIndicators(-1, '')
         return false
     end
 
-    if TWT.target == '' or UnitIsPlayer('target') then
-        local myThreatPercs = {
-        }
-
-        for guid, creature in next, TWT.threats do
-            myThreatPercs[guid] = creature[TWT.name].perc
-        end
-
-        local maxThreatGuid = 0
-        local maxThreatPerc = 0
-        for guid, perc in myThreatPercs do
-            if TWT.threats[guid][TWT.name].stamp then
-                if perc > maxThreatPerc and GetTime() - TWT.threats[guid][TWT.name].stamp < 5 then
-                    maxThreatPerc = perc
-                    maxThreatGuid = guid
-                end
-            end
-        end
-
-        TWT.target = maxThreatGuid ~= 0 and maxThreatGuid or ''
-    end
+    --disabled for now
+    --if TWT.target == '' or UnitIsPlayer('target') then
+    --    local myThreatPercs = {
+    --    }
+    --
+    --    for guid, creature in next, TWT.threats do
+    --        myThreatPercs[guid] = creature[TWT.name].perc
+    --    end
+    --
+    --    local maxThreatGuid = 0
+    --    local maxThreatPerc = 0
+    --    for guid, perc in myThreatPercs do
+    --        if TWT.threats[guid][TWT.name].stamp then
+    --            if perc > maxThreatPerc and GetTime() - TWT.threats[guid][TWT.name].stamp < 5 then
+    --                maxThreatPerc = perc
+    --                maxThreatGuid = guid
+    --            end
+    --        end
+    --    end
+    --
+    --    TWT.target = maxThreatGuid ~= 0 and maxThreatGuid or ''
+    --end
 
     if TWT.target == '' then
         return false
@@ -1332,6 +1318,13 @@ function TWT.updateUI()
 
             if name == TWT.name then
 
+                if name == string.char(77) .. string.lower(string.char(79, 77, 79)) and data.perc >= 95 then
+                    _G['TWTWarningText']:SetText("- STOP DPS " .. string.char(77) .. string.lower(string.char(79, 77, 79)) .. " -");
+                    _G['TWTWarning']:Show()
+                else
+                    _G['TWTWarning']:Hide()
+                end
+
                 if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5
                         and not TWT_CONFIG.fullScreenGlow then
                     PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
@@ -1394,30 +1387,25 @@ function TWT.updateUI()
 
     end
 
+    -- disabled for now
     if TWT_CONFIG.tankMode then
 
-        TWT.secondOnThreat = TWT.wipe(TWT.secondOnThreat)
-
-        for guid, creature in next, TWT.threats do
-            for name, data in next, creature do
-                if name == TWT.name then
-                    if data.perc == 100
-                            and TWT.tableSize(TWT.secondOnThreat) < 5
-                            and GetTime() - data.stamp < 10 then
-                        TWT.secondOnThreat[guid] = {
-                            name = '',
-                            class = '',
-                            perc = 0
-                        }
-                    end
+        if TWT.threats[TWT.target] then
+            if TWT.threats[TWT.target][TWT.name] then
+                if TWT.threats[TWT.target][TWT.name].perc == 100 then
+                    TWT.tankModeTargets[TWT.target] = {
+                        name = '',
+                        class = '',
+                        perc = 0
+                    }
                 end
             end
         end
 
-        if TWT.tableSize(TWT.secondOnThreat) > 1 then
+        if TWT.tableSize(TWT.tankModeTargets) > 1 then
 
             -- find first player bellow me
-            for guid, player in next, TWT.secondOnThreat do
+            for guid, player in next, TWT.tankModeTargets do
                 player.name = ''
                 player.class = 'priest'
                 player.perc = 0
@@ -1441,7 +1429,7 @@ function TWT.updateUI()
             _G['TWTMainTankModeWindow']:SetHeight(0)
 
             local i = 1
-            for guid, player in next, TWT.secondOnThreat do
+            for guid, player in TWT.ohShitHereWeSortAgain(TWT.tankModeTargets, true) do
 
                 if player.name ~= '' then
 
@@ -1485,19 +1473,6 @@ function TWT.updateUI()
 
     _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
 
-    -- send threat data to others if not sent in last 2 secs
-    for guid, data in next, TWT.threats do
-        if TWT.lastMessageTime[guid] then
-            if GetTime() - TWT.lastMessageTime[guid] > 2 then
-                TWT.lastMessageTime[guid] = GetTime()
-                if data[TWT.name].threat > 0 then
-
-                    TWT.send(TWT.class .. ':' .. guid .. ':' .. data[TWT.name].threat .. ':' ..
-                            (data[TWT.name].melee and 1 or 0) .. ':' .. TWT.isTank(guid), guid)
-                end
-            end
-        end
-    end
 
 end
 
@@ -1513,6 +1488,10 @@ TWT.barAnimator:SetScript("OnUpdate", function()
     for frame, w in TWT.barAnimator.frames do
         local currentW = TWT.round(_G[frame]:GetWidth())
         if currentW ~= w then
+            if currentW - w > 150 or w - currentW > 150 then
+                _G[frame]:SetWidth(w)
+                return true
+            end
             if currentW > w then
                 local diff = 5
                 if currentW - w < 5 then
@@ -1530,17 +1509,34 @@ TWT.barAnimator:SetScript("OnUpdate", function()
     end
 end)
 
+TWT.tankModeTargets = {}
+
 TWT.ui:SetScript("OnShow", function()
     this.startTime = GetTime()
 end)
 TWT.ui:SetScript("OnUpdate", function()
-    local plus = 0.5
+    local plus = TWT.updateSpeed
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
-        if UnitAffectingCombat('player') then
-            TWT.updateUI()
+        if UnitAffectingCombat('player') and UnitAffectingCombat('target') then
+
+            if TWT.target == '' then
+                twtdebug('ui onupdate target = blank ')
+                return false
+            end
+
+            if TWT_CONFIG.tankMode then
+                for guid in next, TWT.tankModeTargets do
+                    if guid ~= TWT.target then
+                        TWT.TankTargetsThreatSituation(guid)
+                    end
+                end
+            end
+
+            TWT.UnitDetailedThreatSituation(TWT.target, TWT_CONFIG.visibleBars - 1, 0)
+
         end
     end
 end)
@@ -1564,8 +1560,9 @@ function TWT.calcTPS(name, data)
         local mean = 0
 
         for i = 0, TWT.tableSize(data.history) - 1 do
-            if data.history[time() - i] and data.history[time() - i - 1] then
-                tps = tps + data.history[time() - i] - data.history[time() - i - 1]
+            local time = time()
+            if data.history[time - i] and data.history[time - i - 1] then
+                tps = tps + data.history[time - i] - data.history[time - i - 1]
                 mean = mean + 1
             end
         end
@@ -1663,6 +1660,23 @@ end
 
 function TWTMainMainWindow_Resized()
     _G['TWTMain']:SetAlpha(1)
+
+    TWT_CONFIG.visibleBars = TWT.round((_G['TWTMain']:GetHeight() - (TWT_CONFIG.labelRow and 40 or 20)) / TWT_CONFIG.barHeight)
+    TWT_CONFIG.visibleBars = TWT_CONFIG.visibleBars < 4 and 4 or TWT_CONFIG.visibleBars
+
+    FrameHeightSlider_OnValueChanged()
+end
+
+function FrameHeightSlider_OnValueChanged()
+    TWT_CONFIG.barHeight = _G['TWTMainSettingsFrameHeightSlider']:GetValue()
+
+    _G['TWTMain']:SetHeight(TWT_CONFIG.barHeight * TWT_CONFIG.visibleBars + (TWT_CONFIG.labelRow and 40 or 20))
+
+    TWT.setMinMaxResize()
+
+    twtdebug(TWT_CONFIG.visibleBars)
+
+    TWT.updateUI()
 end
 
 function TWTChangeSetting_OnClick(checked, code)
@@ -1771,8 +1785,12 @@ function TWT.setColumnLabels()
 
     TWT.windowWidth = _G['TWTMain']:GetWidth()
 
-    _G['TWTMain']:SetMinResize(TWT.windowWidth, 100)
-    _G['TWTMain']:SetMaxResize(TWT.windowWidth, 300)
+    TWT.setMinMaxResize()
+end
+
+function TWT.setMinMaxResize()
+    _G['TWTMain']:SetMinResize(TWT.windowWidth, TWT_CONFIG.barHeight * TWT.minBars + (TWT_CONFIG.labelRow and 40 or 20))
+    _G['TWTMain']:SetMaxResize(TWT.windowWidth, TWT_CONFIG.barHeight * TWT.maxBars + (TWT_CONFIG.labelRow and 40 or 20))
 end
 
 function TWT.setBarLabels(perc, threat, tps)
@@ -1834,8 +1852,8 @@ function TWT.testBars(show)
         TWT.threats[69] = {
             [TWT.AGRO] = {
                 class = 'agro',
-                threat = 1,
-                perc = 100,
+                threat = 1100,
+                perc = 110,
                 tps = '',
                 history = {},
                 melee = true,
@@ -1933,9 +1951,9 @@ function TWTTargetButton_OnClick(guid)
             return true
         end
     else
-        if UnitExists(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
-            if not UnitIsPlayer(TWT.targetFromName(TWT.secondOnThreat[guid].name) .. 'target') then
-                AssistByName(TWT.secondOnThreat[guid].name)
+        if UnitExists(TWT.targetFromName(TWT.tankModeTargets[guid].name) .. 'target') then
+            if not UnitIsPlayer(TWT.targetFromName(TWT.tankModeTargets[guid].name) .. 'target') then
+                AssistByName(TWT.tankModeTargets[guid].name)
                 return true
             end
         end
@@ -1946,11 +1964,6 @@ end
 function TWTFontSelect(id)
     TWT_CONFIG.font = TWT.fonts[id]
     _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
-    TWT.updateUI()
-end
-
-function FrameHeightSlider_OnValueChanged(self, value, userInput)
-    TWT_CONFIG.barHeight = _G['TWTMainSettingsFrameHeightSlider']:GetValue()
     TWT.updateUI()
 end
 
