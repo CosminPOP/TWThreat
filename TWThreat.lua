@@ -38,6 +38,9 @@ TWT.maxBars = 11
 TWT.roles = {}
 TWT.spec = {}
 
+TWT.tankModeTargets = {}
+TWT.tankModeThreats = {}
+
 TWT.custom = {
     ['The Prophet Skeram'] = 0
 }
@@ -765,16 +768,38 @@ function TWT.handleServerMSG2(msg)
     -- dead handling
     if msgEx[1] and msgEx[2] and msgEx[3] and not msgEx[4] then
         local guid = tonumber(msgEx[2])
-        local dead = msgEx[2] == 'dead'
+        local dead = msgEx[3] == 'dead'
 
         if dead then
-            TWT.threats[guid][TWT.name].perc = 0
+            for index, target in next, TWT.tankModeTargets do
+                if guid == target then
+                    TWT.tankModeTargets[index] = nil
+                    twtdebug('REMOVED ' .. target .. ' from tank mode targets')
+                    return true
+                end
+            end
         end
         return true
     end
 
-    -- threat data handling
-    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] and msgEx[6] then
+    -- ttts data handling
+    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5]
+            and msgEx[6] and msgEx[6] and msgEx[7] and msgEx[8] and msgEx[9] then
+        if msgEx[9] == 'TTTS' then
+            local guid = tonumber(msgEx[3])
+            local player = msgEx[4]
+            local perc = tonumber(msgEx[7])
+
+            TWT.tankModeThreats[guid] = {
+                name = player,
+                class = TWT.classes[player],
+                perc = perc
+            }
+        end
+    end
+    -- tdts handling
+    if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and
+            msgEx[6] and msgEx[6] and msgEx[7] and msgEx[8] then
 
         local creature = msgEx[2]
         local guid = tonumber(msgEx[3])
@@ -1011,20 +1036,23 @@ function TWT.targetChanged(guid, cached)
     end
 
     -- skeram hax
-    if not cached then
-        if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
-            TWT.custom[UnitName('target')] = guid
-            twtdebug('real skeram guid = ' .. guid)
-        end
-
-        if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
-            if guid == TWT.custom[UnitName('target')] then
-                twtdebug('real skeram')
-            else
-                twtdebug('clone')
-            end
-        end
-    end
+    --if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
+    --    TWT.custom[UnitName('target')] = guid
+    --end
+    --
+    --if UnitAffectingCombat('player') then
+    --    if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
+    --        if guid == TWT.custom[UnitName('target')] then
+    --            _G['TWTWarningText']:SetText("- REAL -");
+    --            _G['TWTWarning']:Show()
+    --        else
+    --            _G['TWTWarningText']:SetText("- CLONE -");
+    --            _G['TWTWarning']:Show()
+    --        end
+    --    else
+    --        _G['TWTWarning']:Hide()
+    --    end
+    --end
 
     TWT.target = guid
     if UnitExists('targettarget') then
@@ -1078,7 +1106,6 @@ end
 
 function TWT.TankTargetsThreatSituation(guid)
     SendAddonMessage("TWT_TTTS", "guid=" .. guid, TWT.channel)
-    --twtdebug("TTTS sending guid=" .. guid)
 end
 
 local nf = CreateFrame('Frame')
@@ -1387,88 +1414,78 @@ function TWT.updateUI()
 
     end
 
-    -- disabled for now
+    _G['TWTMainTankModeWindow']:Hide()
+
     if TWT_CONFIG.tankMode then
 
         if TWT.threats[TWT.target] then
             if TWT.threats[TWT.target][TWT.name] then
                 if TWT.threats[TWT.target][TWT.name].perc == 100 then
-                    TWT.tankModeTargets[TWT.target] = {
-                        name = '',
-                        class = '',
-                        perc = 0
-                    }
-                end
-            end
-        end
-
-        if TWT.tableSize(TWT.tankModeTargets) > 1 then
-
-            -- find first player bellow me
-            for guid, player in next, TWT.tankModeTargets do
-                player.name = ''
-                player.class = 'priest'
-                player.perc = 0
-                for name, data in TWT.threats[guid] do
-                    if name ~= TWT.name and name ~= TWT.AGRO then
-                        if data.perc > player.perc then
-                            player.name = name
-                            player.class = data.class
-                            player.perc = data.perc
+                    local found = false
+                    for _, guid in next, TWT.tankModeTargets do
+                        if guid == TWT.target then
+                            found = true
+                            break
                         end
                     end
+                    if not found then
+                        TWT.tankModeTargets[TWT.tableSize(TWT.tankModeTargets) + 1] = TWT.target
+                        twtdebug('added ' .. TWT.target .. ' to tank mode targets')
+                    end
                 end
             end
-
-            _G['TMEF1']:Hide()
-            _G['TMEF2']:Hide()
-            _G['TMEF3']:Hide()
-            _G['TMEF4']:Hide()
-            _G['TMEF5']:Hide()
-            _G['TWTMainTankModeWindow']:Hide()
-            _G['TWTMainTankModeWindow']:SetHeight(0)
-
-            local i = 1
-            for guid, player in TWT.ohShitHereWeSortAgain(TWT.tankModeTargets, true) do
-
-                if player.name ~= '' then
-
-                    if player.perc ~= 0 then
-                        _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 23)
-                    end
-
-                    _G['TMEF' .. i .. 'Target']:SetText(TWT.guids[guid])
-                    _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[player.class].c .. player.name)
-                    _G['TMEF' .. i .. 'Perc']:SetText(player.perc .. '%')
-                    _G['TMEF' .. i .. 'TargetButton']:SetID(guid)
-                    _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, -21 + 24 - i * 25)
-
-                    _G['TMEF' .. i .. 'RaidTargetIcon']:Hide()
-
-                    if TWT.raidTargetIconIndex[guid] then
-                        SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
-                        _G['TMEF' .. i .. 'RaidTargetIcon']:Show()
-                    end
-
-                    if player.perc >= 0 and player.perc < 50 then
-                        _G['TMEF' .. i .. 'BG']:SetVertexColor(player.perc / 50, 1, 0, 0.3)
-                    else
-                        _G['TMEF' .. i .. 'BG']:SetVertexColor(1, 1 - (player.perc - 50) / 50, 0, 0.6)
-                    end
-
-                    _G['TMEF' .. i]:Show()
-
-                    i = i + 1
-
-                end
-            end
-
-            _G['TWTMainTankModeWindow']:Show()
-        else
-            _G['TWTMainTankModeWindow']:Hide()
         end
-    else
+
+        _G['TMEF1']:Hide()
+        _G['TMEF2']:Hide()
+        _G['TMEF3']:Hide()
+        _G['TMEF4']:Hide()
+        _G['TMEF5']:Hide()
         _G['TWTMainTankModeWindow']:Hide()
+        _G['TWTMainTankModeWindow']:SetHeight(0)
+
+        if table.getn(TWT.tankModeTargets) > 1 then
+
+            twtdebug(' TMT size = ' .. table.getn(TWT.tankModeTargets))
+
+            for i, guid in TWT.tankModeTargets do
+
+                local player = TWT.tankModeThreats[guid]
+
+                if not player then
+                    break
+                end
+
+                twtdebug( i .. ' ' .. player.name)
+
+                _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 23)
+
+                _G['TMEF' .. i .. 'Target']:SetText(TWT.guids[guid])
+                _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[player.class].c .. player.name)
+                _G['TMEF' .. i .. 'Perc']:SetText(player.perc .. '%')
+                _G['TMEF' .. i .. 'TargetButton']:SetID(guid)
+                _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, -21 + 24 - i * 25)
+
+                _G['TMEF' .. i .. 'RaidTargetIcon']:Hide()
+
+                if TWT.raidTargetIconIndex[guid] then
+                    SetRaidTargetIconTexture(_G['TMEF' .. i .. 'RaidTargetIcon'], TWT.raidTargetIconIndex[guid])
+                    _G['TMEF' .. i .. 'RaidTargetIcon']:Show()
+                end
+
+                if player.perc >= 0 and player.perc < 50 then
+                    _G['TMEF' .. i .. 'BG']:SetVertexColor(player.perc / 50, 1, 0, 0.3)
+                else
+                    _G['TMEF' .. i .. 'BG']:SetVertexColor(1, 1 - (player.perc - 50) / 50, 0, 0.6)
+                end
+
+                _G['TMEF' .. i]:Show()
+
+                _G['TWTMainTankModeWindow']:Show()
+
+            end
+
+        end
     end
 
     _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
@@ -1509,8 +1526,6 @@ TWT.barAnimator:SetScript("OnUpdate", function()
     end
 end)
 
-TWT.tankModeTargets = {}
-
 TWT.ui:SetScript("OnShow", function()
     this.startTime = GetTime()
 end)
@@ -1528,10 +1543,10 @@ TWT.ui:SetScript("OnUpdate", function()
             end
 
             if TWT_CONFIG.tankMode then
-                for guid in next, TWT.tankModeTargets do
-                    if guid ~= TWT.target then
-                        TWT.TankTargetsThreatSituation(guid)
-                    end
+                for _, guid in next, TWT.tankModeTargets do
+                    --if guid ~= TWT.target then
+                    TWT.TankTargetsThreatSituation(guid)
+                    --end
                 end
             end
 
@@ -1951,9 +1966,9 @@ function TWTTargetButton_OnClick(guid)
             return true
         end
     else
-        if UnitExists(TWT.targetFromName(TWT.tankModeTargets[guid].name) .. 'target') then
-            if not UnitIsPlayer(TWT.targetFromName(TWT.tankModeTargets[guid].name) .. 'target') then
-                AssistByName(TWT.tankModeTargets[guid].name)
+        if UnitExists(TWT.targetFromName(TWT.tankModeThreats[guid].name) .. 'target') then
+            if not UnitIsPlayer(TWT.targetFromName(TWT.tankModeThreats[guid].name) .. 'target') then
+                AssistByName(TWT.tankModeThreats[guid].name)
                 return true
             end
         end
