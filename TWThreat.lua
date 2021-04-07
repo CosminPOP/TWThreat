@@ -1425,7 +1425,7 @@ function TWT.updateUI()
                             break
                         end
                     end
-                    if not found then
+                    if not found and TWT.tableSize(TWT.tankModeTargets) < 5 then
                         TWT.tankModeTargets[TWT.tableSize(TWT.tankModeTargets) + 1] = TWT.target
                         twtdebug('added ' .. TWT.target .. ' to tank mode targets')
                     end
