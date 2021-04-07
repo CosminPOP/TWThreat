@@ -135,7 +135,7 @@ SlashCmdList["TWT"] = function(cmd)
             return true
         end
 
-        if string.sub(cmd, 1, 3, 'who') then
+        if string.sub(cmd, 1, 3) == 'who' then
             TWT.queryWho()
             return true
         end
@@ -1065,7 +1065,7 @@ function TWT.send(msg, guid)
     end
 end
 
-function TWT.UnitDetailedThreatSituation(guid, limit, offset)
+function TWT.UnitDetailedThreatSituation(guid, limit)
     -- reset threat if limit changed
     if TWT.threats[guid] then
         if TWT.tableSize(TWT.threats[guid]) > 0 then
@@ -1482,7 +1482,12 @@ TWT.ui:SetScript("OnUpdate", function()
                 end
             end
 
-            TWT.UnitDetailedThreatSituation(TWT.target, TWT_CONFIG.visibleBars - 1, 0)
+            if TWT_CONFIG.glow or TWT_CONFIG.fullScreenGlow or TWT_CONFIG.tankmode or
+                    TWT_CONFIG.perc or TWT_CONFIG.visible then
+                TWT.UnitDetailedThreatSituation(TWT.target, TWT_CONFIG.visibleBars - 1)
+            else
+                twtdebug('not asking threat situation')
+            end
 
         end
     end
