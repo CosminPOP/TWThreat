@@ -1239,7 +1239,7 @@ function TWT.updateUI()
 
             TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWTMain"], "TOPLEFT", 0,
                     (TWT_CONFIG.labelRow and -40 or -20) +
-            TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
+                            TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
 
 
             -- icons
@@ -1259,7 +1259,9 @@ function TWT.updateUI()
 
             -- tps
             data.history[time()] = data.threat
-            data.tps = TWT.calcTPS(name, data)
+            if UnitAffectingCombat('player') then
+                data.tps = TWT.calcTPS(name, data)
+            end
             _G['TWThreat' .. name .. 'TPS']:SetText(data.tps)
 
             -- labels
@@ -1790,73 +1792,56 @@ function TWT.testBars(show)
         TWT.guids[69] = 'Patchwerk TESTMODE'
         TWT.roles['BarTestMode'] = 'ability_warrior_defensivestance'
         TWT.roles['Chad'] = 'spell_holy_auraoflight'
-        TWT.roles[TWT.name] = 'ability_warrior_defensivestance'
-        TWT.roles['Gorx'] = 'spell_nature_lightning'
-        TWT.roles['Rake'] = 'ability_marksmanship'
-        TWT.roles['Nephew'] = 'spell_shadow_shadowbolt'
+        TWT.roles[TWT.name] = 'ability_hunter_pet_turtle'
+        TWT.roles['Olaf'] = 'ability_racial_bearform'
+        TWT.roles['Jimmy'] = 'ability_backstab'
+        TWT.roles['Miranda'] = 'spell_shadow_shadowwordpain'
+        TWT.roles['Karen'] = 'spell_holy_powerinfusion'
+        TWT.roles['Felix'] = 'spell_fire_sealoffire'
+        TWT.roles['Tom'] = 'spell_shadow_shadowbolt'
+        TWT.roles['Bill'] = 'ability_marksmanship'
         TWT.threats[69] = {
             [TWT.AGRO] = {
-                class = 'agro',
-                threat = 1100,
-                perc = 110,
-                tps = '',
-                history = {},
-                melee = true,
-                tank = false
+                class = 'agro', threat = 1100, perc = 110, tps = '',
+                history = {}, melee = true, tank = false
             },
             ['BarTestMode'] = {
-                class = 'warrior',
-                threat = 1000,
-                perc = 100,
-                tps = 100,
-                history = {},
-                melee = true,
-                tank = true
-            },
+                class = 'warrior', threat = 1000, perc = 100, tps = 100,
+                history = {}, melee = true, tank = true },
             ['Chad'] = {
-                class = 'paladin',
-                threat = 990,
-                perc = 99,
-                tps = 99,
-                history = {},
-                melee = false,
-                tank = false
-            },
+                class = 'paladin', threat = 990, perc = 99, tps = 99,
+                history = {}, melee = true, tank = false },
             [TWT.name] = {
-                class = TWT.class,
-                threat = 750,
-                perc = 75,
-                tps = 75,
-                history = {},
-                melee = false,
-                tank = false
+                class = TWT.class, threat = 750, perc = 75, tps = 75,
+                history = {}, melee = false, tank = false
             },
-            ['Gorx'] = {
-                class = 'shaman',
-                threat = 500,
-                perc = 50,
-                tps = 50,
-                history = {},
-                melee = false,
-                tank = false
+            ['Olaf'] = {
+                class = 'druid', threat = 700, perc = 70, tps = 70,
+                history = {}, melee = true, tank = false
             },
-            ['Nephew'] = {
-                class = 'warlock',
-                threat = 250,
-                perc = 25,
-                tps = 25,
-                history = {},
-                melee = false,
-                tank = false
+            ['Jimmy'] = {
+                class = 'rogue', threat = 500, perc = 50, tps = 50,
+                history = {}, melee = true, tank = false
             },
-            ['Rake'] = {
-                class = 'hunter',
-                threat = 100,
-                perc = 10,
-                tps = 10,
-                history = {},
-                melee = false,
-                tank = false
+            ['Miranda'] = {
+                class = 'priest', threat = 450, perc = 45, tps = 45,
+                history = {}, melee = false, tank = false
+            },
+            ['Karen'] = {
+                class = 'priest', threat = 400, perc = 40, tps = 40,
+                history = {}, melee = true, tank = false
+            },
+            ['Felix'] = {
+                class = 'mage', threat = 350, perc = 35, tps = 35,
+                history = {}, melee = false, tank = false
+            },
+            ['Tom'] = {
+                class = 'warlock', threat = 250, perc = 25, tps = 25,
+                history = {}, melee = false, tank = false
+            },
+            ['Bill'] = {
+                class = 'hunter', threat = 100, perc = 10, tps = 10,
+                history = {}, melee = false, tank = false
             }
         }
         TWT.target = 69
