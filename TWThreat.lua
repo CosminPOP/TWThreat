@@ -23,7 +23,6 @@ TWT.tank = {}
 
 TWT.threats = {}
 TWT.target = ''
-TWT.lastTarget = ''
 TWT.guids = {}
 TWT.updateSpeed = 1
 
@@ -372,7 +371,6 @@ TWT:SetScript("OnEvent", function()
                         verColor = '|cffff8810'
                     end
 
-                    -- errors out to everyone else cause they dont have the array init
                     TWT.addonStatus[arg4]['v'] = '    ' .. verColor .. msg
                     TWT.withAddon = TWT.withAddon + 1
 
@@ -402,26 +400,21 @@ TWT:SetScript("OnEvent", function()
             end
 
             if not UnitExists('target') then
-                --twtdebug('lost target, prev target = ' .. TWT.target)
-                --TWT.target = ''
+                --lost target, dont change TWT.target
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
             if UnitIsDead('target') then
+                --target is dead, dont show anything
                 TWT.target = ''
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
             if UnitIsPlayer('target') then
-                --show topmost
-                --twtdebug('target is player, showing threat for ' .. TWT.target)
-                --TWT.target = '' -- UnitIsPlayer('target') and 'max' or ''
-
-                -- twtdebug('player or none')
-                --_G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
-                --TWT.updateTargetFrameThreatIndicators(-1)
+                --show topmost, dont change TWT.target
+                TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
@@ -451,13 +444,10 @@ TWT:SetScript("OnEvent", function()
                 for guid, index in next, TWT.raidTargetIconIndex do
                     if index == GetRaidTargetIndex("target") then
                         TWT.target = guid
-                        --twtdebug('found target guid = ' .. guid .. ' based on mark')
                         return true
                     end
                 end
             end
-
-            --TWT.target = ''
 
             TWT.updateTargetFrameThreatIndicators(-1)
             TWT.targetChangedHelper:Show()
@@ -1048,10 +1038,6 @@ function TWT.targetChanged(guid, cached)
     end
 
     TWT.target = guid
-    if UnitExists('targettarget') then
-        TWT.lastTarget = UnitName('targettarget') --tank
-    end
-    --TWT.lastTarget = guid
 
     local targetText = TWT.unitNameForTitle(UnitName('target'))
 
@@ -1196,29 +1182,6 @@ function TWT.updateUI()
         return false
     end
 
-    --disabled for now
-    --if TWT.target == '' or UnitIsPlayer('target') then
-    --    local myThreatPercs = {
-    --    }
-    --
-    --    for guid, creature in next, TWT.threats do
-    --        myThreatPercs[guid] = creature[TWT.name].perc
-    --    end
-    --
-    --    local maxThreatGuid = 0
-    --    local maxThreatPerc = 0
-    --    for guid, perc in myThreatPercs do
-    --        if TWT.threats[guid][TWT.name].stamp then
-    --            if perc > maxThreatPerc and GetTime() - TWT.threats[guid][TWT.name].stamp < 5 then
-    --                maxThreatPerc = perc
-    --                maxThreatGuid = guid
-    --            end
-    --        end
-    --    end
-    --
-    --    TWT.target = maxThreatGuid ~= 0 and maxThreatGuid or ''
-    --end
-
     if TWT.target == '' then
         return false
     end
@@ -1234,42 +1197,19 @@ function TWT.updateUI()
         end
     end
 
-    --for _, creature in next, TWT.threats do
-    --    for player, data in next, creature do
-    --        if player == TWT.AGRO then
-    --            data.tps = ''
-    --            data.threat = 1
-    --        end
-    --    end
-    --end
-
     if not TWT.threats[TWT.target] then
         TWT.updateTargetFrameThreatIndicators(-1)
         return false
     end
 
-    --if UnitExists('target') and (UnitIsPlayer('target') or UnitIsDead('target')) then
-    --    tankName = TWT.lastTarget
-    --else
-    --    if UnitName('targettarget') then
-    --        tankName = UnitName('targettarget')
-    --    else
-    --        -- not tt, target sunned
-    --        tankName = TWT.lastTarget
-    --    end
-    --end
-
-    --local tankThreat = 0
-    --local myThreat = 0
-
     local tankName = ''
 
-    if UnitExists('targettarget') and UnitIsPlayer('targettarget') and
-            not UnitIsPlayer('target') then
-        tankName = UnitName('targettarget')
+    for name, data in TWT.threats[TWT.target] do
+        if data.tank then
+            tankName = name
+            break
+        end
     end
-
-    TWT.lastTarget = tankName
 
     if _G['TWTMainSettings']:IsVisible() and not UnitAffectingCombat('player') then
         tankName = 'BarTestMode'
@@ -1443,8 +1383,6 @@ function TWT.updateUI()
 
         if table.getn(TWT.tankModeTargets) > 1 then
 
-            twtdebug(' TMT size = ' .. table.getn(TWT.tankModeTargets))
-
             for i, guid in TWT.tankModeTargets do
 
                 local player = TWT.tankModeThreats[guid]
@@ -1452,8 +1390,6 @@ function TWT.updateUI()
                 if not player then
                     break
                 end
-
-                twtdebug( i .. ' ' .. player.name)
 
                 _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 23)
 
