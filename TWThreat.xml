@@ -355,6 +355,24 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
+
+                <Texture name="$parentBarsBG" file="Interface\DialogFrame\UI-DialogBox-Background">
+                    <Size>
+                        <AbsDimension x="298" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="-40"/>
+                            </Offset>
+                        </Anchor>
+                        <Anchor point="BOTTOMRIGHT">
+                            <Offset>
+                                <AbsDimension x="-1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
             </Layer>
             <Layer level="OVERLAY">
 
@@ -592,48 +610,6 @@
                     </OnClick>
                 </Scripts>
             </Button>
-
-            <ScrollFrame name="TWThreatListScrollFrame" hidden="false" inherits="UIPanelScrollFrameTemplate">
-<!--                <Size>-->
-<!--                    <AbsDimension x="298" y="200"/>-->
-<!--                </Size>-->
-                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
-                          tile="false">
-                </Backdrop>
-                <Anchors>
-                    <Anchor point="TOPLEFT">
-                        <Offset>
-                            <AbsDimension x="1" y="-40"/>
-                        </Offset>
-                    </Anchor>
-                    <Anchor point="BOTTOMRIGHT">
-                        <Offset>
-                            <AbsDimension x="-1" y="0"/>
-                        </Offset>
-                    </Anchor>
-                </Anchors>
-                <Scripts>
-                </Scripts>
-                <ScrollChild>
-                    <Frame name="TWThreatListScrollFrameChildren">
-                        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background2"
-                                  tile="false">
-                        </Backdrop>
-                        <Size>
-                            <AbsDimension x="298" y="200"/>
-                        </Size>
-                        <Anchors>
-                            <Anchor point="TOPLEFT">
-                                <Offset>
-                                    <AbsDimension x="1" y="0"/>
-                                </Offset>
-                            </Anchor>
-                        </Anchors>
-                        <Frames>
-                        </Frames>
-                    </Frame>
-                </ScrollChild>
-            </ScrollFrame>
 
             <Frame name="$parentSettings" hidden="true" toplevel="true"
                    movable="true" enableMouse="true">
