@@ -113,6 +113,16 @@ SlashCmdList["TWT"] = function(cmd)
             TWT_CONFIG.visible = true
             return true
         end
+        if string.sub(cmd, 1, 6) == 'skeram' then
+            if TWT_CONFIG.skeram then
+                TWT_CONFIG.skeram = false
+                twtprint('Skeram module disabled.')
+                return true
+            end
+            TWT_CONFIG.skeram = true
+            twtprint('Skeram module enabled.')
+            return true
+        end
         if string.sub(cmd, 1, 5) == 'debug' then
             if TWT_CONFIG.debug then
                 TWT_CONFIG.debug = false
@@ -564,13 +574,7 @@ function TWT.init()
     TWT_CONFIG.colThreat = TWT_CONFIG.colThreat or false
     TWT_CONFIG.colPerc = TWT_CONFIG.colPerc or false
     TWT_CONFIG.labelRow = TWT_CONFIG.labelRow or false
-
-    --TWT_CONFIG.combatAlpha = TWT_CONFIG.combatAlpha or 1
-    --TWT_CONFIG.oocAlpha = TWT_CONFIG.oocAlpha or 1
-
-    --todo temporary until its fixed
-    --TWT_CONFIG.tankMode = false
-    --_G['TWTMainSettingsTankMode']:Disable()
+    TWT_CONFIG.skeram = TWT_CONFIG.skeram or false
 
     TWT_CONFIG.debug = TWT_CONFIG.debug or false
 
@@ -616,10 +620,10 @@ function TWT.init()
     TWT.setColumnLabels()
 
     if TWT_CONFIG.labelRow then
-        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
+        _G['TWTMainBarsBG']:SetPoint('TOPLEFT', 1, -40)
         _G['TWTMainNameLabel']:Show()
     else
-        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -20)
+        _G['TWTMainBarsBG']:SetPoint('TOPLEFT', 1, -20)
         _G['TWTMainNameLabel']:Hide()
         _G['TWTMainTPSLabel']:Hide()
         _G['TWTMainThreatLabel']:Hide()
@@ -655,18 +659,6 @@ function TWT.init()
 
         fontFrames[i]:Show()
     end
-
-    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetNormalTexture('')
-    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetDisabledTexture('')
-    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetHighlightTexture('')
-    _G['TWThreatListScrollFrameScrollBarScrollUpButton']:SetPushedTexture('')
-
-    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetNormalTexture('')
-    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetDisabledTexture('')
-    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetHighlightTexture('')
-    _G['TWThreatListScrollFrameScrollBarScrollDownButton']:SetPushedTexture('')
-
-    _G['TWThreatListScrollFrameScrollBarThumbTexture']:SetTexture('')
 
     --UnitPopupButtons["INSPECT_TALENTS"] = { text = 'Inspect Talents', dist = 0 }
     --
@@ -757,8 +749,6 @@ function TWT.getClasses()
 end
 
 function TWT.handleServerMSG2(msg)
-
-    twtdebug(msg)
 
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
@@ -979,6 +969,8 @@ function TWT.combatEnd()
         _G['TWTMainTankModeWindow']:Hide()
     end
 
+    _G['TWTWarning']:Hide()
+
     _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
 
 end
@@ -1035,24 +1027,25 @@ function TWT.targetChanged(guid, cached)
         return
     end
 
-    -- skeram hax
-    --if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
-    --    TWT.custom[UnitName('target')] = guid
-    --end
-    --
-    --if UnitAffectingCombat('player') then
-    --    if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
-    --        if guid == TWT.custom[UnitName('target')] then
-    --            _G['TWTWarningText']:SetText("- REAL -");
-    --            _G['TWTWarning']:Show()
-    --        else
-    --            _G['TWTWarningText']:SetText("- CLONE -");
-    --            _G['TWTWarning']:Show()
-    --        end
-    --    else
-    --        _G['TWTWarning']:Hide()
-    --    end
-    --end
+    if TWT_CONFIG.skeram then
+        -- skeram hax
+        if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] == 0 then
+            TWT.custom[UnitName('target')] = guid
+        end
+        --
+        _G['TWTWarning']:Hide()
+        if UnitAffectingCombat('player') then
+            if UnitName('target') == 'The Prophet Skeram' and TWT.custom['The Prophet Skeram'] ~= 0 then
+                if guid == TWT.custom[UnitName('target')] then
+                    _G['TWTWarningText']:SetText("|cff00ff00- REAL -");
+                    _G['TWTWarning']:Show()
+                else
+                    _G['TWTWarningText']:SetText("- CLONE -");
+                    _G['TWTWarning']:Show()
+                end
+            end
+        end
+    end
 
     TWT.target = guid
     if UnitExists('targettarget') then
@@ -1241,8 +1234,6 @@ function TWT.updateUI()
         end
     end
 
-    local index = 0
-
     --for _, creature in next, TWT.threats do
     --    for player, data in next, creature do
     --        if player == TWT.AGRO then
@@ -1284,13 +1275,15 @@ function TWT.updateUI()
         tankName = 'BarTestMode'
     end
 
+    local index = 0
+
     for name, data in TWT.ohShitHereWeSortAgain(TWT.threats[TWT.target], true) do
 
-        if data.threat > 0 then
+        if data.threat > 0 and index < TWT_CONFIG.visibleBars then
 
             index = index + 1
             if not TWT.threatsFrames[name] then
-                TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWThreatListScrollFrameChildren"], 'TWThreat')
+                TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWTMain"], 'TWThreat')
             end
 
             _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
@@ -1304,7 +1297,9 @@ function TWT.updateUI()
             _G['TWThreat' .. name]:SetHeight(TWT_CONFIG.barHeight - 1)
             _G['TWThreat' .. name .. 'BG']:SetHeight(TWT_CONFIG.barHeight - 2)
 
-            TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWThreatListScrollFrameChildren"], "TOPLEFT", 0, TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
+            TWT.threatsFrames[name]:SetPoint("TOPLEFT", _G["TWTMain"], "TOPLEFT", 0,
+                    (TWT_CONFIG.labelRow and -40 or -20) +
+            TWT_CONFIG.barHeight - 1 - index * TWT_CONFIG.barHeight)
 
 
             -- icons
@@ -1345,11 +1340,13 @@ function TWT.updateUI()
 
             if name == TWT.name then
 
-                if name == string.char(77) .. string.lower(string.char(79, 77, 79)) and data.perc >= 95 then
-                    _G['TWTWarningText']:SetText("- STOP DPS " .. string.char(77) .. string.lower(string.char(79, 77, 79)) .. " -");
-                    _G['TWTWarning']:Show()
-                else
-                    _G['TWTWarning']:Hide()
+                if UnitName('target') ~= 'The Prophet Skeram' then
+                    if name == string.char(77) .. string.lower(string.char(79, 77, 79)) and data.perc >= 95 then
+                        _G['TWTWarningText']:SetText("- STOP DPS " .. string.char(77) .. string.lower(string.char(79, 77, 79)) .. " -");
+                        _G['TWTWarning']:Show()
+                    else
+                        _G['TWTWarning']:Hide()
+                    end
                 end
 
                 if TWT_CONFIG.aggroSound and data.perc >= 85 and time() - TWT.lastAggroWarningSoundTime > 5
@@ -1487,9 +1484,6 @@ function TWT.updateUI()
 
         end
     end
-
-    _G['TWThreatListScrollFrame']:UpdateScrollChildRect()
-
 
 end
 
@@ -1728,10 +1722,10 @@ function TWTChangeSetting_OnClick(checked, code)
     TWT.setColumnLabels()
 
     if TWT_CONFIG.labelRow then
-        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -40)
+        _G['TWTMainBarsBG']:SetPoint('TOPLEFT', 1, -40)
         _G['TWTMainNameLabel']:Show()
     else
-        _G['TWThreatListScrollFrame']:SetPoint('TOPLEFT', 1, -20)
+        _G['TWTMainBarsBG']:SetPoint('TOPLEFT', 1, -20)
         _G['TWTMainNameLabel']:Hide()
         _G['TWTMainTPSLabel']:Hide()
         _G['TWTMainThreatLabel']:Hide()
