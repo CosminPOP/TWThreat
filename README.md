@@ -1,8 +1,19 @@
-# TWThreat v1.0rc
+# TWThreat v1.0.1
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
+## Chngelist
+### v1.0.1
+- Faster way to get guid
+- [bug] Tankmode shows wrong percentages 
+- Tankmode window is not movable
+- Tankmode window has data in config mode
+- Window title is more stable for healers
+- Removed bar animation (maybe only temporary)
+- Fix potential but where Pull Agro At bar is not shown
+- Clear bars if creature dies, for healers
+
 ## Features
 - Threat, threat to pull aggro, TPS, % Max, % to pull
 - Target glow based on threat for default game target frame
@@ -14,7 +25,9 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 - Tankmode _(disabled for now)_ !
 
 ## Slashcommands
-- `/twtshow`, `/twt show`
+- `/twtshow`
+- `/twt show` 
+- `/twt tankmode`
 
 ## Settings
 ![settings](https://imgur.com/S5zpbSX.png)
