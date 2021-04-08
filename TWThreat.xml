@@ -149,7 +149,7 @@
 
     <Frame name="TWThreat" virtual="true">
         <Size>
-            <AbsDimension x="298" y="19"/>
+            <AbsDimension x="1" y="19"/>
         </Size>
         <Anchors>
             <Anchor point="TOPLEFT">
@@ -294,31 +294,31 @@
     </Font>
 
     <Frame name="TWTWarning" hidden="true" parent="UIParent">
-    <Size>
-        <AbsDimension x="500" y="40"/>
-    </Size>
-    <Anchors>
-        <Anchor point="CENTER">
-            <Offset>
-                <AbsDimension x="0" y="0"/>
-            </Offset>
-        </Anchor>
-    </Anchors>
-    <Layers>
-        <Layer level="OVERLAY">
-            <FontString name="$parentText" font="Fonts\FRIZQT__.TTF" text="care">
-                <FontHeight val="40"/>
-                <Color r="1" g="0.1" b="0.1" a="1"/>
-                <Shadow>
-                    <Offset x="1" y="-1"/>
-                    <Color r="0" g="0" b="0"/>
-                </Shadow>
-                <Size>
-                    <AbsDimension x="500" y="40"/>
-                </Size>
-            </FontString>
-        </Layer>
-    </Layers>
+        <Size>
+            <AbsDimension x="500" y="40"/>
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER">
+                <Offset>
+                    <AbsDimension x="0" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Layers>
+            <Layer level="OVERLAY">
+                <FontString name="$parentText" font="Fonts\FRIZQT__.TTF" text="care">
+                    <FontHeight val="40"/>
+                    <Color r="1" g="0.1" b="0.1" a="1"/>
+                    <Shadow>
+                        <Offset x="1" y="-1"/>
+                        <Color r="0" g="0" b="0"/>
+                    </Shadow>
+                    <Size>
+                        <AbsDimension x="500" y="40"/>
+                    </Size>
+                </FontString>
+            </Layer>
+        </Layers>
     </Frame>
 
     <Frame name="TWTMain" hidden="true" toplevel="true"
@@ -767,9 +767,11 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Glow');
-                                GameTooltip:AddLine('Shows a colored aura ranging from Green/Yellow/Red on \nthe Default UI\'s unit frame.', 1, 1,
+                                GameTooltip:AddLine('Shows a colored aura ranging from Green/Yellow/Red on \nthe Default
+                                UI\'s unit frame.', 1, 1,
                                 1);
-                                GameTooltip:AddLine('The color of the aura is based on your current threat threshold:', 1, 1, 1);
+                                GameTooltip:AddLine('The color of the aura is based on your current threat threshold:',
+                                1, 1, 1);
                                 GameTooltip:AddLine(' green - yellow for 0% - 49%', 1, 1, 1);
                                 GameTooltip:AddLine(' yellow - red for 50% - 100%', 1, 1, 1);
                                 GameTooltip:Show();
@@ -1068,7 +1070,8 @@
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Tank Mode');
                                 GameTooltip:AddLine('Extra window showing creatures you are tanking. ', 1, 1, 1);
-                                GameTooltip:AddLine('Disables Full Screen Glow effect and Agro Warning Sound. ', 1, 1, 1);
+                                GameTooltip:AddLine('Disables Full Screen Glow effect and Agro Warning Sound. ', 1, 1,
+                                1);
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
@@ -1350,130 +1353,237 @@
                 </Scripts>
             </Frame>
 
-            <Frame name="$parentRTTPS" hidden="true" toplevel="true" movable="true" enableMouse="true">
+        </Frames>
+    </Frame>
+
+    <Frame name="TWTMainTankModeWindow" hidden="true" toplevel="true"
+           parent="UIParent" movable="true" enableMouse="true">
+        <Size>
+            <AbsDimension x="300" y="60"/>
+        </Size>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                  tile="false">
+        </Backdrop>
+        <Anchors>
+            <Anchor point="CENTER">
+                <Offset>
+                    <AbsDimension x="0" y="0"/>
+                </Offset>
+            </Anchor>
+        </Anchors>
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
+                    <Size>
+                        <AbsDimension x="298" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="1" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString name="$parentTitle" inherits="GameFontHighlight" text="Tank Mode Window">
+                    <Size>
+                        <AbsDimension x="300" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+
+            <Button name="$parentCloseButton" inherits="UIPanelButtonTemplate" text="x">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
                 <Size>
-                    <AbsDimension x="300" y="200"/>
+                    <AbsDimension x="16" y="16"/>
                 </Size>
-                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
-                          tile="false">
-                </Backdrop>
                 <Anchors>
-                    <Anchor point="CENTER" relativeTo="UIParent">
+                    <Anchor point="TOPRIGHT">
                         <Offset>
-                            <AbsDimension x="0" y="0"/>
+                            <AbsDimension x="-2" y="-2"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
-                <Layers>
-                    <Layer level="ARTWORK">
-                        <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
-                            <Size>
-                                <AbsDimension x="298" y="20"/>
-                            </Size>
-                            <Anchors>
-                                <Anchor point="TOPLEFT">
-                                    <Offset>
-                                        <AbsDimension x="1" y="0"/>
-                                    </Offset>
-                                </Anchor>
-                            </Anchors>
-                        </Texture>
-                    </Layer>
-                    <Layer level="OVERLAY">
-                        <FontString name="$parentTitle" inherits="GameFontHighlight" text="Threat">
-                            <Size>
-                                <AbsDimension x="300" y="20"/>
-                            </Size>
-                            <Anchors>
-                                <Anchor point="TOP">
-                                    <Offset>
-                                        <AbsDimension x="0" y="0"/>
-                                    </Offset>
-                                </Anchor>
-                            </Anchors>
-                        </FontString>
-
-                    </Layer>
-                </Layers>
-                <Frames>
-
-                </Frames>
                 <Scripts>
-                    <OnLoad>
-                        this:RegisterForDrag("LeftButton");
-                        this:SetMovable(1);
-                        this:SetUserPlaced(true);
-                    </OnLoad>
-                    <OnDragStart>
-                        this:StartMoving();
-                        this.isMoving = true;
-                    </OnDragStart>
-                    <OnDragStop>
-                        this:StopMovingOrSizing();
-                        this.isMoving = false;
-                    </OnDragStop>
+                    <OnClick>
+                        TWTTankModeWindowCloseButton_OnClick()
+                    </OnClick>
+                    <OnEnter>
+                        GameTooltip:ClearLines();
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                        GameTooltip:AddLine('Close Window and disable Tank Mode');
+                        GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
                 </Scripts>
-            </Frame>
+            </Button>
 
-            <Frame name="$parentTankModeWindow" hidden="true">
+            <Button name="$parentStickTopButton" inherits="UIPanelButtonTemplate" text="T">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
                 <Size>
-                    <AbsDimension x="300" y="30"/>
+                    <AbsDimension x="16" y="16"/>
                 </Size>
-                <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
-                          tile="false">
-                </Backdrop>
                 <Anchors>
-                    <Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT">
+                    <Anchor point="TOPLEFT">
                         <Offset>
-                            <AbsDimension x="0" y="-1"/>
+                            <AbsDimension x="2" y="-2"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
-                <Layers>
-                    <Layer level="ARTWORK">
-                        <Texture name="$parentTitleBG" file="Interface\addons\TWThreat\images\textures\Smooth">
-                            <Size>
-                                <AbsDimension x="298" y="20"/>
-                            </Size>
-                            <Anchors>
-                                <Anchor point="TOPLEFT">
-                                    <Offset>
-                                        <AbsDimension x="1" y="0"/>
-                                    </Offset>
-                                </Anchor>
-                            </Anchors>
-                        </Texture>
-                    </Layer>
-                    <Layer level="OVERLAY">
-                        <FontString name="$parentTitle" inherits="GameFontHighlight" text="Tank Mode Window">
-                            <Size>
-                                <AbsDimension x="300" y="20"/>
-                            </Size>
-                            <Anchors>
-                                <Anchor point="TOP">
-                                    <Offset>
-                                        <AbsDimension x="0" y="0"/>
-                                    </Offset>
-                                </Anchor>
-                            </Anchors>
-                        </FontString>
-                    </Layer>
-                </Layers>
-                <Frames>
-
-                    <Frame name="TMEF1" hidden="true" inherits="TankModeExtraFrameTemplate"/>
-                    <Frame name="TMEF2" hidden="true" inherits="TankModeExtraFrameTemplate"/>
-                    <Frame name="TMEF3" hidden="true" inherits="TankModeExtraFrameTemplate"/>
-                    <Frame name="TMEF4" hidden="true" inherits="TankModeExtraFrameTemplate"/>
-                    <Frame name="TMEF5" hidden="true" inherits="TankModeExtraFrameTemplate"/>
-
-                </Frames>
                 <Scripts>
-
+                    <OnClick>
+                        TWTTankModeWindowChangeStick_OnClick('Top')
+                    </OnClick>
+                    <OnEnter>
+                        GameTooltip:ClearLines();
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                        GameTooltip:AddLine('Stick Top');
+                        GameTooltip:AddLine('Stick this window to the top of the main window.');
+                        GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
                 </Scripts>
-            </Frame>
+            </Button>
+            <Button name="$parentStickRightButton" inherits="UIPanelButtonTemplate" text="R">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="20" y="-2"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        TWTTankModeWindowChangeStick_OnClick('Right')
+                    </OnClick>
+                    <OnEnter>
+                        GameTooltip:ClearLines();
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                        GameTooltip:AddLine('Stick Right');
+                        GameTooltip:AddLine('Stick this window to the right of the main window.');
+                        GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                </Scripts>
+            </Button>
+            <Button name="$parentStickBottomButton" inherits="UIPanelButtonTemplate" text="B">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="38" y="-2"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        TWTTankModeWindowChangeStick_OnClick('Bottom')
+                    </OnClick>
+                    <OnEnter>
+                        GameTooltip:ClearLines();
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                        GameTooltip:AddLine('Stick Bottom');
+                        GameTooltip:AddLine('Stick this window to the bottom of the main window.');
+                        GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                </Scripts>
+            </Button>
+            <Button name="$parentStickLeftButton" inherits="UIPanelButtonTemplate" text="L">
+                <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
+                </NormalTexture>
+                <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                <HighlightTexture/>
+                <Size>
+                    <AbsDimension x="16" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="56" y="-2"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        TWTTankModeWindowChangeStick_OnClick('Left')
+                    </OnClick>
+                    <OnEnter>
+                        GameTooltip:ClearLines();
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                        GameTooltip:AddLine('Stick Left');
+                        GameTooltip:AddLine('Stick this window to the left of the main window.');
+                        GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                </Scripts>
+            </Button>
+
+            <Frame name="TMEF1" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+            <Frame name="TMEF2" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+            <Frame name="TMEF3" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+            <Frame name="TMEF4" hidden="true" inherits="TankModeExtraFrameTemplate"/>
+            <Frame name="TMEF5" hidden="true" inherits="TankModeExtraFrameTemplate"/>
 
         </Frames>
+        <Scripts>
+            <OnLoad>
+                this:RegisterForDrag("LeftButton");
+                this:SetMovable(1);
+                this:SetUserPlaced(true);
+            </OnLoad>
+            <OnDragStart>
+                if getglobal('TWTMainLockButton'):GetText() == 'L' then
+                this:StartMoving();
+                this.isMoving = true;
+                end
+            </OnDragStart>
+            <OnDragStop>
+                this:StopMovingOrSizing();
+                this.isMoving = false;
+                TWTTankModeWindowChangeStick_OnClick('Free')
+            </OnDragStop>
+        </Scripts>
     </Frame>
 
     <Frame name="TWThreatDisplayTarget" frameStrata="LOW" hidden="true">
@@ -1612,16 +1722,16 @@
                     <AbsDimension x="16" y="16"/>
                 </Size>
                 <Anchors>
-                        <Anchor point="BOTTOMLEFT">
-                            <Offset>
-                                <AbsDimension x="1" y="1"/>
-                            </Offset>
-                        </Anchor>
-                        <Anchor point="BOTTOMRIGHT">
-                            <Offset>
-                                <AbsDimension x="-1" y="10"/>
-                            </Offset>
-                        </Anchor>
+                    <Anchor point="BOTTOMLEFT">
+                        <Offset>
+                            <AbsDimension x="1" y="1"/>
+                        </Offset>
+                    </Anchor>
+                    <Anchor point="BOTTOMRIGHT">
+                        <Offset>
+                            <AbsDimension x="-1" y="10"/>
+                        </Offset>
+                    </Anchor>
                 </Anchors>
                 <Scripts>
                     <OnClick>
