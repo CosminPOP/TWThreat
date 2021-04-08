@@ -6,7 +6,7 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 ## Chngelist
 ### v1.0.1
 - Faster way to get guid
-- [bug] Tankmode shows wrong percentages 
+- Tankmode shows wrong percentages 
 - Tankmode window is now movable
 - Tankmode window has data in config mode
 - Window title is more stable for healers
