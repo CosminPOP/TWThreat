@@ -588,7 +588,10 @@ function TWT.init()
     end
 
     if TWT_CONFIG.tankMode then
+        _G['TWTMainSettingsFullScreenGlow']:SetChecked(TWT_CONFIG.fullScreenGlow)
         _G['TWTMainSettingsFullScreenGlow']:Disable()
+        _G['TWTMainSettingsAggroSound']:SetChecked(TWT_CONFIG.fullScreenGlow)
+        _G['TWTMainSettingsAggroSound']:Disable()
     end
 
     if TWT_CONFIG.lock then
@@ -761,7 +764,7 @@ end
 
 function TWT.handleServerMSG2(msg)
 
-    --twtdebug(msg)
+    twtdebug(msg)
 
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
@@ -867,7 +870,7 @@ function TWT.handleServerMSG2(msg)
 
         TWT.calcAGROPerc(guid)
 
-        TWT.calcPerc(guid)
+        TWT.calcPerc(guid) --keep this on till server side changes!
 
         TWT.updateUI()
 
@@ -876,7 +879,7 @@ end
 
 function TWT.calcPerc(guid)
     -- server side calcs are wrong in 7/04 commit
-    -- or tankThreat = (int)round((*threatList.begin())->getThreat()); begin is not the tank !
+    -- or tankThreat = (int)round((*threatList.begin())->getThreat()); begin is not always the tank !
     local tankThreat = 0
     for name, data in next, TWT.threats[guid] do
         if name ~= TWT.AGRO and data.tank then
@@ -1722,6 +1725,12 @@ function TWTChangeSetting_OnClick(checked, code)
             _G['TWTMainSettingsFullScreenGlow']:Disable()
             _G['TWTMainSettingsAggroSound']:SetChecked(TWT_CONFIG.fullScreenGlow)
             _G['TWTMainSettingsAggroSound']:Disable()
+
+            _G['TWTMainTankModeWindowStickTopButton']:Show()
+            _G['TWTMainTankModeWindowStickRightButton']:Show()
+            _G['TWTMainTankModeWindowStickBottomButton']:Show()
+            _G['TWTMainTankModeWindowStickLeftButton']:Show()
+
             _G['TWTMainTankModeWindow']:Show()
         else
             _G['TWTMainSettingsFullScreenGlow']:Enable()
