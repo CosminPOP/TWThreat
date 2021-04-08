@@ -19,11 +19,11 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 - Threat, threat to pull aggro, TPS, % Max, % to pull
 - Target glow based on threat for default game target frame
 - Target threat percent indicator for default game target frame
-- Options for bar height and font style
+- Various options including bar height and font style
 - Full Screen Glow on high threat percentage
 - Aggro Warning Sound on high threat percentage
 - Customizable labels for TPS, Threat, Percent Max
-- Tankmode _(disabled for now)_ !
+- Tankmode !
 
 ## Slashcommands
 - `/twtshow`
