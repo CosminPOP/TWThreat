@@ -1434,7 +1434,7 @@
                 </Scripts>
             </Button>
 
-            <Button name="$parentStickTopButton" inherits="UIPanelButtonTemplate" text="T">
+            <Button name="$parentStickTopButton" hidden="true" inherits="UIPanelButtonTemplate" text="T">
                 <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
                 </NormalTexture>
                 <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
@@ -1465,7 +1465,7 @@
                     </OnLeave>
                 </Scripts>
             </Button>
-            <Button name="$parentStickRightButton" inherits="UIPanelButtonTemplate" text="R">
+            <Button name="$parentStickRightButton" hidden="true" inherits="UIPanelButtonTemplate" text="R">
                 <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
                 </NormalTexture>
                 <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
@@ -1496,7 +1496,7 @@
                     </OnLeave>
                 </Scripts>
             </Button>
-            <Button name="$parentStickBottomButton" inherits="UIPanelButtonTemplate" text="B">
+            <Button name="$parentStickBottomButton" hidden="true" inherits="UIPanelButtonTemplate" text="B">
                 <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
                 </NormalTexture>
                 <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
@@ -1527,7 +1527,7 @@
                     </OnLeave>
                 </Scripts>
             </Button>
-            <Button name="$parentStickLeftButton" inherits="UIPanelButtonTemplate" text="L">
+            <Button name="$parentStickLeftButton" hidden="true" inherits="UIPanelButtonTemplate" text="L">
                 <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth" alphaMode="ADD">
                 </NormalTexture>
                 <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
