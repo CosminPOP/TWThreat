@@ -89,7 +89,7 @@ Shows or hides the Percent Max column.
 <br>
 
 
-## Contributors and tester
+## Contributors and testers
 [Henry](https://armory.turtle-wow.org/#!/character/Henry), [Laughadin](https://armory.turtle-wow.org/#!/character/Laughadin), 
 [Faralynn](https://armory.turtle-wow.org/#!/character/Faralynn), [Draxer](https://armory.turtle-wow.org/#!/character/Draxer) <BR><BR>
 
