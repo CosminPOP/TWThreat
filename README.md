@@ -7,12 +7,12 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 ### v1.0.1
 - Faster way to get guid
 - Tankmode window is now movable and stickable to top/bottom/left/right of main window.
-- Tankmode window has data in config mode.
+- Tankmode window has test data in config mode.
 - Better colors for Tankmode targets and current target is highlighted.
 - Window title is more stable for healers.
 - Removed bar animation (maybe only temporary).
-- Fix potential bug where Pull Agro At bar is not shown.
 - Clear bars if creature dies, for healers.
+- Fix potential bug where Pull Agro At bar was not shown.
 - Fix tankthreat bug when tank is not top in threat list.
 
 ## Features
