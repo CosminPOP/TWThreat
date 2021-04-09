@@ -86,22 +86,23 @@ function twtprint(a)
 end
 
 function twtdebug(a)
+    local time = GetTime() + 0.0001
     if not TWT_CONFIG.debug then
         return false
     end
     if a == nil then
-        twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff attempt to print a nil value.')
+        twtprint('|cff0070de[TWTDEBUG:' .. time .. ']|cffffffff attempt to print a nil value.')
         return
     end
     if type(a) == 'boolean' then
         if a then
-            twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff[true]')
+            twtprint('|cff0070de[TWTDEBUG:' .. time .. ']|cffffffff[true]')
         else
-            twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff[false]')
+            twtprint('|cff0070de[TWTDEBUG:' .. time .. ']|cffffffff[false]')
         end
         return true
     end
-    twtprint('|cff0070de[TWTDEBUG:' .. GetTime() .. ']|cffffffff[' .. a .. ']')
+    twtprint('|cff0070de[D:' .. time .. ']|cffffffff[' .. a .. ']')
 end
 
 SLASH_TWT1 = "/twt"
@@ -453,7 +454,9 @@ TWT:SetScript("OnEvent", function()
             --    end
             --end
 
-            TWT.updateTargetFrameThreatIndicators(-1)
+            if not not UnitAffectingCombat('player') and not UnitAffectingCombat('target') then
+                TWT.updateTargetFrameThreatIndicators(-1)
+            end
 
             -- todo load guid based on mark but also send
             --  guid request in case marks change while im tanking something else
@@ -713,7 +716,7 @@ function TWT.init()
     --
     --UIParentLoadAddOn("Blizzard_TalentUI")
 
-    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+    TWT.updateTitleBarText()
 
     twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
     return true
@@ -1020,7 +1023,7 @@ function TWT.combatEnd()
 
     _G['TWTWarning']:Hide()
 
-    _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+    TWT.updateTitleBarText()
 
     return true
 
@@ -1034,15 +1037,15 @@ TWT.targetChangedHelper:SetScript("OnShow", function()
     this.askTime = GetTime()
     this.tries = 0
     twtdebug('helper shown')
-    for name in next, TWT.threatsFrames do
-        TWT.threatsFrames[name]:Hide()
-        _G['TWThreat' .. name .. 'BG']:SetWidth(1)
-        --twtdebug('hiding and w1 TWThreat' .. name .. 'BG')
-    end
+    --for name in next, TWT.threatsFrames do
+    --    TWT.threatsFrames[name]:Hide()
+    --    _G['TWThreat' .. name .. 'BG']:SetWidth(1)
+    --    --twtdebug('hiding and w1 TWThreat' .. name .. 'BG')
+    --end
 end)
 TWT.targetChangedHelper:SetScript("OnHide", function()
     --twtdebug('helper hidden')
-    twtdebug('took ' .. this.tries .. ' tries (' .. GetTime() - this.askTime ..'ms)')
+    twtdebug('took ' .. this.tries .. ' tries (' .. GetTime() - this.askTime .. 'ms)')
 end)
 TWT.targetChangedHelper:SetScript("OnUpdate", function()
     local plus = 0.25
@@ -1471,7 +1474,7 @@ function TWT.updateUI()
 
                 _G['TWTMainTankModeWindow']:SetHeight(i * 25 + 23)
 
-                _G['TMEF' .. i .. 'Target']:SetText((guid == TWT.target and TWT.classColors['priest'].c or '|cffaaaaaa' ) .. TWT.guids[guid])
+                _G['TMEF' .. i .. 'Target']:SetText((guid == TWT.target and TWT.classColors['priest'].c or '|cffaaaaaa') .. TWT.guids[guid])
                 _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[player.class].c .. player.name)
                 _G['TMEF' .. i .. 'Perc']:SetText(player.perc .. '%')
                 _G['TMEF' .. i .. 'TargetButton']:SetID(guid)
@@ -1538,12 +1541,20 @@ end)
 TWT.ui:SetScript("OnShow", function()
     this.startTime = GetTime()
 end)
+TWT.ui:SetScript("OnHide", function()
+    for name in next, TWT.threatsFrames do
+        TWT.threatsFrames[name]:Hide()
+    end
+end)
 TWT.ui:SetScript("OnUpdate", function()
     local plus = TWT.updateSpeed
     local gt = GetTime() * 1000
     local st = (this.startTime + plus) * 1000
     if gt >= st then
         this.startTime = GetTime()
+        if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
+            return false
+        end
         if UnitAffectingCombat('player') and UnitAffectingCombat('target') then
 
             if TWT.target == '' then
@@ -1551,16 +1562,17 @@ TWT.ui:SetScript("OnUpdate", function()
                 return false
             end
 
-            if TWT_CONFIG.tankMode then
-                for _, guid in next, TWT.tankModeTargets do
-                    --if guid ~= TWT.target then
-                    TWT.TankTargetsThreatSituation(guid)
-                    --end
-                end
-            end
-
             if TWT_CONFIG.glow or TWT_CONFIG.fullScreenGlow or TWT_CONFIG.tankmode or
                     TWT_CONFIG.perc or TWT_CONFIG.visible then
+
+                if TWT_CONFIG.tankMode then
+                    for _, guid in next, TWT.tankModeTargets do
+                        --if guid ~= TWT.target then
+                        TWT.TankTargetsThreatSituation(guid)
+                        --end
+                    end
+                end
+
                 TWT.UnitDetailedThreatSituation(TWT.target, TWT_CONFIG.visibleBars - 1)
             else
                 twtdebug('not asking threat situation')
@@ -1581,7 +1593,7 @@ function TWT.calcTPS(name, data)
             end
         end
 
-        if TWT.tableSize(data.history) > 6 then
+        if TWT.tableSize(data.history) > 5 then
             data.history[older] = nil
         end
 
@@ -1620,7 +1632,7 @@ function TWT.updateTargetFrameThreatIndicators(perc, creature)
     end
 
     if not creature or creature ~= UnitName('target') or perc == -1 then
-        _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+        TWT.updateTitleBarText()
         _G['TWThreatDisplayTarget']:Hide()
         return false
     end
@@ -2018,7 +2030,6 @@ function TWTSettingsToggle_OnClick()
             _G['TWTMainTankModeWindowStickLeftButton']:Show()
         end
 
-
         TWT.testBars(true)
     end
 end
@@ -2175,6 +2186,14 @@ function TWT.targetRaidIcon(iconIndex, guid)
     return false
 end
 
+function TWT.updateTitleBarText(text)
+    if not text then
+        _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
+        return true
+    end
+
+end
+
 function TWT.targetRaidSymbolFromUnit(unit, index)
     if UnitExists(unit) then
         if GetRaidTargetIndex(unit) == index then
@@ -2264,7 +2283,8 @@ end
 function TWT.version(ver)
     local verEx = string.split(ver, '.')
 
-    if verEx[3] then -- new versioning with 3 numbers
+    if verEx[3] then
+        -- new versioning with 3 numbers
         return tonumber(verEx[1]) * 100 +
                 tonumber(verEx[2]) * 10 +
                 tonumber(verEx[3]) * 1
