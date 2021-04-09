@@ -873,7 +873,7 @@ function TWT.handleServerMSG2(msg)
 
         TWT.calcAGROPerc(guid)
 
-        TWT.calcPerc(guid) --keep this on till server side changes!
+        --TWT.calcPerc(guid) --keep this on till server side changes!
 
         TWT.updateUI()
 
@@ -1056,7 +1056,7 @@ TWT.targetChangedHelper:SetScript("OnUpdate", function()
         twtdebug('asking for guid @ ' .. plus * 1000)
         SendAddonMessage("TWT_GUID", "twt", TWT.channel)
         this.tries = this.tries + 1
-        if this.tries > 20 then
+        if this.tries > 4 then
             TWT.targetChangedHelper:Hide()
         end
     end
@@ -1156,7 +1156,7 @@ function TWT.UnitDetailedThreatSituation(guid, limit)
 
     end
     SendAddonMessage("TWT_UDTS", "guid=" .. guid .. "&limit=" .. limit, TWT.channel)
-    --twtdebug("UDTS guid=" .. guid)
+    twtdebug("send: UDTS guid=" .. guid .. "&limit=" .. limit)
 end
 
 function TWT.TankTargetsThreatSituation(guid)
