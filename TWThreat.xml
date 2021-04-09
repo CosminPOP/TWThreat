@@ -1018,7 +1018,7 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Combat Hide');
-                                GameTooltip:AddLine('Automatically hides the window when combat begins.', 1, 1, 1);
+                                GameTooltip:AddLine('Automatically hides the window when combat ends.', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
                             <OnLeave>
