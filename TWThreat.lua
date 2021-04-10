@@ -1,7 +1,7 @@
 local _G, _ = _G or getfenv()
 
 local TWT = CreateFrame("Frame")
-TWT.addonVer = '1.0.1'
+TWT.addonVer = '1.0.2'
 TWT.showedUpdateNotification = false
 TWT.addonName = '|cffabd473TW|cff11cc11 |cffcdfe00Threatmeter'
 
@@ -19,7 +19,6 @@ TWT.lastAggroWarningGlowTime = 0
 
 TWT.AGRO = '-Pull Aggro at-'
 TWT.threatsFrames = {}
-TWT.tank = {}
 
 TWT.threats = {}
 TWT.target = ''
@@ -113,16 +112,16 @@ SlashCmdList["TWT"] = function(cmd)
             TWT_CONFIG.visible = true
             return true
         end
-        if string.sub(cmd, 1, 8) == 'tankmode' then
-            if TWT_CONFIG.tankMode then
-                twtprint('Tank Mode is already enabled.')
-                return false
-            else
-                TWT_CONFIG.tankMode = true
-                twtprint('Tank Mode enabled.')
-            end
-            return true
-        end
+        --if string.sub(cmd, 1, 8) == 'tankmode' then
+        --    if TWT_CONFIG.tankMode then
+        --        twtprint('Tank Mode is already enabled.')
+        --        return false
+        --    else
+        --        TWT_CONFIG.tankMode = true
+        --        twtprint('Tank Mode enabled.')
+        --    end
+        --    return true
+        --end
         if string.sub(cmd, 1, 6) == 'skeram' then
             if TWT_CONFIG.skeram then
                 TWT_CONFIG.skeram = false
@@ -563,6 +562,7 @@ function TWT.init()
         }
     end
 
+    TWT_CONFIG.windowScale = TWT_CONFIG.windowScale or 1
     TWT_CONFIG.glow = TWT_CONFIG.glow or false
     TWT_CONFIG.perc = TWT_CONFIG.perc or false
     TWT_CONFIG.showInCombat = TWT_CONFIG.showInCombat or false
@@ -581,6 +581,9 @@ function TWT.init()
     TWT_CONFIG.colPerc = TWT_CONFIG.colPerc or false
     TWT_CONFIG.labelRow = TWT_CONFIG.labelRow or false
     TWT_CONFIG.skeram = TWT_CONFIG.skeram or false
+
+    --disabled for now
+    TWT_CONFIG.tankMode = false
 
     TWT_CONFIG.debug = TWT_CONFIG.debug or false
 
@@ -609,6 +612,7 @@ function TWT.init()
     _G['TWTMain']:SetHeight(TWT_CONFIG.barHeight * TWT_CONFIG.visibleBars + (TWT_CONFIG.labelRow and 40 or 20))
 
     _G['TWTMainSettingsFrameHeightSlider']:SetValue(TWT_CONFIG.barHeight) -- calls FrameHeightSlider_OnValueChanged()
+    _G['TWTMainSettingsWindowScaleSlider']:SetValue(TWT_CONFIG.windowScale) -- calls FrameHeightSlider_OnValueChanged()
 
     _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
 
@@ -717,9 +721,33 @@ function TWT.init()
     --UIParentLoadAddOn("Blizzard_TalentUI")
 
     TWT.updateTitleBarText()
+    TWT.updateSettingsTabs(1)
 
     twtprint(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer .. '|cffffffff loaded.')
     return true
+end
+
+function TWT.updateSettingsTabs(tab)
+    local color = TWT.classColors[TWT.class]
+    _G['TWTMainSettingsTabsUnderline']:SetVertexColor(color.r, color.g, color.b)
+
+    for i = 1, 3 do
+        _G['TWTMainSettingsTab' .. i]:Hide()
+        _G['TWTMainSettingsTab' .. i .. 'ButtonNT']:SetVertexColor(color.r, color.g, color.b, 0.4)
+        _G['TWTMainSettingsTab' .. i .. 'ButtonHT']:SetVertexColor(color.r, color.g, color.b, 0.4)
+        _G['TWTMainSettingsTab' .. i .. 'ButtonPT']:SetVertexColor(color.r, color.g, color.b, 0.4)
+        _G['TWTMainSettingsTab' .. i .. 'ButtonText']:SetTextColor(0.4, 0.4, 0.4)
+    end
+
+    _G['TWTMainSettingsTab' .. tab .. 'ButtonNT']:SetVertexColor(color.r, color.g, color.b, 1)
+    _G['TWTMainSettingsTab' .. tab .. 'ButtonText']:SetTextColor(1, 1, 1)
+
+    _G['TWTMainSettingsTab' .. tab]:Show()
+
+end
+
+function TWTSettingsTab_OnClick(tab)
+    TWT.updateSettingsTabs(tab)
 end
 
 function TWT.addInspectMenu(to)
@@ -767,7 +795,7 @@ end
 
 function TWT.handleServerMSG2(msg)
 
-    twtdebug(msg)
+    --twtdebug(msg)
 
     totalPackets = totalPackets + 1
     totalData = totalData + string.len(msg)
@@ -811,7 +839,7 @@ function TWT.handleServerMSG2(msg)
             }
         end
     end
-    -- tdts handling
+    -- udts handling
     if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and
             msgEx[6] and msgEx[6] and msgEx[7] and msgEx[8] then
 
@@ -930,8 +958,6 @@ function TWT.combatStart()
     TWT.tankModeTargets = TWT.wipe(TWT.tankModeTargets)
     TWT.lastMessageTime = TWT.wipe(TWT.lastMessageTime)
 
-    TWT.tank = TWT.wipe(TWT.tank)
-
     if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
         return false
     end
@@ -986,7 +1012,7 @@ function TWT.combatStart()
     TWT.updateUI()
 
     TWT.ui:Show()
-    --TWT.barAnimator:Show()
+    TWT.barAnimator:Show()
 
     TWTTankModeWindowChangeStick_OnClick()
 
@@ -998,8 +1024,6 @@ function TWT.combatEnd()
     TWT.updateTargetFrameThreatIndicators(-1, '')
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.raidTargetIconIndex = TWT.wipe(TWT.raidTargetIconIndex)
-    TWT.guids = TWT.wipe(TWT.guids)
-
     TWT.guids = TWT.wipe(TWT.guids)
 
     twtdebug('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
@@ -1156,7 +1180,7 @@ function TWT.UnitDetailedThreatSituation(guid, limit)
 
     end
     SendAddonMessage("TWT_UDTS", "guid=" .. guid .. "&limit=" .. limit, TWT.channel)
-    twtdebug("send: UDTS guid=" .. guid .. "&limit=" .. limit)
+    --twtdebug("send: UDTS guid=" .. guid .. "&limit=" .. limit)
 end
 
 function TWT.TankTargetsThreatSituation(guid)
@@ -1194,6 +1218,7 @@ nf:SetScript("OnUpdate", function()
     end
 end)
 
+--temp--
 function np_test(heal, target)
 
     local Nameplates = {}
@@ -1239,15 +1264,15 @@ end
 function TWT.updateUI()
 
     if TWT_CONFIG.debug then
-        _G['pps']:SetText('Traffic: ' .. TWT.round((totalPackets / (GetTime() - timeStart)) * 10) / 10 .. 'packets/s (' .. TWT.round(totalData / (GetTime() - timeStart)) .. ' Bps)')
+        _G['pps']:SetText('Traffic: ' .. TWT.round((totalPackets / (GetTime() - timeStart)) * 10) / 10 .. 'packets/s (' .. TWT.round(totalData / (GetTime() - timeStart)) .. ' cps)')
         _G['pps']:Show()
     else
         _G['pps']:Hide()
     end
 
-    --if not TWT.barAnimator:IsVisible() then
-    --    TWT.barAnimator:Show()
-    --end
+    if not TWT.barAnimator:IsVisible() then
+        TWT.barAnimator:Show()
+    end
 
     for name in next, TWT.threatsFrames do
         TWT.threatsFrames[name]:Hide()
@@ -1303,8 +1328,6 @@ function TWT.updateUI()
             end
 
             _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
-            --TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = 1
-            _G['TWThreat' .. name .. 'BG']:SetWidth(1)
 
             _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
             _G['TWThreat' .. name .. 'TPS']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
@@ -1387,11 +1410,11 @@ function TWT.updateUI()
 
                 _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
-                --TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
-                _G['TWThreat' .. name .. 'BG']:SetWidth((TWT.windowWidth - 2) * data.perc / 100)
+                TWT.barAnimator:animateTo(name, data.perc)
 
             elseif name == TWT.AGRO then
-                --TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
+
+                TWT.barAnimator:animateTo(name, nil)
 
                 _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
                 _G['TWThreat' .. name .. 'Threat']:SetText('+' .. TWT.formatNumber(data.threat - TWT.threats[TWT.target][TWT.name].threat))
@@ -1410,15 +1433,17 @@ function TWT.updateUI()
                 end
 
             else
-                --TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = TWT.round((TWT.windowWidth - 2) * data.perc / 100)
-                _G['TWThreat' .. name .. 'BG']:SetWidth((TWT.windowWidth - 2) * data.perc / 100)
+
+                TWT.barAnimator:animateTo(name, data.perc)
+
                 _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
                 _G['TWThreat' .. name .. 'BG']:SetVertexColor(color.r, color.g, color.b, 0.9)
             end
 
             if data.tank then
-                --TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = nil
-                _G['TWThreat' .. name .. 'BG']:SetWidth(TWT.windowWidth - 2)
+
+                TWT.barAnimator:animateTo(name, 100, true)
+
             end
 
             if name == TWT.name then
@@ -1431,8 +1456,6 @@ function TWT.updateUI()
         end
 
     end
-
-    _G['TWTMainTankModeWindow']:Hide()
 
     if TWT_CONFIG.tankMode then
 
@@ -1459,7 +1482,7 @@ function TWT.updateUI()
         _G['TMEF3']:Hide()
         _G['TMEF4']:Hide()
         _G['TMEF5']:Hide()
-        _G['TWTMainTankModeWindow']:Hide()
+
         _G['TWTMainTankModeWindow']:SetHeight(0)
 
         if table.getn(TWT.tankModeTargets) > 1 then
@@ -1499,7 +1522,11 @@ function TWT.updateUI()
 
             end
 
+        else
+            _G['TWTMainTankModeWindow']:Hide()
         end
+    else
+        _G['TWTMainTankModeWindow']:Hide()
     end
 
 end
@@ -1508,31 +1535,46 @@ TWT.barAnimator = CreateFrame('Frame')
 TWT.barAnimator:Hide()
 TWT.barAnimator.frames = {}
 
+function TWT.barAnimator:animateTo(name, perc, instant)
+
+    if perc == nil then
+        TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = perc
+        return false
+    end
+
+    local width = TWT.round((TWT.windowWidth - 2) * perc / 100)
+    if instant then
+        _G['TWThreat' .. name .. 'BG']:SetWidth(width)
+        return true
+    end
+    TWT.barAnimator.frames['TWThreat' .. name .. 'BG'] = width
+end
+
 TWT.barAnimator:SetScript("OnShow", function()
     this.startTime = GetTime()
     TWT.barAnimator.frames = {}
 end)
 TWT.barAnimator:SetScript("OnUpdate", function()
+    local currentW, step, diff
     for frame, w in TWT.barAnimator.frames do
-        local currentW = TWT.round(_G[frame]:GetWidth())
-        local inc = 5
-        if currentW ~= w then
-            if currentW - w > 150 or w - currentW > 150 then
-                _G[frame]:SetWidth(w)
-                return true
-            end
-            if currentW > w then
-                local diff = inc
-                if currentW - w < inc then
-                    diff = currentW - w
+        currentW = TWT.round(_G[frame]:GetWidth())
+
+        diff = currentW - w
+
+        step = abs(diff) / (math.floor(GetFramerate()) / 30)
+
+        if diff ~= 0 then
+            -- grow
+            if diff < 0 then
+                if abs(diff) < step then
+                    step = abs(diff)
                 end
-                _G[frame]:SetWidth(currentW - diff)
+                _G[frame]:SetWidth(currentW + step)
             else
-                local diff = inc
-                if w - currentW < inc then
-                    diff = w - currentW
+                if diff < step then
+                    step = diff
                 end
-                _G[frame]:SetWidth(currentW + diff)
+                _G[frame]:SetWidth(currentW - step)
             end
         end
     end
@@ -1716,6 +1758,30 @@ function FrameHeightSlider_OnValueChanged()
 
     TWT.setMinMaxResize()
     TWT.updateUI()
+end
+
+function WindowScaleSlider_OnValueChanged()
+    TWT_CONFIG.windowScale = _G['TWTMainSettingsWindowScaleSlider']:GetValue()
+
+    local x, y = _G['TWTMain']:GetLeft(), _G['TWTMain']:GetTop()
+    local s = _G['TWTMain']:GetEffectiveScale()
+    local posX, posY
+
+    if x and y and s then
+        x, y = x * s, y * s
+        posX = x
+        posY = y
+    end
+
+    _G['TWTMain']:SetScale(TWT_CONFIG.windowScale)
+
+    s = _G['TWTMain']:GetEffectiveScale()
+    posX, posY = posX / s, posY / s
+    _G['TWTMain']:ClearAllPoints()
+    _G['TWTMain']:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", posX, posY)
+
+    twtdebug(TWT_CONFIG.windowScale)
+
 end
 
 function TWTChangeSetting_OnClick(checked, code)

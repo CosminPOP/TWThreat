@@ -1,9 +1,16 @@
-# TWThreat v1.0.1
+# TWThreat v1.0.2
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
 ## Chngelist
+
+### v.1.0.2
+- Revamped settings window with tabs.
+- New setting: frame scale.
+- Enabled bar animation.
+- Disabled Tankmode (still buggy).
+
 ### v1.0.1
 - Faster way to get guid
 - Tankmode window is now movable and stickable to top/bottom/left/right of main window.
