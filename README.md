@@ -5,7 +5,7 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
 ## Chngelist
 
-### v.1.0.2
+### v1.0.2
 - Revamped settings window with tabs.
 - New setting: frame scale.
 - Enabled bar animation.
