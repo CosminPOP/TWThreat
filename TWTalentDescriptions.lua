@@ -318,15 +318,19 @@ TWTTalentDescriptions = {
             iconTexture = 'Ability_Warrior_Sunder'
         }, {
             n = 'Improved Disarm',
-            d = { 'Increases the duration of your Disarm ability by 1 secs.', 'Increases the duration of your Disarm ability by 2 secs.', 'Increases the duration of your Disarm ability by 3 secs.' },
+            d = { 'Increases the duration of your Disarm ability by 1 secs.', 
+                'Increases the duration of your Disarm ability by 2 secs.', 
+                'Increases the duration of your Disarm ability by 3 secs.' },
             iconTexture = 'Ability_Warrior_Disarm'
         }, {
             n = 'Improved Taunt',
-            d = { 'Reduces the cooldown of your Taunt ability by 1 sec.', 'Reduces the cooldown of your Taunt ability by 2 sec.' },
+            d = { 'Reduces the cooldown of your Taunt ability by 1 sec.', 
+                'Reduces the cooldown of your Taunt ability by 2 sec.' },
             iconTexture = 'Spell_Nature_Reincarnation'
         }, {
             n = 'Improved Shield Wall',
-            d = { 'Increases the effect duration of your Shield Wall ability by 3 secs.', 'Increases the effect duration of your Shield Wall ability by 5 secs.' },
+            d = { 'Increases the effect duration of your Shield Wall ability by 3 secs.', 
+                'Increases the effect duration of your Shield Wall ability by 5 secs.' },
             iconTexture = 'Ability_Warrior_ShieldWall'
         }, {
             n = 'Concussion Blow',
@@ -334,11 +338,16 @@ TWTTalentDescriptions = {
             iconTexture = 'Ability_ThunderBolt'
         }, {
             n = 'Improved Shield Bash',
-            d = { 'Gives your Shield Bash ability a 50% chance to silence the target for 3 sec.', 'Gives your Shield Bash ability a 100% chance to silence the target for 3 sec.' },
+            d = { 'Gives your Shield Bash ability a 50% chance to silence the target for 3 sec.', 
+                'Gives your Shield Bash ability a 100% chance to silence the target for 3 sec.' },
             iconTexture = 'Ability_Warrior_ShieldBash'
         }, {
             n = 'One-Handed Weapon Specialization',
-            d = { 'Increases the damage you deal with One-Handed Melee weapons by 2%.', 'Increases the damage you deal with One-Handed Melee weapons by 4%.', 'Increases the damage you deal with One-Handed Melee weapons by 6%.', 'Increases the damage you deal with One-Handed Melee weapons by 8%.', 'Increases the damage you deal with One-Handed Melee weapons by 10%.' },
+            d = { 'Increases the damage you deal with One-Handed Melee weapons by 2%.', 
+                'Increases the damage you deal with One-Handed Melee weapons by 4%.', 
+                'Increases the damage you deal with One-Handed Melee weapons by 6%.', 
+                'Increases the damage you deal with One-Handed Melee weapons by 8%.', 
+                'Increases the damage you deal with One-Handed Melee weapons by 10%.' },
             iconTexture = 'INV_Sword_20'
         }, {
             n = 'Shield Slam',
@@ -349,23 +358,41 @@ TWTTalentDescriptions = {
     ['PaladinHoly'] = {
         {
             n = 'Divine Strength',
-            d = { 'Increases your Strength by 2%.', 'Increases your Strength by 4%.', 'Increases your Strength by 6%.', 'Increases your Strength by 8%.', 'Increases your Strength by 10%.' },
+            d = { 'Increases your Strength by 2%.', 
+                'Increases your Strength by 4%.', 
+                'Increases your Strength by 6%.', 
+                'Increases your Strength by 8%.', 
+                'Increases your Strength by 10%.' },
             iconTexture = 'Ability_GolemThunderClap'
         }, {
             n = 'Divine Intellect',
-            d = { 'Increases your total Intellect by 2%.', 'Increases your total Intellect by 4%.', 'Increases your total Intellect by 6%.', 'Increases your total Intellect by 8%.', 'Increases your total Intellect by 10%.' },
+            d = { 'Increases your total Intellect by 2%.', 
+                'Increases your total Intellect by 4%.', 
+                'Increases your total Intellect by 6%.',
+                'Increases your total Intellect by 8%.', 
+                'Increases your total Intellect by 10%.' },
             iconTexture = 'Spell_Nature_Sleep'
         }, {
             n = 'Spiritual Focus',
-            d = { 'Gives your Flash of Light and Holy Light spells a 14% chance to not lose casting time when you take damage.', 'Gives your Flash of Light and Holy Light spells a 28% chance to not lose casting time when you take damage.', 'Gives your Flash of Light and Holy Light spells a 42% chance to not lose casting time when you take damage.', 'Gives your Flash of Light and Holy Light spells a 56% chance to not lose casting time when you take damage.', 'Gives your Flash of Light and Holy Light spells a 70% chance to not lose casting time when you take damage.' },
+            d = { 'Gives your Flash of Light and Holy Light spells a 14% chance to not lose casting time when you take damage.',
+                'Gives your Flash of Light and Holy Light spells a 28% chance to not lose casting time when you take damage.', 
+                'Gives your Flash of Light and Holy Light spells a 42% chance to not lose casting time when you take damage.', 
+                'Gives your Flash of Light and Holy Light spells a 56% chance to not lose casting time when you take damage.', 
+                'Gives your Flash of Light and Holy Light spells a 70% chance to not lose casting time when you take damage.' },
             iconTexture = 'Spell_Arcane_Blink'
         }, {
             n = 'Improved Seal of Righteousness',
-            d = { 'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 3%.', 'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 6%.', 'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 9%.', 'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 12%.', 'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 15%.' },
+            d = { 'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 3%.', 
+                'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 6%.',
+                'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 9%.', 
+                'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 12%.', 
+                'Increases the damage done by your Seal of Righteousness and Judgement of Righteousness by 15%.' },
             iconTexture = 'Ability_ThunderBolt'
         }, {
             n = 'Healing Light',
-            d = { 'Increases the amount healed by your Holy Light and Flash of Light spells by 4%.', 'Increases the amount healed by your Holy Light and Flash of Light spells by 8%.', 'Increases the amount healed by your Holy Light and Flash of Light spells by 12%.' },
+            d = { 'Increases the amount healed by your Holy Light and Flash of Light spells by 4%.', 
+                'Increases the amount healed by your Holy Light and Flash of Light spells by 8%.', 
+                'Increases the amount healed by your Holy Light and Flash of Light spells by 12%.' },
             iconTexture = 'Spell_Holy_HolyBolt'
         }, {
             n = 'Consecration',
@@ -377,11 +404,14 @@ TWTTalentDescriptions = {
             iconTexture = 'Spell_Holy_LayOnHands'
         }, {
             n = 'Unyielding Faith',
-            d = { 'Increases your chance to resist Fear and Disorient effects by an additional 5%.', 'Increases your chance to resist Fear and Disorient effects by an additional 10%.' },
+            d = { 'Increases your chance to resist Fear and Disorient effects by an additional 5%.', 
+                'Increases your chance to resist Fear and Disorient effects by an additional 10%.' },
             iconTexture = 'Spell_Holy_UnyieldingFaith'
         }, {
             n = 'Illumination',
-            d = { 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 20% chance to gain Mana equal to the base cost of the spell.', 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 40% chance to gain Mana equal to the base cost of the spell.', 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 60% chance to gain Mana equal to the base cost of the spell.', 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 80% chance to gain Mana equal to the base cost of the spell.', 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 100% chance to gain Mana equal to the base cost of the spell.' },
+            d = { 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 20% chance to gain Mana equal to the base cost of the spell.', 
+                'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 40% chance to gain Mana equal to the base cost of the spell.', 
+                'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 60% chance to gain Mana equal to the base cost of the spell.', 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 80% chance to gain Mana equal to the base cost of the spell.', 'After getting a critical effect from your Flash of Light, Holy Light, or Holy Shock heal spell, gives you a 100% chance to gain Mana equal to the base cost of the spell.' },
             iconTexture = 'Spell_Holy_GreaterHeal'
         }, {
             n = 'Improved Blessing of Wisdom',
@@ -393,11 +423,17 @@ TWTTalentDescriptions = {
             iconTexture = 'Spell_Holy_Heal'
         }, {
             n = 'Lasting Judgement',
-            d = { 'Increases the duration of your Judgement of Light and Judgement of Wisdom by 10 sec.', 'Increases the duration of your Judgement of Light and Judgement of Wisdom by 20 sec.', 'Increases the duration of your Judgement of Light and Judgement of Wisdom by 30 sec.' },
+            d = { 'Increases the duration of your Judgement of Light and Judgement of Wisdom by 10 sec.', 
+                'Increases the duration of your Judgement of Light and Judgement of Wisdom by 20 sec.', 
+                'Increases the duration of your Judgement of Light and Judgement of Wisdom by 30 sec.' },
             iconTexture = 'Spell_Holy_HealingAura'
         }, {
             n = 'Holy Power',
-            d = { 'Increases the critical effect chance of your Holy spells by 1%.', 'Increases the critical effect chance of your Holy spells by 2%.', 'Increases the critical effect chance of your Holy spells by 3%.', 'Increases the critical effect chance of your Holy spells by 4%.', 'Increases the critical effect chance of your Holy spells by 5%.' },
+            d = { 'Increases the critical effect chance of your Holy spells by 1%.', 
+                'Increases the critical effect chance of your Holy spells by 2%.', 
+                'Increases the critical effect chance of your Holy spells by 3%.', 
+                'Increases the critical effect chance of your Holy spells by 4%.', 
+                'Increases the critical effect chance of your Holy spells by 5%.' },
             iconTexture = 'Spell_Holy_Power'
         }, {
             n = 'Holy Shock',
