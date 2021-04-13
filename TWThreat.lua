@@ -36,6 +36,8 @@ TWT.threatsFrames = {}
 TWT.threats = {}
 
 TWT.targetName = ''
+TWT.isRelay = false
+TWT.healerMasterTarget = ''
 TWT.updateSpeed = 1
 
 TWT.targetFrameVisible = false
@@ -205,12 +207,11 @@ SlashCmdList["TWTDEBUG"] = function(cmd)
     end
 end
 
-TWT:RegisterEvent("CHAT_MSG_ADDON")
 TWT:RegisterEvent("ADDON_LOADED")
+TWT:RegisterEvent("CHAT_MSG_ADDON")
 TWT:RegisterEvent("PLAYER_REGEN_DISABLED")
 TWT:RegisterEvent("PLAYER_REGEN_ENABLED")
 TWT:RegisterEvent("PLAYER_TARGET_CHANGED")
-TWT:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 TWT:RegisterEvent("PLAYER_ENTERING_WORLD")
 TWT:RegisterEvent("PARTY_MEMBERS_CHANGED")
 
@@ -241,6 +242,55 @@ TWT:SetScript("OnEvent", function()
             return TWT.handleServerMSG2(arg1)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.prefix then
+
+            if __substr(arg2, 1, 11) == 'TWTRelayV1:' and arg4 == TWT.healerMasterTarget then
+
+                local msgEx = __explode(arg2, ':')
+
+                if msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] and msgEx[7] then
+
+                    TWT.targetName = msgEx[2]
+
+                    TWT.handleServerMSG2('TWTv3' ..
+                            ':' .. msgEx[3] ..
+                            ':' .. msgEx[4] ..
+                            ':' .. msgEx[5] ..
+                            ':' .. msgEx[6] ..
+                            ':' .. msgEx[7])
+
+                end
+                return true
+            end
+
+            if __substr(arg2, 1, 8) == 'TWT_HMT:' and arg4 ~= TWT.name then
+                local hmtEx = __explode(arg2, ':')
+                if not hmtEx[2] then
+                    return true
+                end
+                if hmtEx[2] == TWT.name then
+                    TWT.isRelay = true
+                    TWT.send('TWT_HMT_OK:' .. arg4)
+                end
+                return true
+            end
+
+            if __substr(arg2, 1, 11) == 'TWT_HMT_OK:' and arg4 ~= TWT.name then
+                local hmtEx = __explode(arg2, ':')
+                if not hmtEx[2] then
+                    return true
+                end
+                if hmtEx[2] == TWT.name then
+                    TWT.healerMasterTarget = arg4
+
+                    local color = TWT.classColors[TWT.getClass(TWT.healerMasterTarget)]
+
+                    _G['TWTMainSettingsHealerMasterTargetButton']:SetText(TWT.healerMasterTarget)
+                    _G['TWTMainSettingsHealerMasterTargetButtonNT']:SetVertexColor(color.r, color.g, color.b, 1)
+
+                    twtprint('Healer Master Target set to ' .. color.c .. TWT.healerMasterTarget)
+                end
+                return true
+            end
 
             if __substr(arg2, 1, 11) == 'TWTVersion:' and arg4 ~= TWT.name then
                 if not TWT.showedUpdateNotification then
@@ -413,6 +463,10 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_TARGET_CHANGED" then
 
+            if TWT.healerMasterTarget ~= '' then
+                return true
+            end
+
             TWT.targetName = ''
 
             TWT.channel = (GetNumRaidMembers() > 0) and 'RAID' or 'PARTY'
@@ -441,20 +495,19 @@ TWT:SetScript("OnEvent", function()
                 return false
             end
 
+            -- no raid or party
             if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
+            -- not in combat
             if not not UnitAffectingCombat('player') and not UnitAffectingCombat('target') then
                 TWT.updateTargetFrameThreatIndicators(-1)
                 return false
             end
 
-            --SendAddonMessage("TWT_GUID", "twt", TWT.channel)
-            TWT.targetChanged()
-
-            return true
+            return TWT.targetChanged()
 
         end
     end
@@ -570,6 +623,9 @@ function TWT.init()
     TWT_CONFIG.labelRow = TWT_CONFIG.labelRow or false
     TWT_CONFIG.skeram = TWT_CONFIG.skeram or false
 
+    TWT_CONFIG.combatAlpha = TWT_CONFIG.combatAlpha or 1
+    TWT_CONFIG.oocAlpha = TWT_CONFIG.oocAlpha or 1
+
     --disabled for now
     TWT_CONFIG.tankMode = false
 
@@ -601,6 +657,9 @@ function TWT.init()
 
     _G['TWTMainSettingsFrameHeightSlider']:SetValue(TWT_CONFIG.barHeight) -- calls FrameHeightSlider_OnValueChanged()
     _G['TWTMainSettingsWindowScaleSlider']:SetValue(TWT_CONFIG.windowScale) -- calls FrameHeightSlider_OnValueChanged()
+
+    _G['TWTMainSettingsCombatAlphaSlider']:SetValue(TWT_CONFIG.combatAlpha) -- calls CombatOpacitySlider_OnValueChanged()
+    _G['TWTMainSettingsOOCAlphaSlider']:SetValue(TWT_CONFIG.oocAlpha) -- calls OOCombatSlider_OnValueChanged()
 
     _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
 
@@ -738,6 +797,39 @@ function TWTSettingsTab_OnClick(tab)
     TWT.updateSettingsTabs(tab)
 end
 
+function TWTHealerMasterTarget_OnClick()
+
+    if not UnitExists('target') or not UnitIsPlayer('target')
+            or UnitName('target') == TWT.name then
+
+        if TWT.healerMasterTarget == '' then
+            twtprint('Please target a tank.')
+        else
+            twtprint('Healer Master Target cleared.')
+
+            TWT.healerMasterTarget = ''
+            TWT.targetName = ''
+
+            TWT.threats = TWT.wipe(TWT.threats)
+
+            _G['TWTMainSettingsHealerMasterTargetButton']:SetText('From Target')
+            _G['TWTMainSettingsHealerMasterTargetButtonNT']:SetVertexColor(1, 1, 1, 1)
+
+            TWT.updateUI()
+
+        end
+
+        return false
+    end
+
+    TWT.send('TWT_HMT:' .. UnitName('target'))
+
+    local color = TWT.classColors[TWT.getClass(UnitName('target'))]
+
+    twtprint('Trying to set Healer Master Target to ' .. color.c .. UnitName('target'))
+
+end
+
 function TWT.addInspectMenu(to)
     local found = 0
     for i, j in UnitPopupMenus[to] do
@@ -755,6 +847,10 @@ function TWT.addInspectMenu(to)
 end
 
 TWT.classes = {}
+
+function TWT.getClass(name)
+    return TWT.classes[name] or 'priest'
+end
 
 function TWT.getClasses()
     if TWT.channel == 'RAID' then
@@ -783,6 +879,8 @@ end
 
 function TWT.handleServerMSG2(msg)
 
+    --twtdebug(msg)
+
     totalPackets = totalPackets + 1
     totalData = totalData + __strlen(msg)
 
@@ -797,6 +895,17 @@ function TWT.handleServerMSG2(msg)
         local threat = __parseint(msgEx[4])
         local perc = __parseint(msgEx[5])
         local melee = msgEx[6] == '1'
+
+        if UnitName('target') and not UnitIsPlayer('target') and TWT.isRelay then
+            --relay
+            TWT.send('TWTRelayV1' ..
+                    ':' .. UnitName('target') ..
+                    ':' .. player ..
+                    ':' .. msgEx[3] ..
+                    ':' .. threat ..
+                    ':' .. perc ..
+                    ':' .. msgEx[6]);
+        end
 
         local time = time()
 
@@ -836,7 +945,7 @@ function TWT.handleServerMSG2(msg)
 
         else
             TWT.threats[player] = {
-                class = TWT.classes[player] or 'priest',
+                class = TWT.getClass(player),
                 threat = threat,
                 perc = tank and 100 or 1,
                 tps = 0,
@@ -940,6 +1049,8 @@ function TWT.combatStart()
 
     TWTTankModeWindowChangeStick_OnClick()
 
+    _G['TWTMain']:SetAlpha(TWT_CONFIG.combatAlpha)
+
     return true
 end
 
@@ -971,6 +1082,8 @@ function TWT.combatEnd()
     _G['TWTWarning']:Hide()
 
     TWT.updateTitleBarText()
+
+    _G['TWTMain']:SetAlpha(TWT_CONFIG.oocAlpha)
 
     return true
 
@@ -1344,6 +1457,8 @@ function TWT.barAnimator:animateTo(name, perc, instant)
         return false
     end
 
+    perc = perc > 100 and 100 or perc
+
     local width = TWT.round((TWT.windowWidth - 2) * perc / 100)
     if instant then
         _G['TWThreat' .. name .. 'BG']:SetWidth(width)
@@ -1417,7 +1532,9 @@ TWT.ui:SetScript("OnUpdate", function()
                 --    end
                 --end
 
-                TWT.UnitDetailedThreatSituation(TWT_CONFIG.visibleBars - 1)
+                if TWT.healerMasterTarget == '' then
+                    TWT.UnitDetailedThreatSituation(TWT_CONFIG.visibleBars - 1)
+                end
             else
                 twtdebug('not asking threat situation')
             end
@@ -1541,11 +1658,11 @@ function TWT.updateTargetFrameThreatIndicators(perc)
 end
 
 function TWTMainWindow_Resizing()
-    _G['TWTMain']:SetAlpha(0.5)
+    _G['TWTMain']:SetAlpha(0.4)
 end
 
 function TWTMainMainWindow_Resized()
-    _G['TWTMain']:SetAlpha(1)
+    _G['TWTMain']:SetAlpha(UnitAffectingCombat('player') and TWT_CONFIG.combatAlpha or TWT_CONFIG.oocAlpha)
 
     TWT_CONFIG.visibleBars = TWT.round((_G['TWTMain']:GetHeight() - (TWT_CONFIG.labelRow and 40 or 20)) / TWT_CONFIG.barHeight)
     TWT_CONFIG.visibleBars = TWT_CONFIG.visibleBars < 4 and 4 or TWT_CONFIG.visibleBars
@@ -1581,9 +1698,16 @@ function WindowScaleSlider_OnValueChanged()
     posX, posY = posX / s, posY / s
     _G['TWTMain']:ClearAllPoints()
     _G['TWTMain']:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", posX, posY)
+end
 
-    twtdebug(TWT_CONFIG.windowScale)
+function CombatOpacitySlider_OnValueChanged()
+    TWT_CONFIG.combatAlpha = _G['TWTMainSettingsCombatAlphaSlider']:GetValue()
+    _G['TWTMain']:SetAlpha(UnitAffectingCombat('player') and TWT_CONFIG.combatAlpha or TWT_CONFIG.oocAlpha)
+end
 
+function OOCombatSlider_OnValueChanged()
+    TWT_CONFIG.oocAlpha = _G['TWTMainSettingsOOCAlphaSlider']:GetValue()
+    _G['TWTMain']:SetAlpha(UnitAffectingCombat('player') and TWT_CONFIG.combatAlpha or TWT_CONFIG.oocAlpha)
 end
 
 function TWTChangeSetting_OnClick(checked, code)
@@ -1638,6 +1762,8 @@ function TWTChangeSetting_OnClick(checked, code)
         _G['TWTMainThreatLabel']:Hide()
         _G['TWTMainPercLabel']:Hide()
     end
+
+    FrameHeightSlider_OnValueChanged()
 
     TWT.updateUI()
 end

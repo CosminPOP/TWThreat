@@ -328,9 +328,7 @@
         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background">
         </Backdrop>
         <Anchors>
-            <Anchor point="CENTER" relativeTo="UIParent" relativePoint="CENTER">
-                <AbsDimension x="0" y="0"/>
-            </Anchor>
+            <Anchor point="CENTER" relativeTo="UIParent" relativePoint="CENTER"/>
         </Anchors>
         <Layers>
             <Layer level="ARTWORK">
@@ -610,10 +608,10 @@
         </Frames>
     </Frame>
 
-    <Frame name="TWTMainSettings" hidden="true" toplevel="true"
+    <Frame name="TWTMainSettings" hidden="false" toplevel="true"
            movable="true" enableMouse="true">
         <Size>
-            <AbsDimension x="300" y="220"/>
+            <AbsDimension x="300" y="280"/>
         </Size>
         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                   tile="false">
@@ -938,7 +936,7 @@
                         <Anchors>
                             <Anchor point="TOPLEFT">
                                 <Offset>
-                                    <AbsDimension x="10" y="-110"/>
+                                    <AbsDimension x="10" y="-80"/>
                                 </Offset>
                             </Anchor>
                         </Anchors>
@@ -980,6 +978,45 @@
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
 
+                    <Button name="TWTMainSettingsHealerMasterTargetButton" inherits="UIPanelButtonTemplate" text="From Target">
+                        <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth"
+                                       alphaMode="ADD">
+                        </NormalTexture>
+                        <PushedTexture name="$parentPT" file="Interface\addons\TWThreat\images\textures\Smooth"/>
+                        <HighlightTexture/>
+                        <Size>
+                            <AbsDimension x="140" y="16"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="150" y="-110"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="OVERLAY">
+                                <FontString name="$parentText" inherits="GameFontNormal" text="Healer Master Target"
+                                            justifyH="LEFT">
+                                    <Size>
+                                        <AbsDimension x="150" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="LEFT">
+                                            <Offset>
+                                                <AbsDimension x="-140" y="0"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Scripts>
+                            <OnClick>
+                                TWTHealerMasterTarget_OnClick()
+                            </OnClick>
+                        </Scripts>
+                    </Button>
 
                     <Slider name="TWTMainSettingsWindowScaleSlider" inherits="TWTSliderTemplate"
                             minValue="0.5" maxValue="1.5" valueStep="0.05">
@@ -1053,6 +1090,124 @@
                         </Scripts>
                     </Slider>
 
+                    <Slider name="TWTMainSettingsCombatAlphaSlider" inherits="TWTSliderTemplate"
+                            minValue="0.5" maxValue="1" valueStep="0.05">
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="148" y="-175"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="OVERLAY">
+                                <FontString name="$parentText" inherits="GameFontNormal" text="Combat Opacity"
+                                            justifyH="LEFT">
+                                    <Size>
+                                        <AbsDimension x="150" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPLEFT">
+                                            <Offset>
+                                                <AbsDimension x="-138" y="5"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="0.5" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPLEFT">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="1" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPRIGHT">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Scripts>
+                            <OnValueChanged>
+                                CombatOpacitySlider_OnValueChanged()
+                            </OnValueChanged>
+                        </Scripts>
+                    </Slider>
+
+                    <Slider name="TWTMainSettingsOOCAlphaSlider" inherits="TWTSliderTemplate"
+                            minValue="0.5" maxValue="1" valueStep="0.05">
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="148" y="-205"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="OVERLAY">
+                                <FontString name="$parentText" inherits="GameFontNormal" text="OOC Opacity"
+                                            justifyH="LEFT">
+                                    <Size>
+                                        <AbsDimension x="150" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPLEFT">
+                                            <Offset>
+                                                <AbsDimension x="-138" y="5"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="0.5" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPLEFT">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="1" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPRIGHT">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Scripts>
+                            <OnValueChanged>
+                                OOCombatSlider_OnValueChanged()
+                            </OnValueChanged>
+                        </Scripts>
+                    </Slider>
+
 
                 </Frames>
             </Frame>
@@ -1089,7 +1244,8 @@
                         </Anchors>
                         <Layers>
                             <Layer level="OVERLAY">
-                                <FontString name="$parentSBarFont" inherits="GameFontNormal" text="Bar Font" justifyH="LEFT">
+                                <FontString name="$parentSBarFont" inherits="GameFontNormal" text="Bar Font"
+                                            justifyH="LEFT">
                                     <Size>
                                         <AbsDimension x="100" y="20"/>
                                     </Size>
@@ -1549,7 +1705,6 @@
                         <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
-
 
 
                 </Frames>
