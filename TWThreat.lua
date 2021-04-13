@@ -1,6 +1,18 @@
 local _G, _ = _G or getfenv()
 
 local __lower = string.lower
+local __repeat = string.rep
+local __strlen = string.len
+local __find = string.find
+local __substr = string.sub
+local __parseint = tonumber
+local __parsestring = tostring
+local __getn = table.getn
+local __tinsert = table.insert
+local __tsort = table.sort
+local __pairs = pairs
+local __floor = math.floor
+local __abs = abs
 
 local TWT = CreateFrame("Frame")
 
@@ -13,7 +25,7 @@ TWT.channel = 'RAID'
 
 TWT.name = UnitName('player')
 local _, cl = UnitClass('player')
-TWT.class = string.lower(cl)
+TWT.class = __lower(cl)
 
 TWT.lastAggroWarningSoundTime = 0
 TWT.lastAggroWarningGlowTime = 0
@@ -123,12 +135,12 @@ end
 SLASH_TWT1 = "/twt"
 SlashCmdList["TWT"] = function(cmd)
     if cmd then
-        if string.sub(cmd, 1, 4) == 'show' then
+        if __substr(cmd, 1, 4) == 'show' then
             _G['TWTMain']:Show()
             TWT_CONFIG.visible = true
             return true
         end
-        --if string.sub(cmd, 1, 8) == 'tankmode' then
+        --if __substr(cmd, 1, 8) == 'tankmode' then
         --    if TWT_CONFIG.tankMode then
         --        twtprint('Tank Mode is already enabled.')
         --        return false
@@ -138,7 +150,7 @@ SlashCmdList["TWT"] = function(cmd)
         --    end
         --    return true
         --end
-        if string.sub(cmd, 1, 6) == 'skeram' then
+        if __substr(cmd, 1, 6) == 'skeram' then
             if TWT_CONFIG.skeram then
                 TWT_CONFIG.skeram = false
                 twtprint('Skeram module disabled.')
@@ -148,7 +160,7 @@ SlashCmdList["TWT"] = function(cmd)
             twtprint('Skeram module enabled.')
             return true
         end
-        if string.sub(cmd, 1, 5) == 'debug' then
+        if __substr(cmd, 1, 5) == 'debug' then
             if TWT_CONFIG.debug then
                 TWT_CONFIG.debug = false
                 _G['pps']:Hide()
@@ -161,7 +173,7 @@ SlashCmdList["TWT"] = function(cmd)
             return true
         end
 
-        if string.sub(cmd, 1, 3) == 'who' then
+        if __substr(cmd, 1, 3) == 'who' then
             TWT.queryWho()
             return true
         end
@@ -225,14 +237,14 @@ TWT:SetScript("OnEvent", function()
             end
             return true
         end
-        if event == 'CHAT_MSG_ADDON' and string.find(arg1, 'TWTv3:', 1, true) then
+        if event == 'CHAT_MSG_ADDON' and __find(arg1, 'TWTv3:', 1, true) then
             return TWT.handleServerMSG2(arg1)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.prefix then
 
-            if string.sub(arg2, 1, 11) == 'TWTVersion:' and arg4 ~= TWT.name then
+            if __substr(arg2, 1, 11) == 'TWTVersion:' and arg4 ~= TWT.name then
                 if not TWT.showedUpdateNotification then
-                    local verEx = string.split(arg2, ':')
+                    local verEx = __explode(arg2, ':')
                     if TWT.version(verEx[2]) > TWT.version(TWT.addonVer) then
                         twtprint('New version available ' ..
                                 TWT.classColors[TWT.class].c .. 'v' .. verEx[2] .. ' |cffffffff(current version ' ..
@@ -244,20 +256,20 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
-            if string.sub(arg2, 1, 7) == 'TWT_WHO' then
+            if __substr(arg2, 1, 7) == 'TWT_WHO' then
                 TWT.send('TWT_ME:' .. TWT.addonVer)
                 return true
             end
 
-            if string.sub(arg2, 1, 15) == 'TWTRoleTexture:' then
-                local tex = string.split(arg2, ':')[2] or ''
+            if __substr(arg2, 1, 15) == 'TWTRoleTexture:' then
+                local tex = __explode(arg2, ':')[2] or ''
                 TWT.roles[arg4] = tex
                 return true
             end
 
-            if string.sub(arg2, 1, 15) == 'TWTShowTalents:' and arg4 ~= TWT.name then
+            if __substr(arg2, 1, 15) == 'TWTShowTalents:' and arg4 ~= TWT.name then
 
-                local name = string.split(arg2, ':')[2] or ''
+                local name = __explode(arg2, ':')[2] or ''
 
                 if name ~= TWT.name then
                     return false
@@ -293,8 +305,8 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
-            if string.sub(arg2, 1, 13) == 'TWTTalentEND;' then
-                local talentEx = string.split(arg2, ';')
+            if __substr(arg2, 1, 13) == 'TWTTalentEND;' then
+                local talentEx = __explode(arg2, ';')
                 local name = talentEx[2]
                 if name == TWT.name then
                     _G['TWTTalentFrame']:Show()
@@ -302,18 +314,18 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
-            if string.sub(arg2, 1, 17) == 'TWTTalentTabInfo;' then
+            if __substr(arg2, 1, 17) == 'TWTTalentTabInfo;' then
 
-                local talentEx = string.split(arg2, ';')
+                local talentEx = __explode(arg2, ';')
 
                 if talentEx[2] ~= TWT.name then
                     return false
                 end
 
-                local index = tonumber(talentEx[3])
+                local index = __parseint(talentEx[3])
                 local name = talentEx[4]
-                local pointsSpent = tonumber(talentEx[5])
-                local numTalents = tonumber(talentEx[6])
+                local pointsSpent = __parseint(talentEx[5])
+                local numTalents = __parseint(talentEx[6])
 
                 -- todo save twt_spec per sender so it caches from other people's inspects
 
@@ -324,25 +336,25 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
-            if string.sub(arg2, 1, 14) == 'TWTTalentInfo;' and arg4 ~= TWT.name then
+            if __substr(arg2, 1, 14) == 'TWTTalentInfo;' and arg4 ~= TWT.name then
 
-                local talentEx = string.split(arg2, ';')
+                local talentEx = __explode(arg2, ';')
 
                 if talentEx[2] ~= TWT.name then
                     return false
                 end
 
-                local tree = tonumber(talentEx[3])
-                local i = tonumber(talentEx[4])
+                local tree = __parseint(talentEx[3])
+                local i = __parseint(talentEx[4])
                 local nameTalent = talentEx[5]
-                local tier = tonumber(talentEx[6])
-                local column = tonumber(talentEx[7])
-                local currRank = tonumber(talentEx[8])
-                local maxRank = tonumber(talentEx[9])
+                local tier = __parseint(talentEx[6])
+                local column = __parseint(talentEx[7])
+                local currRank = __parseint(talentEx[8])
+                local maxRank = __parseint(talentEx[9])
                 local meetsPrereq = talentEx[10] == '1'
 
-                local ptier = talentEx[11] ~= '-1' and tonumber(talentEx[11]) or nil
-                local pcolumn = talentEx[12] ~= '-1' and tonumber(talentEx[12]) or nil
+                local ptier = talentEx[11] ~= '-1' and __parseint(talentEx[11]) or nil
+                local pcolumn = talentEx[12] ~= '-1' and __parseint(talentEx[12]) or nil
                 local isLearnable = talentEx[13] == '1' and 1 or nil
 
                 if not TWT_SPEC[tree][i] then
@@ -363,11 +375,11 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
-            if string.sub(arg2, 1, 7) == 'TWT_ME:' then
+            if __substr(arg2, 1, 7) == 'TWT_ME:' then
 
                 if TWT.addonStatus[arg4] then
 
-                    local msg = string.split(arg2, ':')[2]
+                    local msg = __explode(arg2, ':')[2]
                     local verColor = ""
                     if TWT.version(msg) == TWT.version(TWT.addonVer) then
                         verColor = TWT.classColors['hunter'].c
@@ -461,7 +473,7 @@ function TWT.queryWho()
             local _, class = UnitClass('raid' .. i)
 
             TWT.addonStatus[n] = {
-                ['class'] = string.lower(class),
+                ['class'] = __lower(class),
                 ['v'] = '|cff888888   -   '
             }
             if z == 'Offline' then
@@ -480,7 +492,7 @@ function TWT.updateWithAddon()
     local i = 0
     for n, data in next, TWT.addonStatus do
         i = i + 1
-        rosterList = rosterList .. TWT.classColors[data['class']].c .. n .. string.rep(' ', 12 - string.len(n)) .. ' ' .. data['v'] .. ' |cff888888'
+        rosterList = rosterList .. TWT.classColors[data['class']].c .. n .. __repeat(' ', 12 - __strlen(n)) .. ' ' .. data['v'] .. ' |cff888888'
         if i < 4 then
             rosterList = rosterList .. '| '
         end
@@ -734,8 +746,8 @@ function TWT.addInspectMenu(to)
         end
     end
     if found ~= 0 then
-        UnitPopupMenus[to][table.getn(UnitPopupMenus[to]) + 1] = UnitPopupMenus[to][table.getn(UnitPopupMenus[to])]
-        for i = table.getn(UnitPopupMenus[to]) - 1, found, -1 do
+        UnitPopupMenus[to][__getn(UnitPopupMenus[to]) + 1] = UnitPopupMenus[to][__getn(UnitPopupMenus[to])]
+        for i = __getn(UnitPopupMenus[to]) - 1, found, -1 do
             UnitPopupMenus[to][i] = UnitPopupMenus[to][i - 1]
         end
     end
@@ -750,7 +762,7 @@ function TWT.getClasses()
             if GetRaidRosterInfo(i) then
                 local name = GetRaidRosterInfo(i)
                 local _, raidCls = UnitClass('raid' .. i)
-                TWT.classes[name] = string.lower(raidCls)
+                TWT.classes[name] = __lower(raidCls)
             end
         end
     end
@@ -760,7 +772,7 @@ function TWT.getClasses()
                 if UnitName('party' .. i) and UnitClass('party' .. i) then
                     local name = UnitName('party' .. i)
                     local _, raidCls = UnitClass('party' .. i)
-                    TWT.classes[name] = string.lower(raidCls)
+                    TWT.classes[name] = __lower(raidCls)
                 end
             end
         end
@@ -772,9 +784,9 @@ end
 function TWT.handleServerMSG2(msg)
 
     totalPackets = totalPackets + 1
-    totalData = totalData + string.len(msg)
+    totalData = totalData + __strlen(msg)
 
-    local msgEx = string.split(msg, ':')
+    local msgEx = __explode(msg, ':')
 
     -- udts handling
     if msgEx[1] and msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] then
@@ -782,8 +794,8 @@ function TWT.handleServerMSG2(msg)
         --local prefix = msgEx[1] -- TWTv3
         local player = msgEx[2]
         local tank = msgEx[3] == '1'
-        local threat = tonumber(msgEx[4])
-        local perc = tonumber(msgEx[5])
+        local threat = __parseint(msgEx[4])
+        local perc = __parseint(msgEx[5])
         local melee = msgEx[6] == '1'
 
         local time = time()
@@ -895,8 +907,8 @@ function TWT.combatStart()
         local name, texture = GetSpellTabInfo(i);
         if name and name ~= 'General' and texture and i > 1 then
             TWT.spec[specIndex].name = name
-            texture = string.split(texture, '\\')
-            texture = texture[table.getn(texture)]
+            texture = __explode(texture, '\\')
+            texture = texture[__getn(texture)]
             TWT.spec[specIndex].texture = texture
             specIndex = specIndex + 1
         end
@@ -913,7 +925,7 @@ function TWT.combatStart()
         TWT.updateSpeed = TWT.updateSpeeds[TWT.class][3]
     end
 
-    if TWT.class == 'warrior' and string.lower(sendTex) == 'ability_rogue_eviscerate' then
+    if TWT.class == 'warrior' and __lower(sendTex) == 'ability_rogue_eviscerate' then
         sendTex = 'ability_warrior_savageblow' --ms
     end
 
@@ -937,7 +949,7 @@ function TWT.combatEnd()
     twtdebug('wipe threats combat end')
     TWT.threats = TWT.wipe(TWT.threats)
 
-    twtdebug('time = ' .. (math.floor(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
+    twtdebug('time = ' .. (TWT.round(GetTime() - timeStart)) .. 's packets = ' .. totalPackets .. ' ' ..
             totalPackets / (GetTime() - timeStart) .. ' packets/s')
 
     timeStart = GetTime()
@@ -1064,49 +1076,6 @@ nf:SetScript("OnUpdate", function()
     end
 end)
 
---temp--
-function np_test(heal, target)
-
-    local Nameplates = {}
-
-    for _, plate in pairs({ WorldFrame:GetChildren() }) do
-        local name = plate:GetName()
-        if plate then
-
-            if plate:GetObjectType() == 'Button' then
-
-                for _, region in ipairs({ plate:GetRegions() }) do
-                    --twtdebug('found a region')
-                    --twtdebug(region:GetObjectType())
-                    if region:GetObjectType() == 'FontString' then
-                        --twtdebug(region:GetText())
-                        --twtdebug(target)
-
-                        if region:GetText() == target then
-
-                            framePoint = plate
-
-                            _G['CombatHeal']:SetText("+" .. heal)
-
-                            _G['CombatHeal']:SetWidth(plate:GetWidth())
-                            _G['CombatHeal']:SetPoint("TOPLEFT", plate, "TOPLEFT", 0, 30)
-
-                            nf:Show()
-
-                        else
-                            region:SetAlpha(0)
-                        end
-                    else
-                        region:SetAlpha(0)
-                    end
-
-                end
-            end
-        end
-    end
-
-end
-
 function TWT.updateUI()
 
     if TWT_CONFIG.debug then
@@ -1222,8 +1191,8 @@ function TWT.updateUI()
             if name == TWT.name then
 
                 if UnitName('target') ~= 'The Prophet Skeram' then
-                    if name == string.char(77) .. string.lower(string.char(79, 77, 79)) and data.perc >= 95 then
-                        _G['TWTWarningText']:SetText("- STOP DPS " .. string.char(77) .. string.lower(string.char(79, 77, 79)) .. " -");
+                    if name == string.char(77) .. __lower(string.char(79, 77, 79)) and data.perc >= 95 then
+                        _G['TWTWarningText']:SetText("- STOP DPS " .. string.char(77) .. __lower(string.char(79, 77, 79)) .. " -");
                         _G['TWTWarning']:Show()
                     else
                         _G['TWTWarning']:Hide()
@@ -1394,13 +1363,13 @@ TWT.barAnimator:SetScript("OnUpdate", function()
 
         diff = currentW - w
 
-        step = abs(diff) / (math.floor(GetFramerate()) / 30)
+        step = __abs(diff) / (__floor(GetFramerate()) / 30)
 
         if diff ~= 0 then
             -- grow
             if diff < 0 then
-                if abs(diff) < step then
-                    step = abs(diff)
+                if __abs(diff) < step then
+                    step = __abs(diff)
                 end
                 _G[frame]:SetWidth(currentW + step)
             else
@@ -1458,8 +1427,6 @@ TWT.ui:SetScript("OnUpdate", function()
 end)
 
 function TWT.calcTPS(name, data)
-
-    local weight = 2.0
 
     if name ~= TWT.AGRO then
 
@@ -1923,30 +1890,30 @@ function TWTFontSelect(id)
     TWT.updateUI()
 end
 
-function string:split(delimiter)
+function __explode(str, delimiter)
     local result = {}
     local from = 1
-    local delim_from, delim_to = string.find(self, delimiter, from, 1, true)
+    local delim_from, delim_to = __find(str, delimiter, from, 1, true)
     while delim_from do
-        table.insert(result, string.sub(self, from, delim_from - 1))
+        __tinsert(result, __substr(str, from, delim_from - 1))
         from = delim_to + 1
-        delim_from, delim_to = string.find(self, delimiter, from, true)
+        delim_from, delim_to = __find(str, delimiter, from, true)
     end
-    table.insert(result, string.sub(self, from))
+    __tinsert(result, __substr(str, from))
     return result
 end
 
 function TWT.ohShitHereWeSortAgain(t, reverse)
     local a = {}
-    for n, l in pairs(t) do
-        table.insert(a, { ['threat'] = l.threat, ['perc'] = l.perc, ['tps'] = l.tps, ['name'] = n })
+    for n, l in __pairs(t) do
+        __tinsert(a, { ['threat'] = l.threat, ['perc'] = l.perc, ['tps'] = l.tps, ['name'] = n })
     end
     if reverse then
-        table.sort(a, function(b, c)
+        __tsort(a, function(b, c)
             return b['perc'] > c['perc']
         end)
     else
-        table.sort(a, function(b, c)
+        __tsort(a, function(b, c)
             return b['perc'] < c['perc']
         end)
     end
@@ -2020,8 +1987,8 @@ function TWT.targetFromName(name)
 end
 
 function TWT.unitNameForTitle(name)
-    if string.len(name) > TWT.nameLimit then
-        return string.sub(name, 1, TWT.nameLimit) .. '-'
+    if __strlen(name) > TWT.nameLimit then
+        return __substr(name, 1, TWT.nameLimit) .. '-'
     end
     return name
 end
@@ -2065,7 +2032,7 @@ function TWT.wipe(src)
         mt.__mode = "kv"
         src = setmetatable(src, mt)
     end
-    for k in pairs(src) do
+    for k in __pairs(src) do
         src[k] = nil
     end
     return src
@@ -2078,31 +2045,31 @@ function TWT.hooksecurefunc(name, func, append)
         return
     end
 
-    TWT.hooks[tostring(func)] = {}
-    TWT.hooks[tostring(func)]["old"] = _G[name]
-    TWT.hooks[tostring(func)]["new"] = func
+    TWT.hooks[__parsestring(func)] = {}
+    TWT.hooks[__parsestring(func)]["old"] = _G[name]
+    TWT.hooks[__parsestring(func)]["new"] = func
 
     if append then
-        TWT.hooks[tostring(func)]["function"] = function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-            TWT.hooks[tostring(func)]["old"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-            TWT.hooks[tostring(func)]["new"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        TWT.hooks[__parsestring(func)]["function"] = function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[__parsestring(func)]["old"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[__parsestring(func)]["new"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
         end
     else
-        TWT.hooks[tostring(func)]["function"] = function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-            TWT.hooks[tostring(func)]["new"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-            TWT.hooks[tostring(func)]["old"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+        TWT.hooks[__parsestring(func)]["function"] = function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[__parsestring(func)]["new"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+            TWT.hooks[__parsestring(func)]["old"](a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
         end
     end
 
-    _G[name] = TWT.hooks[tostring(func)]["function"]
+    _G[name] = TWT.hooks[__parsestring(func)]["function"]
 end
 
 function TWT.pairsByKeys(t, f)
     local a = {}
-    for n in pairs(t) do
-        table.insert(a, n)
+    for n in __pairs(t) do
+        __tinsert(a, n)
     end
-    table.sort(a, function(a, b)
+    __tsort(a, function(a, b)
         return a < b
     end)
     local i = 0 -- iterator variable
@@ -2120,22 +2087,22 @@ end
 
 function TWT.round(num, numDecimalPlaces)
     local mult = 10 ^ (numDecimalPlaces or 0)
-    return math.floor(num * mult + 0.5) / mult
+    return __floor(num * mult + 0.5) / mult
 end
 
 function TWT.version(ver)
-    local verEx = string.split(ver, '.')
+    local verEx = __explode(ver, '.')
 
     if verEx[3] then
         -- new versioning with 3 numbers
-        return tonumber(verEx[1]) * 100 +
-                tonumber(verEx[2]) * 10 +
-                tonumber(verEx[3]) * 1
+        return __parseint(verEx[1]) * 100 +
+                __parseint(verEx[2]) * 10 +
+                __parseint(verEx[3]) * 1
     end
 
     -- old versioning
-    return tonumber(verEx[1]) * 10 +
-            tonumber(verEx[2]) * 1
+    return __parseint(verEx[1]) * 10 +
+            __parseint(verEx[2]) * 1
 
 end
 
