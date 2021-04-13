@@ -190,7 +190,6 @@
                     </Anchors>
                 </Texture>
 
-                <!--                <Texture name="$parentTank" file="Interface\addons\TWThreat\images\tank" hidden="true">-->
                 <Texture name="$parentRole" file="" hidden="true">
                     <Size>
                         <AbsDimension x="24" y="24"/>
@@ -478,7 +477,6 @@
             <OnDragStop>
                 this:StopMovingOrSizing();
                 this.isMoving = false;
-                twtdebug(this:GetLeft() .. ' ' .. this:GetTop())
             </OnDragStop>
         </Scripts>
         <Frames>
