@@ -1,9 +1,15 @@
-# TWThreat v1.0.2
+# TWThreat v1.1.0
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
-## Chngelist
+## Changes
+
+### v1.1.0
+- Threat api v3, older versions don't work anymore.
+- Summoned creatures show the right threat values.
+- Settings for in and out of combat frame opacity.
+
 
 ### v1.0.2
 - Revamped settings window with tabs.
