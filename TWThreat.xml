@@ -608,7 +608,7 @@
         </Frames>
     </Frame>
 
-    <Frame name="TWTMainSettings" hidden="false" toplevel="true"
+    <Frame name="TWTMainSettings" hidden="true" toplevel="true"
            movable="true" enableMouse="true">
         <Size>
             <AbsDimension x="300" y="280"/>
@@ -978,7 +978,8 @@
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
 
-                    <Button name="TWTMainSettingsHealerMasterTargetButton" inherits="UIPanelButtonTemplate" text="From Target">
+                    <Button name="TWTMainSettingsHealerMasterTargetButton" inherits="UIPanelButtonTemplate"
+                            text="From Target" hidden="true">
                         <NormalTexture name="$parentNT" file="Interface\addons\TWThreat\images\textures\Smooth"
                                        alphaMode="ADD">
                         </NormalTexture>
@@ -1015,6 +1016,18 @@
                             <OnClick>
                                 TWTHealerMasterTarget_OnClick()
                             </OnClick>
+                            <OnEnter>
+                                GameTooltip:ClearLines();
+                                GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
+                                GameTooltip:AddLine('Healer Master Target *EXPERIMENTAL*');
+                                GameTooltip:AddLine('Select a tank to get his target\'s threat information.', 1,1,1);
+                                GameTooltip:AddLine('Clicking this button with no target or with the same', 1,1,1);
+                                GameTooltip:AddLine('target will reset Master Target.', 1,1,1);
+                                GameTooltip:Show();
+                            </OnEnter>
+                            <OnLeave>
+                                GameTooltip:Hide();
+                            </OnLeave>
                         </Scripts>
                     </Button>
 
