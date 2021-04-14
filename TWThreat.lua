@@ -36,8 +36,10 @@ TWT.threatsFrames = {}
 TWT.threats = {}
 
 TWT.targetName = ''
-TWT.isRelay = false
+TWT.relayTo = {}
+TWT.shouldRelay = false
 TWT.healerMasterTarget = ''
+
 TWT.updateSpeed = 1
 
 TWT.targetFrameVisible = false
@@ -262,18 +264,48 @@ TWT:SetScript("OnEvent", function()
                 return true
             end
 
+            -- healer master target request
             if __substr(arg2, 1, 8) == 'TWT_HMT:' and arg4 ~= TWT.name then
                 local hmtEx = __explode(arg2, ':')
                 if not hmtEx[2] then
                     return true
                 end
                 if hmtEx[2] == TWT.name then
-                    TWT.isRelay = true
+                    for _, name in TWT.relayTo do
+                        if name == arg4 then
+                            twtdebug('relay ' .. name .. ' already exists.')
+                            return false
+                        end
+                    end
+                    TWT.relayTo[table.getn(TWT.relayTo) + 1] = arg4
+                    twtdebug('added relay: ' .. arg4)
                     TWT.send('TWT_HMT_OK:' .. arg4)
+
+                    TWT.shouldRelay = TWT.checkRelay()
+
                 end
                 return true
             end
 
+            -- healer master target request
+            if __substr(arg2, 1, 12) == 'TWT_HMT_REM:' and arg4 ~= TWT.name then
+                local hmtEx = __explode(arg2, ':')
+                if not hmtEx[2] then
+                    return true
+                end
+                if hmtEx[2] == TWT.name then
+                    for index, name in TWT.relayTo do
+                        if name == arg4 then
+                            TWT.relayTo[index] = nil
+                            twtdebug('removed relay: ' .. arg4)
+                            return false
+                        end
+                    end
+                end
+                return true
+            end
+
+            -- healer master target respond
             if __substr(arg2, 1, 11) == 'TWT_HMT_OK:' and arg4 ~= TWT.name then
                 local hmtEx = __explode(arg2, ':')
                 if not hmtEx[2] then
@@ -463,50 +495,6 @@ TWT:SetScript("OnEvent", function()
         end
         if event == "PLAYER_TARGET_CHANGED" then
 
-            if TWT.healerMasterTarget ~= '' then
-                return true
-            end
-
-            TWT.targetName = ''
-
-            TWT.channel = (GetNumRaidMembers() > 0) and 'RAID' or 'PARTY'
-
-            -- lost target
-            if not UnitExists('target') then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
-            -- target is dead, dont show anything
-            if UnitIsDead('target') then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
-            -- dont show anything
-            if UnitIsPlayer('target') then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
-            -- non interesting target
-            if UnitClassification('target') ~= 'worldboss' and UnitClassification('target') ~= 'elite' then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
-            -- no raid or party
-            if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
-            -- not in combat
-            if not not UnitAffectingCombat('player') and not UnitAffectingCombat('target') then
-                TWT.updateTargetFrameThreatIndicators(-1)
-                return false
-            end
-
             return TWT.targetChanged()
 
         end
@@ -521,7 +509,7 @@ function TWT.queryWho()
     TWT.withAddon = 0
     TWT.addonStatus = {}
     for i = 0, GetNumRaidMembers() do
-        if (GetRaidRosterInfo(i)) then
+        if GetRaidRosterInfo(i) then
             local n, _, _, _, _, _, z = GetRaidRosterInfo(i);
             local _, class = UnitClass('raid' .. i)
 
@@ -799,27 +787,22 @@ end
 
 function TWTHealerMasterTarget_OnClick()
 
+    TWT.getClasses()
+
     if not UnitExists('target') or not UnitIsPlayer('target')
             or UnitName('target') == TWT.name then
 
         if TWT.healerMasterTarget == '' then
             twtprint('Please target a tank.')
         else
-            twtprint('Healer Master Target cleared.')
-
-            TWT.healerMasterTarget = ''
-            TWT.targetName = ''
-
-            TWT.threats = TWT.wipe(TWT.threats)
-
-            _G['TWTMainSettingsHealerMasterTargetButton']:SetText('From Target')
-            _G['TWTMainSettingsHealerMasterTargetButtonNT']:SetVertexColor(1, 1, 1, 1)
-
-            TWT.updateUI()
-
+            TWT.removeHealerMasterTarget()
         end
 
         return false
+    end
+
+    if UnitName('target') == TWT.healerMasterTarget then
+        return TWT.removeHealerMasterTarget()
     end
 
     TWT.send('TWT_HMT:' .. UnitName('target'))
@@ -828,6 +811,24 @@ function TWTHealerMasterTarget_OnClick()
 
     twtprint('Trying to set Healer Master Target to ' .. color.c .. UnitName('target'))
 
+end
+
+function TWT.removeHealerMasterTarget()
+    TWT.send('TWT_HMT_REM:' .. TWT.healerMasterTarget)
+
+    twtprint('Healer Master Target cleared.')
+
+    TWT.healerMasterTarget = ''
+    TWT.targetName = ''
+
+    TWT.threats = TWT.wipe(TWT.threats)
+
+    _G['TWTMainSettingsHealerMasterTargetButton']:SetText('From Target')
+    _G['TWTMainSettingsHealerMasterTargetButtonNT']:SetVertexColor(1, 1, 1, 1)
+
+    TWT.updateUI()
+
+    return true
 end
 
 function TWT.addInspectMenu(to)
@@ -896,8 +897,11 @@ function TWT.handleServerMSG2(msg)
         local perc = __parseint(msgEx[5])
         local melee = msgEx[6] == '1'
 
-        if UnitName('target') and not UnitIsPlayer('target') and TWT.isRelay then
+        if UnitName('target') and not UnitIsPlayer('target') and TWT.shouldRelay then
             --relay
+            for i, name in TWT.relayTo do
+                twtdebug('relaying to ' .. i .. ' ' .. name)
+            end
             TWT.send('TWTRelayV1' ..
                     ':' .. UnitName('target') ..
                     ':' .. player ..
@@ -990,6 +994,8 @@ function TWT.combatStart()
 
     twtdebug('wipe threats combatstart')
     TWT.threats = TWT.wipe(TWT.threats)
+
+    TWT.shouldRelay = TWT.checkRelay()
 
     if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
         return false
@@ -1089,9 +1095,93 @@ function TWT.combatEnd()
 
 end
 
+function TWT.checkRelay()
+
+    if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
+        return false
+    end
+
+    if table.getn(TWT.relayTo) == 0 then
+        return false
+    end
+
+    -- in raid
+    if TWT.channel == 'RAID' and GetNumRaidMembers() > 0 then
+        for index, name in TWT.relayTo do
+            local found = false
+            for i = 0, GetNumRaidMembers() do
+                if GetRaidRosterInfo(i) and UnitName('raid' .. i) == name then
+                    found = true
+                end
+            end
+            if not found then
+                TWT.relayTo[index] = nil
+                twtdebug(name .. ' removed from relay')
+            end
+        end
+    end
+    if TWT.channel == 'PARTY' and GetNumPartyMembers() > 0 then
+        for index, name in TWT.relayTo do
+            local found = false
+            for i = 1, GetNumPartyMembers() do
+                if UnitName('party' .. i) == name then
+                    found = true
+                end
+            end
+            if not found then
+                TWT.relayTo[index] = nil
+                twtdebug(name .. ' removed from relay')
+            end
+        end
+    end
+
+    if table.getn(TWT.relayTo) == 0 then
+        return false
+    end
+
+    return true
+end
+
 function TWT.targetChanged()
 
+    if TWT.healerMasterTarget ~= '' then
+        return true
+    end
+
+    TWT.channel = (GetNumRaidMembers() > 0) and 'RAID' or 'PARTY'
+
+    TWT.targetName = ''
     TWT.updateTargetFrameThreatIndicators(-1)
+
+    -- lost target
+    if not UnitExists('target') then
+        return false
+    end
+
+    -- target is dead, dont show anything
+    if UnitIsDead('target') then
+        return false
+    end
+
+    -- dont show anything
+    if UnitIsPlayer('target') then
+        return false
+    end
+
+    -- non interesting target
+    if UnitClassification('target') ~= 'worldboss' and UnitClassification('target') ~= 'elite' then
+        return false
+    end
+
+    -- no raid or party
+    if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
+        return false
+    end
+
+    -- not in combat
+    if not not UnitAffectingCombat('player') and not UnitAffectingCombat('target') then
+        return false
+    end
 
     twtdebug('wipe target changed')
     TWT.threats = TWT.wipe(TWT.threats)
@@ -1127,8 +1217,6 @@ function TWT.targetChanged()
 
     _G['TWTMainTitle']:SetText(TWT.targetName)
 
-    --TWT.updateUI()
-
     return true
 end
 
@@ -1150,12 +1238,8 @@ function TWT.UnitDetailedThreatSituation(limit)
     --    end
     --
     --end
-    SendAddonMessage("TWT_UDTS", "limit=" .. limit, TWT.channel)
+    SendAddonMessage("TWT_UDTSv3", "limit=" .. limit, TWT.channel)
 
-end
-
-function TWT.TankTargetsThreatSituation(guid)
-    SendAddonMessage("TWT_TTTS", "guid=" .. guid, TWT.channel)
 end
 
 local nf = CreateFrame('Frame')
@@ -1523,14 +1607,6 @@ TWT.ui:SetScript("OnUpdate", function()
 
             if TWT_CONFIG.glow or TWT_CONFIG.fullScreenGlow or TWT_CONFIG.tankmode or
                     TWT_CONFIG.perc or TWT_CONFIG.visible then
-
-                --if TWT_CONFIG.tankMode then
-                --    for _, guid in next, TWT.tankModeTargets do
-                --        --if guid ~= TWT.target then
-                --        TWT.TankTargetsThreatSituation(guid)
-                --        --end
-                --    end
-                --end
 
                 if TWT.healerMasterTarget == '' then
                     TWT.UnitDetailedThreatSituation(TWT_CONFIG.visibleBars - 1)
@@ -2014,6 +2090,10 @@ function TWTFontSelect(id)
     TWT_CONFIG.font = TWT.fonts[id]
     _G['TWTMainSettingsFontButton']:SetText(TWT_CONFIG.font)
     TWT.updateUI()
+end
+
+function TWTTargetButton_OnClick()
+    --
 end
 
 function __explode(str, delimiter)
