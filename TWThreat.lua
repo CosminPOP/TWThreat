@@ -1242,37 +1242,6 @@ function TWT.UnitDetailedThreatSituation(limit)
 
 end
 
-local nf = CreateFrame('Frame')
-nf:Hide()
-
-local framePoint = ''
-
-nf:SetScript("OnShow", function()
-    this.startTime = GetTime()
-    this.mh = 70
-    this.ch = 0
-    _G['CombatHeal']:SetPoint("TOPLEFT", framePoint, "TOPLEFT", 0, 30)
-    _G['CombatHeal']:SetAlpha(1)
-    _G['CombatHeal']:Show()
-end)
-nf:SetScript("OnUpdate", function()
-    local plus = 0.01
-    local gt = GetTime() * 1000
-    local st = (this.startTime + plus) * 1000
-    if gt >= st then
-        this.startTime = GetTime()
-        if this.ch < this.mh then
-            this.ch = this.ch + 1
-            _G['CombatHeal']:SetPoint("TOPLEFT", framePoint, "TOPLEFT", 0, 30 + this.ch)
-            _G['CombatHeal']:SetAlpha(1 - this.ch / this.mh)
-            return true
-        end
-        _G['CombatHeal']:SetAlpha(0)
-        nf:Hide()
-        _G['CombatHeal']:Hide()
-    end
-end)
-
 function TWT.updateUI()
 
     if TWT_CONFIG.debug then
@@ -1323,6 +1292,7 @@ function TWT.updateUI()
                 TWT.threatsFrames[name] = CreateFrame('Frame', 'TWThreat' .. name, _G["TWTMain"], 'TWThreat')
             end
 
+            _G['TWThreat' .. name]:SetAlpha(TWT_CONFIG.combatAlpha)
             _G['TWThreat' .. name]:SetWidth(TWT.windowWidth - 2)
 
             _G['TWThreat' .. name .. 'Name']:SetFont("Interface\\addons\\TWThreat\\fonts\\" .. TWT_CONFIG.font .. ".ttf", 15, "OUTLINE")
