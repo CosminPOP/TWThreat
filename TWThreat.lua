@@ -1215,7 +1215,7 @@ function TWT.targetChanged()
 
     TWT.targetName = TWT.unitNameForTitle(UnitName('target'))
 
-    _G['TWTMainTitle']:SetText(TWT.targetName)
+    TWT.updateTitleBarText(TWT.targetName)
 
     return true
 end
@@ -1343,7 +1343,7 @@ function TWT.updateUI()
             TWT.setBarLabels(_G['TWThreat' .. name .. 'Perc'], _G['TWThreat' .. name .. 'Threat'], _G['TWThreat' .. name .. 'TPS'])
 
             -- perc
-            _G['TWThreat' .. name .. 'Perc']:SetText(data.perc .. '%')
+            _G['TWThreat' .. name .. 'Perc']:SetText(TWT.round(data.perc) .. '%')
 
             if TWT.name ~= tankName and name == TWT.AGRO then
                 _G['TWThreat' .. name .. 'Perc']:SetText(100 - TWT.threats[TWT.name].perc .. '%')
@@ -1380,7 +1380,7 @@ function TWT.updateUI()
                     end
                 end
 
-                _G['TWTMainTitle']:SetText(TWT.targetName .. ' (' .. data.perc .. '%)')
+                TWT.updateTitleBarText(TWT.targetName .. ' (' .. TWT.round(data.perc) .. '%)')
 
                 _G['TWThreat' .. name .. 'Threat']:SetText(TWT.formatNumber(data.threat))
 
@@ -1511,6 +1511,7 @@ function TWT.barAnimator:animateTo(name, perc, instant)
         return false
     end
 
+    perc = TWT.round(perc)
     perc = perc > 100 and 100 or perc
 
     local width = TWT.round((TWT.windowWidth - 2) * perc / 100)
@@ -1650,6 +1651,8 @@ function TWT.updateTargetFrameThreatIndicators(perc)
     end
 
     _G['TWThreatDisplayTarget']:Show()
+
+    perc = TWT.round(perc)
 
     if TWT_CONFIG.perc and not UnitIsPlayer('target') then
         _G['TWThreatDisplayTargetNumericPerc']:SetText(perc .. '%')
@@ -2192,7 +2195,7 @@ function TWT.updateTitleBarText(text)
         _G['TWTMainTitle']:SetText(TWT.addonName .. ' |cffabd473v' .. TWT.addonVer)
         return true
     end
-
+    _G['TWTMainTitle']:SetText(text)
 end
 
 
