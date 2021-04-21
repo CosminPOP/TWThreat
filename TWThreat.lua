@@ -18,7 +18,7 @@ local __abs = abs
 
 local TWT = CreateFrame("Frame")
 
-TWT.addonVer = '1.1.0'
+TWT.addonVer = '1.2.0'
 
 TWT.threatApi = 'TWTv4=';
 TWT.tankModeApi = 'TMTv1=';

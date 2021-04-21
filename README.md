@@ -1,9 +1,17 @@
-# TWThreat v1.1.0
+# TWThreat v1.2.0
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
 ## Changes
+
+### v1.2.0
+- Threat api v4, older versions don't work anymore.
+- [pfUI](https://github.com/shagu/pfUI) integration for target frame glow and threat percentage.
+- tankMode is back !
+- New threat warning sound.
+- New icons for settings/lock/close buttons.
+
 
 ### v1.1.0
 - Threat api v3, older versions don't work anymore.
