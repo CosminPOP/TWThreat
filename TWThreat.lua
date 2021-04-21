@@ -1043,6 +1043,7 @@ function TWT.combatStart()
     --twtdebug('wipe threats combatstart')
     --TWT.threats = TWT.wipe(TWT.threats)
     --TWT.tankModeThreats = TWT.wipe(TWT.tankModeThreats)
+    TWT.hideThreatFrames(true)
     TWT.shouldRelay = TWT.checkRelay()
 
     if GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0 then
@@ -1144,6 +1145,8 @@ function TWT.combatEnd()
 
     _G['TWTMain']:SetAlpha(TWT_CONFIG.oocAlpha)
 
+    TWT.hideThreatFrames(true)
+
     return true
 
 end
@@ -1206,6 +1209,14 @@ function TWT.checkTargetFrames()
         TWT.PFUItargetFrameVisible = true
     else
         TWT.PFUItargetFrameVisible = false
+    end
+end
+
+function TWT.hideThreatFrames(force)
+    if TWT.tableSize(TWT.threats) > 0 or force then
+        for name in next, TWT.threatsFrames do
+            TWT.threatsFrames[name]:Hide()
+        end
     end
 end
 
@@ -1315,10 +1326,7 @@ function TWT.updateUI(from)
         TWT.barAnimator:Show()
     end
 
-    -- todo dont hide threatframes if twt threats is empty, for lua random table reset
-    for name in next, TWT.threatsFrames do
-        TWT.threatsFrames[name]:Hide()
-    end
+    TWT.hideThreatFrames()
 
     if not UnitAffectingCombat('player') and not _G['TWTMainSettings']:IsVisible() then
         TWT.updateTargetFrameThreatIndicators(-1)
@@ -1573,21 +1581,25 @@ TWT.barAnimator:SetScript("OnUpdate", function()
 
         if diff ~= 0 then
 
-            local fps = 30 -- GetFramerate()
-
-            step = TWT.round(__abs(diff) / (__floor(fps) / TWT.updateSpeed))
-            step = step < 1 and 1 or step
+            step = 3
+            if __abs(diff) > 50 then
+                step = 4
+            elseif __abs(diff) > 100 then
+                step = 5
+            elseif __abs(diff) > 200 then
+                step = 10
+            end
 
             -- grow
             if diff < 0 then
-                --if __abs(diff) < step then
-                --    step = __abs(diff)
-                --end
+                if __abs(diff) < step then
+                    step = __abs(diff)
+                end
                 _G[frame]:SetWidth(currentW + step)
             else
-                --if diff < step then
-                --    step = diff
-                --end
+                if diff < step then
+                    step = diff
+                end
                 _G[frame]:SetWidth(currentW - step)
             end
         end
@@ -1684,9 +1696,7 @@ function TWT.updateTargetFrameThreatIndicators(perc)
         _G['TWThreatDisplayTarget']:Hide()
         _G['TWThreatDisplayTargetPFUI']:Hide()
 
-        for name in next, TWT.threatsFrames do
-            TWT.threatsFrames[name]:Hide()
-        end
+        --TWT.hideThreatFrames()
 
         return false
     end
@@ -1959,11 +1969,11 @@ function TWTChangeSetting_OnClick(checked, code)
             _G['TWTMainTankModeWindow']:Hide()
         end
     end
-    if code == 'aggroSound' and checked then
+    if code == 'aggroSound' and checked and not UnitAffectingCombat('player') then
         PlaySoundFile('Interface\\addons\\TWThreat\\sounds\\warn.ogg')
     end
 
-    if code == 'fullScreenGlow' and checked then
+    if code == 'fullScreenGlow' and checked and not UnitAffectingCombat('player') then
         TWT.glowFader:Show()
     end
 
