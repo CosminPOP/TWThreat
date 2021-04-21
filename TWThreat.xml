@@ -2138,7 +2138,8 @@
                 this:SetUserPlaced(true);
             </OnLoad>
             <OnDragStart>
-                if getglobal('TWTMainLockButton'):GetText() == 'L' then
+                if getglobal('TWTMainLockButtonNT'):GetTexture() == 'Interface\\addons\\TWThreat\\images\\icon_unlocked'
+                then
                 this:StartMoving();
                 this.isMoving = true;
                 end
