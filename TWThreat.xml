@@ -2228,8 +2228,6 @@
         <Size>
             <AbsDimension x="2" y="2"/>
         </Size>
-        <!--        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" tile="true">-->
-        <!--        </Backdrop>-->
         <Anchors>
             <Anchor point="TOPLEFT" relativeTo="pfTarget" relativePoint="TOPLEFT">
                 <Offset>
