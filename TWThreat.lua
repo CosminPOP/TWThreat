@@ -656,9 +656,9 @@ function TWT.init()
     end
 
     if TWT_CONFIG.lock then
-        _G['TWTMainLockButton']:SetNormalTexture('Interface\\addons\\TWThreat\\images\\icon_unlocked')
-    else
         _G['TWTMainLockButton']:SetNormalTexture('Interface\\addons\\TWThreat\\images\\icon_locked')
+    else
+        _G['TWTMainLockButton']:SetNormalTexture('Interface\\addons\\TWThreat\\images\\icon_unlocked')
     end
 
     _G['TWTFullScreenGlowTexture']:SetWidth(GetScreenWidth())
@@ -1211,6 +1211,10 @@ end
 
 function TWT.targetChanged()
 
+    if not UnitAffectingCombat('player') and _G['TWTMainSettings']:IsVisible() == 1 then
+        return true
+    end
+
     TWT.channel = (GetNumRaidMembers() > 0) and 'RAID' or 'PARTY'
 
     if UIParent:GetScale() ~= _G['TWThreatDisplayTarget']:GetScale() then
@@ -1258,7 +1262,6 @@ function TWT.targetChanged()
     TWT.threats = TWT.wipe(TWT.threats)
     TWT.history = TWT.wipe(TWT.history)
 
-
     if TWT_CONFIG.skeram then
         -- skeram hax
         --The Prophet Skeram
@@ -1296,7 +1299,6 @@ function TWT.updateUI(from)
     --twtdebug('update ui call from [' .. (from or '') .. ']')
 
     TWT.checkTargetFrames()
-
 
     if TWT_CONFIG.debug then
         _G['pps']:SetText('Traffic: ' .. TWT.round((totalPackets / (GetTime() - timeStart)) * 10) / 10
@@ -1510,7 +1512,7 @@ function TWT.updateUI(from)
                 _G['TMEF' .. i .. 'Target']:SetText(data.creature)
                 _G['TMEF' .. i .. 'Player']:SetText(TWT.classColors[TWT.getClass(data.name)].c .. data.name)
                 _G['TMEF' .. i .. 'Perc']:SetText(TWT.round(data.perc) .. '%')
-                _G['TMEF' .. i .. 'TargetButton']:SetID(i)
+                _G['TMEF' .. i .. 'TargetButton']:SetID(guid)
                 _G['TMEF' .. i]:SetPoint("TOPLEFT", _G["TWTMainTankModeWindow"], "TOPLEFT", 0, -21 + 24 - i * 25)
 
                 _G['TMEF' .. i .. 'RaidTargetIcon']:Hide()
@@ -1615,9 +1617,10 @@ TWT.threatQuery:SetScript("OnUpdate", function()
                 return false
             end
 
-            --todo add pfui stuff here too
-            if TWT_CONFIG.glow or TWT_CONFIG.fullScreenGlow or TWT_CONFIG.tankmode or
-                    TWT_CONFIG.perc or TWT_CONFIG.visible then
+            if TWT_CONFIG.glow or TWT_CONFIG.perc or
+                    TWT_CONFIG.glowPFUI or TWT_CONFIG.percPFUI or
+                    TWT_CONFIG.fullScreenGlow or TWT_CONFIG.tankmode or
+                    TWT_CONFIG.visible then
                 if TWT.healerMasterTarget == '' then
                     TWT.UnitDetailedThreatSituation(TWT_CONFIG.visibleBars - 1)
                 end
@@ -1628,7 +1631,6 @@ TWT.threatQuery:SetScript("OnUpdate", function()
         end
     end
 end)
-
 
 function TWT.calcTPS(name)
 
@@ -1772,7 +1774,7 @@ function TWT.updateTargetFrameThreatIndicators(perc)
                 index = index + 1
                 if index == 3 then
                     tankModePerc = TWT.round(data.perc)
-                    second =  TWT.unitNameForTitle(name, 6) .. ' ' .. tankModePerc .. '%'
+                    second = TWT.unitNameForTitle(name, 6) .. ' ' .. tankModePerc .. '%'
                     break
                     --TWT.classColors[TWT.getClass(name)].c ..
                 end
@@ -1809,7 +1811,7 @@ function TWT.updateTargetFrameThreatIndicators(perc)
 
         local offset = 0
         if TWT_CONFIG.percPFUIbottom then
-            offset = - _G['pfTarget']:GetHeight() - 32/2
+            offset = -_G['pfTarget']:GetHeight() - 32 / 2
         end
 
         if TWT_CONFIG.tankMode then
@@ -1831,13 +1833,13 @@ function TWT.updateTargetFrameThreatIndicators(perc)
         local tankModePerc = 0
 
         if TWT_CONFIG.tankMode then
-            local second = 'Ilmane 20% '
+            local second = ''
             local index = 0
             for name, data in TWT.ohShitHereWeSortAgain(TWT.threats, true) do
                 index = index + 1
                 if index == 3 then
                     tankModePerc = TWT.round(data.perc)
-                    second =  TWT.unitNameForTitle(name, 6) .. ' ' .. tankModePerc .. '%'
+                    second = TWT.unitNameForTitle(name, 6) .. ' ' .. tankModePerc .. '%'
                     break
                 end
             end
@@ -1929,9 +1931,9 @@ function TWTChangeSetting_OnClick(checked, code)
     if code == 'lock' then
         checked = not TWT_CONFIG[code]
         if checked then
-            _G['TWTMainLockButton']:SetNormalTexture('Interface\\addons\\TWThreat\\images\\icon_unlocked')
-        else
             _G['TWTMainLockButton']:SetNormalTexture('Interface\\addons\\TWThreat\\images\\icon_locked')
+        else
+            _G['TWTMainLockButton']:SetNormalTexture('Interface\\addons\\TWThreat\\images\\icon_unlocked')
         end
     end
     TWT_CONFIG[code] = checked
@@ -2162,39 +2164,39 @@ function TWT.testBars(show)
                 history = {}, melee = false, tank = false
             }
         }
-        TWT.targetName = "Patchwerk TEST"
-
-        -- todo fix creature names
 
         TWT.tankModeThreats = {
             [1] = {
-                creature = 'Mob1',
+                creature = 'Infectious Ghoul',
                 name = 'Bob',
                 perc = 78
             },
             [2] = {
-                creature = 'Mob2',
+                creature = 'Venom Stalker',
                 name = 'Alice',
                 perc = 95
             },
             [3] = {
-                creature = 'Mob3',
+                creature = 'Living Monstrosity',
                 name = 'Chad',
                 perc = 52
             },
             [4] = {
-                creature = 'Mob4',
+                creature = 'Deathknight Captain',
                 name = 'Olaf',
                 perc = 81
             },
             [5] = {
-                creature = 'Mob5',
+                creature = 'Patchwerk TEST',
                 name = 'Jimmy',
-                perc = 42
+                perc = 12
             },
         }
 
         TWT.targetChanged()
+
+        TWT.targetName = "Patchwerk TEST"
+
         TWT.updateUI('testBars')
     else
         TWT.combatEnd()
@@ -2223,7 +2225,6 @@ function TWTTankModeWindowChangeStick_OnClick(to)
         _G['TWTMainTankModeWindow']:ClearAllPoints()
         _G['TWTMainTankModeWindow']:SetPoint('TOPLEFT', _G['TWTMain'], 'TOPRIGHT', 1, 0)
     elseif TWT_CONFIG.tankModeStick == 'Bottom' then
-        twtdebug('set')
         _G['TWTMainTankModeWindow']:ClearAllPoints()
         _G['TWTMainTankModeWindow']:SetPoint('TOPLEFT', _G['TWTMain'], 'BOTTOMLEFT', 0, -1)
     elseif TWT_CONFIG.tankModeStick == 'Left' then
@@ -2273,8 +2274,8 @@ end
 
 function TWTTargetButton_OnClick(index)
 
-    if TWT.tankModeThreats[index] then
-        AssistByName(TWT.tankModeThreats[index].name)
+    if TWT.tankModeThreats[__parsestring(index)] then
+        AssistByName(TWT.tankModeThreats[__parsestring(index)].name)
         return true
     end
 
