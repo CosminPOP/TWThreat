@@ -18,7 +18,7 @@ local __abs = abs
 
 local TWT = CreateFrame("Frame")
 
-TWT.addonVer = '1.2.0'
+TWT.addonVer = '1.2.1'
 
 TWT.threatApi = 'TWTv4=';
 TWT.tankModeApi = 'TMTv1=';
@@ -1910,21 +1910,38 @@ function WindowScaleSlider_OnValueChanged()
     TWT_CONFIG.windowScale = _G['TWTMainSettingsWindowScaleSlider']:GetValue()
 
     local x, y = _G['TWTMain']:GetLeft(), _G['TWTMain']:GetTop()
+    local sx, sy = _G['TWTMainTankModeWindow']:GetLeft(), _G['TWTMainTankModeWindow']:GetTop()
     local s = _G['TWTMain']:GetEffectiveScale()
+    local ss = _G['TWTMainTankModeWindow']:GetEffectiveScale()
     local posX, posY
+    local sposX, sposY
 
     if x and y and s then
         x, y = x * s, y * s
         posX = x
         posY = y
     end
+    if sx and sy and ss then
+        sx, sy = sx * ss, sy * ss
+        sposX = sx
+        sposY = sy
+    end
 
     _G['TWTMain']:SetScale(TWT_CONFIG.windowScale)
+    _G['TWTMainTankModeWindow']:SetScale(TWT_CONFIG.windowScale)
 
     s = _G['TWTMain']:GetEffectiveScale()
+    ss = _G['TWTMainTankModeWindow']:GetEffectiveScale()
     posX, posY = posX / s, posY / s
+    sposX, sposY = sposX / ss, sposY / ss
     _G['TWTMain']:ClearAllPoints()
+    _G['TWTMainTankModeWindow']:ClearAllPoints()
     _G['TWTMain']:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", posX, posY)
+    _G['TWTMainTankModeWindow']:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", sposX, sposY)
+
+    if TWT_CONFIG.tankModeStick ~= 'Free' then
+        TWTTankModeWindowChangeStick_OnClick(TWT_CONFIG.tankModeStick)
+    end
 end
 
 function CombatOpacitySlider_OnValueChanged()

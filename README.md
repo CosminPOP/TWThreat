@@ -5,6 +5,9 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
 ## Changes
 
+### v1.2.1
+- Scale TankMode window with main window.
+
 ### v1.2.0
 - Threat api v4, older versions don't work anymore.
 - [pfUI](https://github.com/shagu/pfUI) integration for target frame glow and threat percentage.
