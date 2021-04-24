@@ -1,4 +1,4 @@
-# TWThreat v1.2.0
+# TWThreat v1.2.1
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
