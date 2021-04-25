@@ -601,7 +601,7 @@
     <Frame name="TWTMainSettings" hidden="true" toplevel="true"
            movable="true" enableMouse="true">
         <Size>
-            <AbsDimension x="300" y="280"/>
+            <AbsDimension x="300" y="320"/>
         </Size>
         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
                   tile="false">
@@ -1843,7 +1843,7 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Full Screen Glow');
-                                GameTooltip:AddLine('Red glowing screen edges when your threat is above 80%.', 1, 1, 1);
+                                GameTooltip:AddLine('Red glowing screen edges when you reach aggro threshold.',1,1,1);
                                 GameTooltip:AddLine('This feature is disabled in Tank Mode.', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
@@ -1872,7 +1872,7 @@
                         <Layers>
                             <Layer level="ARTWORK">
                                 <FontString name="$parentLabel" inherits="GameFontNormal"
-                                            text="Sound Warning at 85%">
+                                            text="Sound Warning">
                                     <Anchors>
                                         <Anchor point="LEFT" relativePoint="RIGHT">
                                             <Offset>
@@ -1893,7 +1893,7 @@
                                 GameTooltip:ClearLines();
                                 GameTooltip:SetOwner(this, "ANCHOR_RIGHT", -(this:GetWidth() / 2) + 5, 0);
                                 GameTooltip:AddLine('Aggro Warning Sound');
-                                GameTooltip:AddLine('Plays a warning sound when you reach 95% threat.', 1, 1, 1);
+                                GameTooltip:AddLine('Plays a warning sound when you reach aggro threshold.',1,1,1);
                                 GameTooltip:AddLine('This feature is disabled in Tank Mode.', 1, 1, 1);
                                 GameTooltip:Show();
                             </OnEnter>
@@ -1907,6 +1907,78 @@
                         <CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
                         <DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>
                     </CheckButton>
+
+                    <Slider name="TWTMainSettingsAggroThresholdSlider" inherits="TWTSliderTemplate"
+                            minValue="65" maxValue="95" valueStep="1">
+                        <Anchors>
+                            <Anchor point="TOPLEFT">
+                                <Offset>
+                                    <AbsDimension x="148" y="-225"/>
+                                </Offset>
+                            </Anchor>
+                        </Anchors>
+                        <Layers>
+                            <Layer level="OVERLAY">
+                                <FontString name="$parentText" inherits="GameFontNormal" text="Aggro Threshold"
+                                            justifyH="LEFT">
+                                    <Size>
+                                        <AbsDimension x="150" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPLEFT">
+                                            <Offset>
+                                                <AbsDimension x="-138" y="5"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="65%" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPLEFT">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="80%" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOP">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+
+                                <FontString inherits="GameFontHighlightSmall" text="95%" justifyH="CENTER">
+                                    <Size>
+                                        <AbsDimension x="30" y="20"/>
+                                    </Size>
+                                    <Anchors>
+                                        <Anchor point="TOPRIGHT">
+                                            <Offset>
+                                                <AbsDimension x="0" y="15"/>
+                                            </Offset>
+                                        </Anchor>
+                                    </Anchors>
+                                </FontString>
+                            </Layer>
+                        </Layers>
+                        <Scripts>
+                            <OnValueChanged>
+                                AggroThresholdSlider_OnValueChanged()
+                            </OnValueChanged>
+                        </Scripts>
+                    </Slider>
 
 
                 </Frames>

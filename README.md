@@ -1,9 +1,14 @@
-# TWThreat v1.2.1
+# TWThreat v1.2.2
 Threat Meter for Turtle WoW
 <br>
 Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
 ## Changes
+
+### v1.2.2
+- Bar animation fixes.
+- TankName bug fix.
+- Configurable aggro warning threshold.
 
 ### v1.2.1
 - Scale TankMode window with main window.
@@ -55,7 +60,9 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 - `/twt tankmode`
 
 ## Settings
-![settings](https://imgur.com/S5zpbSX.png)
+![settings](https://imgur.com/xBUdh2C.png)
+![settings](https://imgur.com/MNdyp7w.png)
+![settings](https://imgur.com/IT9wFXp.png)
 
 ### Glow
 Shows a colored aura ranging from Green/Yellow/Red on the Default UI's unit frame.<br>
@@ -93,7 +100,7 @@ Automatically hides the window when combat begins.<br>
 Shows an additional window with targets that you are currently tanking and the name and threat
 percent of the next player in threat list for quick target swap (this mode disables
 Full Screen Glow and Aggro Warning Sound).<br><br>
-![tankmode](https://imgur.com/daZ3vuv.png)
+![tankmode](https://imgur.com/3eR28Zp.png)
 <br>
 
 ### Show Name/TPS/Threat/% Max Label Row
@@ -119,5 +126,4 @@ Shows or hides the Percent Max column.
 
 ## Support
 If you like my work consider buying me a coffee !<br>
-https://ko-fi.com/xerron <br>
-https://paypal.me/xerroner <br>
+https://ko-fi.com/xerr
