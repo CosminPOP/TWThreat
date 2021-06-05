@@ -126,4 +126,6 @@ Shows or hides the Percent Max column.
 
 ## Support
 If you like my work consider buying me a coffee !<br>
-https://ko-fi.com/xerr
+https://ko-fi.com/xerron
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/xerroner)
