@@ -896,9 +896,9 @@ function TWT.combatStart()
     end
 
     local specIndex = 1
-    for i = 1, MAX_SKILLLINE_TABS do
+    for i = 2, 4 do
         local name, texture = GetSpellTabInfo(i);
-        if name and name ~= 'General' and name ~= 'Companions' and name ~= 'Mounts' and texture and i > 1 then
+        if name and texture then
             TWT.spec[specIndex].name = name
             texture = __explode(texture, '\\')
             texture = texture[__getn(texture)]
