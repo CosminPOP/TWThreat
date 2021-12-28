@@ -20,7 +20,7 @@ local __char = string.char
 
 local TWT = CreateFrame("Frame")
 
-TWT.addonVer = '1.2.2'
+TWT.addonVer = '1.2.3'
 
 TWT.threatApi = 'TWTv4=';
 TWT.tankModeApi = 'TMTv1=';
@@ -250,14 +250,14 @@ TWT:SetScript("OnEvent", function()
             end
             return true
         end
-        if event == 'CHAT_MSG_ADDON' and __find(arg1, TWT.threatApi, 1, true) then
+        if event == 'CHAT_MSG_ADDON' and __find(arg2, TWT.threatApi, 1, true) then
 
             totalPackets = totalPackets + 1
-            totalData = totalData + __strlen(arg1)
+            totalData = totalData + __strlen(arg2)
 
-            local threatData = arg1
-            if __find(arg1, '#') and __find(arg1, TWT.tankModeApi) then
-                local packetEx = __explode(arg1, '#')
+            local threatData = arg2
+            if __find(threatData, '#') and __find(threatData, TWT.tankModeApi) then
+                local packetEx = __explode(threatData, '#')
                 if packetEx[1] and packetEx[2] then
                     threatData = packetEx[1]
                     TWT.handleTankModePacket(packetEx[2])
@@ -267,81 +267,6 @@ TWT:SetScript("OnEvent", function()
             return TWT.handleThreatPacket(threatData)
         end
         if event == 'CHAT_MSG_ADDON' and arg1 == TWT.prefix then
-
-            if __substr(arg2, 1, 11) == 'TWTRelayV1:' and arg4 == TWT.healerMasterTarget then
-
-                --local msgEx = __explode(arg2, ':')
-                --if msgEx[2] and msgEx[3] and msgEx[4] and msgEx[5] and msgEx[6] and msgEx[7] then
-                --    TWT.targetName = msgEx[2]
-                --    TWT.handleServerMSG('TWT' .. TWT.threatApi ..
-                --            ':' .. msgEx[3] ..
-                --            ':' .. msgEx[4] ..
-                --            ':' .. msgEx[5] ..
-                --            ':' .. msgEx[6] ..
-                --            ':' .. msgEx[7])
-                --end
-                --return true
-            end
-
-            -- healer master target request
-            if __substr(arg2, 1, 8) == 'TWT_HMT:' and arg4 ~= TWT.name then
-                local hmtEx = __explode(arg2, ':')
-                if not hmtEx[2] then
-                    return true
-                end
-                if hmtEx[2] == TWT.name then
-                    for _, name in TWT.relayTo do
-                        if name == arg4 then
-                            twtdebug('relay ' .. name .. ' already exists.')
-                            return false
-                        end
-                    end
-                    TWT.relayTo[__getn(TWT.relayTo) + 1] = arg4
-                    twtdebug('added relay: ' .. arg4)
-                    TWT.send('TWT_HMT_OK:' .. arg4)
-
-                    TWT.shouldRelay = TWT.checkRelay()
-
-                end
-                return true
-            end
-
-            -- healer master target request
-            if __substr(arg2, 1, 12) == 'TWT_HMT_REM:' and arg4 ~= TWT.name then
-                local hmtEx = __explode(arg2, ':')
-                if not hmtEx[2] then
-                    return true
-                end
-                if hmtEx[2] == TWT.name then
-                    for index, name in TWT.relayTo do
-                        if name == arg4 then
-                            TWT.relayTo[index] = nil
-                            twtdebug('removed relay: ' .. arg4)
-                            return false
-                        end
-                    end
-                end
-                return true
-            end
-
-            -- healer master target respond
-            if __substr(arg2, 1, 11) == 'TWT_HMT_OK:' and arg4 ~= TWT.name then
-                local hmtEx = __explode(arg2, ':')
-                if not hmtEx[2] then
-                    return true
-                end
-                if hmtEx[2] == TWT.name then
-                    TWT.healerMasterTarget = arg4
-
-                    local color = TWT.classColors[TWT.getClass(TWT.healerMasterTarget)]
-
-                    _G['TWTMainSettingsHealerMasterTargetButton']:SetText(TWT.healerMasterTarget)
-                    _G['TWTMainSettingsHealerMasterTargetButtonNT']:SetVertexColor(color.r, color.g, color.b, 1)
-
-                    twtprint('Healer Master Target set to ' .. color.c .. TWT.healerMasterTarget)
-                end
-                return true
-            end
 
             if __substr(arg2, 1, 11) == 'TWTVersion:' and arg4 ~= TWT.name then
                 if not TWT.showedUpdateNotification then
@@ -365,112 +290,6 @@ TWT:SetScript("OnEvent", function()
             if __substr(arg2, 1, 15) == 'TWTRoleTexture:' then
                 local tex = __explode(arg2, ':')[2] or ''
                 TWT.roles[arg4] = tex
-                return true
-            end
-
-            if __substr(arg2, 1, 15) == 'TWTShowTalents:' and arg4 ~= TWT.name then
-
-                local name = __explode(arg2, ':')[2] or ''
-
-                if name ~= TWT.name then
-                    return false
-                end
-
-                for tree = 1, GetNumTalentTabs() do
-                    local treeName, iconTexture, pointsSpent = GetTalentTabInfo(tree)
-                    local numTalents = GetNumTalents(tree)
-                    TWT.send('TWTTalentTabInfo;' .. arg4 .. ';' .. tree .. ';' ..
-                            treeName .. ';' .. pointsSpent .. ';' .. numTalents)
-
-                    for i = 1, GetNumTalents(tree) do
-                        local nameTalent, _, tier, column, currRank, maxRank, _, meetsPrereq = GetTalentInfo(tree, i)
-                        local ptier, pcolumn, isLearnable = GetTalentPrereqs(tree, i);
-                        if not ptier then
-                            ptier = -1
-                        end
-                        if not pcolumn then
-                            pcolumn = -1
-                        end
-                        if not isLearnable then
-                            isLearnable = -1
-                        end
-                        TWT.send('TWTTalentInfo;' .. arg4 .. ';' .. tree .. ';' .. i .. ';' ..
-                                nameTalent .. ';' .. tier .. ';' .. column .. ';' ..
-                                currRank .. ';' .. maxRank .. ';' .. meetsPrereq .. ';' ..
-                                ptier .. ';' .. pcolumn .. ';' .. isLearnable)
-                    end
-                end
-
-                TWT.send('TWTTalentEND;' .. arg4)
-
-                return true
-            end
-
-            if __substr(arg2, 1, 13) == 'TWTTalentEND;' then
-                local talentEx = __explode(arg2, ';')
-                local name = talentEx[2]
-                if name == TWT.name then
-                    _G['TWTTalentFrame']:Show()
-                end
-                return true
-            end
-
-            if __substr(arg2, 1, 17) == 'TWTTalentTabInfo;' then
-
-                local talentEx = __explode(arg2, ';')
-
-                if talentEx[2] ~= TWT.name then
-                    return false
-                end
-
-                local index = __parseint(talentEx[3])
-                local name = talentEx[4]
-                local pointsSpent = __parseint(talentEx[5])
-                local numTalents = __parseint(talentEx[6])
-
-                TWT_SPEC[index].name = name
-                TWT_SPEC[index].pointsSpent = pointsSpent
-                TWT_SPEC[index].numTalents = numTalents
-
-                return true
-            end
-
-            if __substr(arg2, 1, 14) == 'TWTTalentInfo;' and arg4 ~= TWT.name then
-
-                local talentEx = __explode(arg2, ';')
-
-                if talentEx[2] ~= TWT.name then
-                    return false
-                end
-
-                local tree = __parseint(talentEx[3])
-                local i = __parseint(talentEx[4])
-                local nameTalent = talentEx[5]
-                local tier = __parseint(talentEx[6])
-                local column = __parseint(talentEx[7])
-                local currRank = __parseint(talentEx[8])
-                local maxRank = __parseint(talentEx[9])
-                local meetsPrereq = talentEx[10] == '1'
-
-                local ptier = talentEx[11] ~= '-1' and __parseint(talentEx[11]) or nil
-                local pcolumn = talentEx[12] ~= '-1' and __parseint(talentEx[12]) or nil
-                local isLearnable = talentEx[13] == '1' and 1 or nil
-
-                if not TWT_SPEC[tree][i] then
-                    TWT_SPEC[tree][i] = {}
-                end
-
-                TWT_SPEC[tree][i].name = nameTalent
-                TWT_SPEC[tree][i].tier = tier
-                TWT_SPEC[tree][i].column = column
-                TWT_SPEC[tree][i].rank = currRank
-                TWT_SPEC[tree][i].maxRank = maxRank
-                TWT_SPEC[tree][i].meetsPrereq = meetsPrereq
-
-                TWT_SPEC[tree][i].ptier = ptier
-                TWT_SPEC[tree][i].pcolumn = pcolumn
-                TWT_SPEC[tree][i].isLearnable = isLearnable
-
                 return true
             end
 
