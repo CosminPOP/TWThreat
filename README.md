@@ -5,6 +5,9 @@ Requirements: in `party` or `raid`, attacking `elite` creatures or `bosses`.
 <br>
 ## Changes
 
+### v1.2.3
+- Fixes for TW patch 16.0
+
 ### v1.2.2
 - Bar animation fixes.
 - TankName bug fix.
