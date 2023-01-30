@@ -459,7 +459,7 @@ function TWT.init()
     TWT_CONFIG.combatAlpha = TWT_CONFIG.combatAlpha or 1
     TWT_CONFIG.oocAlpha = TWT_CONFIG.oocAlpha or 1
 
-    if TWT.class ~= 'paladin' and TWT.class ~= 'warrior' and TWT.class ~= 'druid' then
+    if TWT.class ~= 'paladin' and TWT.class ~= 'warrior' and TWT.class ~= 'druid' and TWT.class ~= 'shaman' then
         _G['TWTMainSettingsTankMode']:Disable()
         TWT_CONFIG.tankMode = false
     end
